@@ -71,8 +71,8 @@ dobin rgi
 dobin rgl
 dobin rgpc
 dobin rguc
-dobin rsync_handy2_dcimdir_fast
-dobin rsync_handy_dcimdir_fast
+#dobin rsync_handy2_dcimdir_fast
+#dobin rsync_handy_dcimdir_fast
 dobin sd
 dobin speech-wrapper
 dobin gi

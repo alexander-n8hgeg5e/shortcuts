@@ -1,0 +1,6 @@
+#!/bin/fish
+
+# submodul checkout to what superproject expects.
+
+/usr/bin/git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME submodule sync --recursive
+/usr/bin/git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME submodule update --init --no-fetch --checkout --recursive

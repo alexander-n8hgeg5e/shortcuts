@@ -1,0 +1,3 @@
+#!/bin/fish
+/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ add $argv
+/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ commit -m'nvim auto commit' $argv

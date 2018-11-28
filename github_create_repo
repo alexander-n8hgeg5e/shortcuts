@@ -1,0 +1,7 @@
+#!/usr/bin/python3
+sys import argv
+import github
+pass=input('enter pass:')
+gh=github.MainClass.Github(login_or_token='alexander-n8hgeg5e', password=pass)
+user=gh.get_user()
+user.create_repo(argv[1], private=False,  auto_init=False)

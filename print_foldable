@@ -1,0 +1,146 @@
+#!/usr/bin/python3
+# coding: utf-8
+from sys import argv,exit
+from shlex import split
+from os import path
+import argparse
+import subprocess
+blank = '/tmp/blank_fsdfsdfs.pdf'
+tmpfn_prefix = '/tmp/print_slifjsoil546645'
+tmpfn= tmpfn_prefix + '.pdf'
+sep=' '
+
+
+
+def parse_args():
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description='print foldable')
+    parser.add_argument('file', type=str ,action="store" ,help='filename')
+    parser.add_argument('first', type=int ,action="store" ,help='first page')
+    parser.add_argument('last',  type=int ,action="store" ,help='last page')
+    parser.add_argument('-f', '--filter', type=str ,action="store" ,default='',help='last step filter pages by range')
+    parser.add_argument('-l', '--landscape' ,action="store_true" ,help='landscape')
+    parser.add_argument('-s', '--scale' ,action="store" ,help='scale em all')
+    parser.add_argument('-p', '--print',action="store_true" ,help='print')
+    return parser.parse_args()
+
+def gen_blank():
+    cmdstr = "convert xc:none -page A4 "+blank
+    cmd = split(cmdstr)
+    subprocess.call(cmd,shell=False)
+
+if path.exists(argv[1]):
+    filename = argv[1]
+else:
+    exit(1)
+
+def gen_page_ranges():
+    l=[]
+    for i in range(args.first,args.last+1):
+        l.append(i)
+    s=''
+    print(len(l)%4)
+    print(len(l))
+    if len(l)%4==0:
+            s=s+sep+str(l.pop(-1))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(-1))
+            s=s+sep+str(l.pop(-1))
+    elif len(l)%4==3:
+        ## last page blank -> is first on first sheet
+            s=s+sep+'B'
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(-1))
+            if len(l) > 0:
+                s=s+sep+str(l.pop(-1))
+    elif len(l)%4==2:
+            ## 2 blank pages, -> 1,4 on first sheet
+            s=s+sep+'B'
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+'B'
+            s=s+sep+str(l.pop(-1))
+    elif len(l)%4==1 and len(l) > 1:
+            ## 3 blank pages, -> 1,4   on first sheet
+            ##                   and 1 on second sheet
+            s=s+sep+'B'
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+'B'
+            s=s+sep+'B'
+    elif len(l)%4==1 and len(l) == 1:
+            ## 3 blank pages
+            ##          
+            s=s+sep+str(l.pop(0))
+            s=s+sep+'B'
+            s=s+sep+'B'
+            s=s+sep+'B'
+
+    try:
+        s=s+sep+str(l.pop(0))
+        s=s+sep+str(l.pop(0))
+        s=s+sep+str(l.pop(-1))
+    except:
+            pass
+    while len(l):
+        try:
+            s=s+sep+str(l.pop(-1))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(0))
+            s=s+sep+str(l.pop(-1))
+        except:
+            pass
+    return s[1:]
+args=parse_args()
+gen_blank()
+
+if not args.scale is None:
+        scale='--scale '+args.scale
+else:
+        scale=''
+
+if args.landscape:
+        landscape='--landscape'
+else:
+        landscape=''
+
+if not args.filter == None:
+        p_range= args.filter
+
+suffix='2up'
+infile = filename
+outfile = tmpfn
+pdftk_cmdstr = 'pdftk A='+infile+' B='+blank+' cat '+gen_page_ranges()+' output '+outfile
+pdftk_cmd = split(pdftk_cmdstr)
+
+infile = outfile
+outfile = tmpfn_prefix+'-'+suffix+'.pdf'
+pdfjamcmdstr='/usr/bin/pdfjam --nup "2x1" --suffix '+suffix+' '+landscape+' '+scale+' --outfile /tmp/ -- '+infile+' -'
+pdfjamcmd = split(pdfjamcmdstr)
+
+infile = outfile
+outfile = tmpfn_prefix+'_'+'stage_preprint_filter.pdf'
+pdftk2_cmdstr = 'pdftk A='+infile+' cat '+args.filter+' output ' + outfile
+pdftk2_cmd = split(pdftk2_cmdstr)
+
+infile = outfile
+outfile = None
+lpr_cmdstr0 = "lpr -PBrother_DCP-J725DW -o wrap=false -o page_ranges="+p_range+" -o position=top-left -o PageSize=A4 -o outputorder=normal -o number-up=1 -o copies=1 -o collate=false -o BRSlowDrying=OFF -o BRReverse=OFF -o BRResolution=High -o BRRed=0 -o BRMonoColor=Color -o BRMirror=OFF -o BRMediaType=Plain -o BRJpeg=Recommended -o BRHalfTonePattern=Diffusion -o BRGreen=0 -o BRDuplexMode=Normal -o BRDuplex=DuplexTumble -o BRContrast=0 -o BRColorPaperThick=Regular -o BRColorMatching=None -o BRColorEnhancement=OFF -o BRBrightness=0 -o BRBlue=0 -o BRBiDir=ON"
+lpr_cmdstr = lpr_cmdstr0 + ' ' + infile
+lpr_cmd = split(lpr_cmdstr)
+
+print(pdftk_cmd)
+subprocess.call( pdftk_cmd , shell=False)
+
+print(pdfjamcmd)
+subprocess.call( pdfjamcmd , shell=False)
+
+print(pdftk2_cmd)
+subprocess.call( pdftk2_cmd , shell=False)
+
+print(lpr_cmd)
+
+if args.print:
+        subprocess.call( lpr_cmd, shell=False)

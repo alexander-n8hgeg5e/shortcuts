@@ -1,0 +1,14 @@
+#!/usr/bin/python3
+from sys import argv,exit
+from sys import exit
+from os import environ
+from subprocess import list2cmdline
+import neovim
+path=environ['NVIM_LISTEN_ADDRESS']
+nvim = neovim.attach('socket',path=path)
+
+if argv[1]=='-h' or argv[1]=="--help":
+    print(self.__code__)
+    exit()
+
+nvim.command(list2cmdline(argv[1:]))

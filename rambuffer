@@ -1,0 +1,26 @@
+#!/bin/fish
+
+set progs firefox qutebrowser okular kicad
+set signals TERM QUIT KILL
+function start
+    for i in $progs
+    start-stop-daemon --start --exec $i --make-pidfile --pidfile /tmp/pidfile_$i --background
+    end
+end  
+
+function stop
+  for j in $signals
+      for i in $progs
+	   echo sending signal $j to $i ....
+           start-stop-daemon --pidfile /tmp/pidfile_$i --signal $j
+      end
+  sleep 10
+  end
+end
+
+while true
+   start
+   sleep 30
+   stop
+end
+

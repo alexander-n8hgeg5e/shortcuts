@@ -1,0 +1,5 @@
+#!/bin/bash
+sudo dmsetup mknodes
+sudo cryptsetup luksOpen /dev/mapper/hdc-extra_disk_c extracrypt_c
+sudo cryptsetup luksOpen /dev/mapper/vgsda-extra_disk_a extracrypt_a
+sudo  mount -o device=/dev/mapper/extracrypt_c,noatime,compress=zstd /dev/mapper/extracrypt_a /mnt/extra

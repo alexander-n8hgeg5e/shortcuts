@@ -1,0 +1,26 @@
+#!/bin/bash
+#qdbus org.freedesktop.ScreenSaver /ScreenSaver Lock
+#if [[ $(qdbus org.freedesktop.ScreenSaver /ScreenSaver GetActive) = "true" ]]
+xlock -mode blank&
+rc=$?
+if [[ $rc = "0" ]]
+then
+sleep 5
+sudo hciconfig hci0 down up noscan down
+sudo rfkill block bluetooth
+sudo rc-service libvirtd stop
+sudo rc-service net.enp5s0 stop 
+sudo pm-suspend
+sudo rfkill unblock bluetooth
+bt1
+sudo hciconfig hci0 up piscan
+sleep 1
+sudo rc-service bluetooth restart
+sudo hciconfig hci0 up piscan
+sleep 1
+sleep 1
+#sudo rc-service bluealsa restart
+sudo rc-service net.enp5s0 start
+sleep 5
+sudo rc-service net.enp5s0 restart
+fi

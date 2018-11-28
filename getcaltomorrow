@@ -1,0 +1,11 @@
+#!/usr/bin/python3
+from os import environ
+import datetime
+d=str(datetime.datetime.fromordinal(datetime.date.today().toordinal()+1).date()).split('-')
+year=d[0]
+month=int(d[1])
+day=int(d[2])
+from subprocess import check_output
+from shlex import split
+cmd='cat '+environ.get("HOME")+'/PIM/diary/'+year+'/'+str(month)+'/'+str(day)+'.md'
+print(check_output(split(cmd)).decode()) 

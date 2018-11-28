@@ -1,0 +1,89 @@
+#!/usr/bin/python3
+from sys import argv
+from subprocess import call
+import argparse
+
+cmd_base       = ['ionice', '-c3', 'nice', '-n19', 'sudo']
+
+def gen_cmd_emerge_update( full=False , emptytree=False , ask=False , additional_args=None, some_args=[]):
+    cmd_emerge     = ['emerge']
+    args_all       = ['-v', '-u', '--keep-going=y', '--backtrack=300']
+    pgk_set        = ['@world']
+    args_full      = ['--deep', '--newuse','--with-bdeps=y']
+    args_emptytree = ['--emptytree', '--newuse', '--ask']
+    l = cmd_base + cmd_emerge + args_all
+    if full and not emptytree:
+        l.extend(args_full)
+    elif emptytree and not full:
+            l.extend(args_emptytree)
+    elif not full and not emptytree:
+        pass
+    else:
+        raise Exception('ERROR: Invalid args')
+    if ask:
+        l.append('--ask')
+    if len(some_args) > 0:
+        print(some_args)
+        l.extend(some_args)
+    if not additional_args is None:
+        for i in additional_args:
+            l.append('--'+i)
+    l.extend( pgk_set )
+    return l
+
+def gen_cmd_sync(additional_args=None):
+    _cmd_sync       = ['emerge-webrsync']
+    args_additonal = ['$1']
+    l = cmd_base + _cmd_sync
+    if not additional_args is None:
+        for i in additional_args:
+            l.append('--'+i)
+    return l
+
+
+
+def parse_args():
+    """Parse command-line arguments."""
+
+    parser = argparse.ArgumentParser(description='update tool')
+    parser.add_argument('-f', '--full', action="store_true",
+            help=str(gen_cmd_emerge_update(full=True)))
+    parser.add_argument('-l', '--light', action="store_true",
+            help=str(gen_cmd_emerge_update()))
+    parser.add_argument('-s', '--sync', action="store_true",
+            help=str(gen_cmd_sync()))
+    parser.add_argument('-e', '--emptytree', action="store_true",
+            help=str(gen_cmd_emerge_update(emptytree=True)))
+    parser.add_argument('-a', '--ask', action="store_true",
+                        help='add ask to arglist')
+    parser.add_argument('-j', '--jobs', type=int, action="store" ,default=3,
+                        help='jobs to run simultaniously')
+    parser.add_argument('additional_args',nargs='*',
+                        help='additional args will be forwarded and "--" prepended, so specify without minus ("--"). And because of this Only "--"-long-type-args are supported')
+    return parser.parse_args()
+
+
+def c(cmdlist):
+    print(cmdlist)
+    call(cmdlist,shell=False)
+
+ 
+args=parse_args()
+some_args=["--jobs="+str(args.jobs)]
+
+
+if args.sync:
+  cmd_sync      = gen_cmd_sync(additional_args=args.additional_args)
+  c(cmd_sync)
+
+if args.light:
+  cmd_light     = gen_cmd_emerge_update(additional_args=args.additional_args,ask=args.ask,some_args=some_args)
+  c(cmd_light)
+
+if args.full:
+  cmd_full      = gen_cmd_emerge_update(full=True,additional_args=args.additional_args,ask=args.ask,some_args=some_args)
+  c(cmd_full)
+
+if args.emptytree:
+  cmd_emptytree = gen_cmd_emerge_update(emptytree=True,additional_args=args.additional_args,ask=args.ask,some_args=some_args)
+  c(cmd_emptytree)

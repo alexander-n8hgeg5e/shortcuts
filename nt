@@ -1,0 +1,2 @@
+#!/bin/bash
+sed -i 1c"workdir `pwd`" $HOME/.config/nvim/NERDTreeBookmark

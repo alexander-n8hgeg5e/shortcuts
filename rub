@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+from sys import argv
+from sys import exit
+from os import environ
+import neovim
+path=environ['NVIM_LISTEN_ADDRESS']
+nvim = neovim.attach('socket',path=path)
+
+
+
+def exit_interpret_retcode(r):
+    """
+    """
+    if r < 1:
+        exit(1)
+    else:
+        exit(0)
+
+def exit_if_failed(r,funcname):
+    if r < 1:
+        exit_interpret_retcode(r)
+
+def nvim_run_cmdline_in_new_tab(liste):
+        nvim.command( 'tabnew' )
+        return nvim.call( "termopen", liste )
+
+win_id=nvim.call('win_getid')
+retcode=nvim_run_cmdline_in_new_tab(argsv[1:])
+nvim.command( "augroup end")                  # end group so can be deleted
+nvim.command( "silent! augroup! winback")      # delete group so previously defined aucmds are away
+nvim.command( "augroup winback")              # create new clean group so aucmds can be assigned to it
+nvim.command( "au winback BufUnload <buffer> call win_gotoid("+str(win_id)+") | startinsert" )  # finally assign the buffer local autocmd to the group
+exit_interpret_retcode(retcode)

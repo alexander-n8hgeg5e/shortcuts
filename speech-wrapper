@@ -1,0 +1,2 @@
+#!/bin/bash
+ echo "$1" | espeak -v german+f3 --stdout |aplay > /dev/null

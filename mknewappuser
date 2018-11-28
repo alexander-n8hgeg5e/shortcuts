@@ -1,0 +1,9 @@
+#!/bin/bash
+_USERNAME=$1
+_EXTRA_ARG=$2
+echo "Username =" $_USERNAME
+echo "extra argument =" $_EXTRA_ARG
+sudo useradd --create-home -U  $_EXTRA_ARG $_USERNAME  #-U Create a group with the same name as the user, and add the user to this group 
+sudo usermod -aG $_USERNAME $USER		# -a Add the user to the supplementary group(s). Use only with the -G option.
+sudo chmod g+s /home/$_USERNAME
+echo please update sudoers file with visudo 

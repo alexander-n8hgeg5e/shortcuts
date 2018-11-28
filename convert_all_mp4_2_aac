@@ -1,0 +1,5 @@
+#!/bin/fish
+set IFS '\n'
+for i in *.mp4 *.flv
+  eval ffmpeg -i \'$i\' -acodec copy \'$i.aac\'
+end

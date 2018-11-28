@@ -1,0 +1,6 @@
+#!/bin/fish
+if test $argv[1] -eq ""
+        tmux -S /tmp/tmux-(id -u)/(hostname) new-session -c $argv[1]
+else
+        tmux -S /tmp/tmux-(id -u)/(hostname) new-session
+end

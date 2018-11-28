@@ -1,0 +1,12 @@
+#!/bin/bash
+#übergabe [user] [executable] [options]
+sudo chown -R $1 /home/$1
+sudo -u $1 chmod g+rw /home/$1
+#xauth -f /home/$1/.Xauthority generate $DISPLAY MIT-MAGIC-COOKIE-1 trusted
+#XAUTHORITY=/home/$1/.Xauthority
+#cp ~/.Xauthority /home/$1/
+#sudo chown :$1  /home/$1/.Xauthority
+#chmod g+rw /home/$1/.Xauthority
+xhost SI:localuser:$1
+sudo -iu $1 nohup sh -c "umask 007 ;$2 $3" 2>&1|tee /dev/zero
+#unlink /home/$1/.Xauthority

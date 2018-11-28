@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo git add  . $argv 

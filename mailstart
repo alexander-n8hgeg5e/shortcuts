@@ -1,0 +1,9 @@
+#!/bin/fish
+
+if not test -z (rc-status -c|grep -o offlineimap)
+  sudo rc-service offlineimap restart
+end
+notmuch new
+if test (cat /proc/mounts|grep notmuchfs|grep -c $HOME/.my_notmuchfs) -lt 1
+  mount-notmuchfs
+end

@@ -1,0 +1,4 @@
+#!/bin/fish
+manif
+git add -u
+git commit -m'manifest update'

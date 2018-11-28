@@ -1,0 +1,8 @@
+#!/bin/fish
+if tmux has-session -t vlc
+        tmux attach-session -d -t vlc 
+elif set -q TMUX
+        tmux switch-client -t vlc
+else
+        tmux new-session -d -s vlc
+end

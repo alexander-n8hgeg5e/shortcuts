@@ -1,0 +1,88 @@
+#!/usr/bin/python3
+import pexpect
+import subprocess
+from time import sleep
+
+mac="0C:A6:94:37:E4:AF"
+
+p=pexpect.spawn("bluetoothctl")
+p.sendline("scan on")
+def pair(macaddr):
+    if not p.expect("#")==0:
+        return False
+    p.sendline("pair "+macaddr) 
+    l=["PIN code","Pairing successful","AlreadyExists"]
+    v=p.expect(l)
+    if v==0:
+        p.sendline("0000")
+        v=p.expect(l)
+    if v==1 or v==2:
+         return True
+    else:
+         return False
+
+def power_on(reset=False):
+    if (reset==True):
+        reset()
+    l=["Changing power on succeeded"]
+    if not p.expect("#")==0:
+        return False
+    p.sendline("power on")
+    v=p.expect(l)
+    if v==0:
+        return True
+    else:
+        if reset==True:
+            return False
+        else: 
+            return power_on(reset=True)
+
+def send_scan_on():
+    if not p.expect("#")==0:
+        return False
+    p.sendline("scan on")
+    return True
+
+def send_scan_off():
+    if not p.expect("#")==0:
+        return False
+    p.sendline("scan on")
+    return True
+
+
+def reset():
+    subprocess.check_call("sudo rmmod btusb")
+    subprocess.check_call("sudo modprobe btusb")
+ 
+
+def connect(macaddr):
+    l=["Connection successful"]
+    if not p.expect("#")==0:
+        return False
+    p.sendline("connect "+macaddr)
+    v=p.expect(l)
+    if v==0:
+        
+        return True
+    else:
+        return False
+
+while not power_on():
+    sleep(3)
+while not pair(mac):
+    sleep(3)
+while not connect(mac):
+    sleep(3)
+print("connected")
+p.sendline("scan off")
+p.sendline("quit")
+while not p.terminated or tried_to_terminate_n_times > 3:
+    if not "tried_to_terminate_n_times" in dir():
+        tried_to_terminate_n_times=0
+    p.terminate()
+    tried_to_terminate_n_times=tried_to_terminate_n_times+1
+
+if not p.terminated:
+    p.kill(9)
+if not p.terminated:
+    print("bluetoothctl terminated: "+str(p.terminated))

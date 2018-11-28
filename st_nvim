@@ -1,0 +1,3 @@
+#!/bin/fish
+export DISPLAY=(cat /etc/xhost):0
+rind st -n nvim -e nvim

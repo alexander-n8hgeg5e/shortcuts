@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=w3m
+GenericName=Web Browser
+Comment=No X-terminal required.
+Type=Application
+Categories=Network;WebBrowser;
+Exec=o w3m %u
+Terminal=false
+StartupNotify=false
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+Keywords=Browser

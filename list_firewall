@@ -1,0 +1,65 @@
+#!/bin/fish
+function headline -a message
+
+    set space 3
+    set width ( tput cols )
+
+	if not test $width -gt 0
+		set w 50
+	end
+
+	set remains ( math $width - ( string length $message ) )
+
+	set remains ( math $remains - $space )
+	set remains ( math $remains - $space )
+	set remains ( math $remains - 10 )
+	set remains ( math $remains / 3 )
+
+    if test $remains -lt 4
+		set remains 4
+    end
+
+    set left ( math $remains / 2 )
+    set right ( math $remains - $left )
+ 
+
+	set leftnumbersignstring ""
+	for i in (seq  $left)
+		set leftnumbersignstring $leftnumbersignstring'#'
+	end
+
+	set rightnumbersignstring ""
+	for i in (seq  $right)
+		set rightnumbersignstring $rightnumbersignstring'#'
+	end
+
+	set spacestring ""
+	for i in (seq $space)
+		set spacestring $spacestring' '
+	end
+
+	set midspace ""
+	for i in ( seq  ( string length $message ) )
+		set midspace $midspace' '
+    end 
+
+	echo $leftnumbersignstring$spacestring$midspace$spacestring$rightnumbersignstring
+	echo $leftnumbersignstring$spacestring$message$spacestring$rightnumbersignstring
+	echo $leftnumbersignstring$spacestring$midspace$spacestring$rightnumbersignstring
+end
+
+set cmdpostfix "tables"
+set cmdprefix "ip"
+set params "-L -vn"
+
+for i in 4 6
+	if test $i -eq 4
+        headline ipv$i
+		eval sudo ip$cmdpostfix $params
+	else
+        headline ipv$i
+		eval sudo $cmdprefix$i$cmdpostfix $params
+    end
+end
+
+

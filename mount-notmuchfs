@@ -1,0 +1,3 @@
+#!/bin/bash
+notmuchfs $HOME/.my_notmuchfs -o nonempty,backing_dir=$HOME/.my_notmuchfs_backing/ \
+-o mail_dir=$HOME/mail

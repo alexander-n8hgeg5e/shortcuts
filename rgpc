@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo git --git-dir=/.root.git commit -p $argv

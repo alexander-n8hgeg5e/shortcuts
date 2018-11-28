@@ -1,0 +1,6 @@
+#!/bin/fish
+ for i in a b c ;
+   echo $i
+   sudo smartctl -AH /dev/sd$i|grep Pre-fail
+   echo
+end

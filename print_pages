@@ -1,0 +1,16 @@
+#!/usr/bin/python3
+# coding: utf-8
+sep=','
+l=[]
+for i in range(argv[1],argv[2]):
+    l.append(i)
+    s=''
+while len(l):
+    try:
+        s=s+sep+str(l.pop(-1))
+        s=s+sep+str(l.pop(0))
+        s=s+sep+str(l.pop(0))
+        s=s+sep+str(l.pop(-1))
+    except:
+        pass
+print(s[1:])

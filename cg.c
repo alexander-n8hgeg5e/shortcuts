@@ -1,0 +1,3 @@
+#!/bin/fish
+sudo git --git-dir=/.$argv[1].git add .
+sudo git --git-dir=/.$argv[1].git commit $argv[2..(math (count $argv) + 1)]

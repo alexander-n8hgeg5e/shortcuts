@@ -1,0 +1,2 @@
+#!/bin/fish
+for i in a b c e;echo -n sd_$i "("(stat /dev/sd$i|egrep -o 'Gerätetyp: [0-9]?,[0-9]{1,2}'|cut -d ':' -f2|tr -d [:blank:])")";echo ": "(math (sudo blockdev --getsize64  /dev/sd$i) /1024 /1026 /1024)' Gbyte' ;end

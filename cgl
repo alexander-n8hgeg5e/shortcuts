@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo git --git-dir=/.$argv[1].git log $argv[2..(math (count $argv) + 1)]

@@ -1,0 +1,3 @@
+#!/bin/fish
+xkbcomp ~/.xkbmap $DISPLAY
+xset r rate 130 50

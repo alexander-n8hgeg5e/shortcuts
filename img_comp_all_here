@@ -1,0 +1,5 @@
+#!/bin/fish
+set IFS '\n'
+for i in *.jpg *.jpeg *.JPEG *.JPG
+  eval convert -quality 20 \'$i\' reduced_\'$i\'
+end

@@ -1,0 +1,50 @@
+#!/usr/bin/python3
+
+mac="00:1D:43:A0:0F:CF" # headphone
+
+import pexpect
+from time import sleep
+
+p=pexpect.spawn("bluetoothctl")
+p.sendline("scan on")
+def pair(macaddr):
+    if not p.expect("#")==0:
+        return False
+    p.sendline("pair "+macaddr) 
+    l=["PIN code","Pairing successful","AlreadyExists"]
+    v=p.expect(l)
+    if v==0:
+        p.sendline("0000")
+        v=p.expect(l)
+    if v==1 or v==2:
+         return True
+    else:
+         return False
+
+def connect(macaddr):
+    l=["Connection successful"]
+    if not p.expect("#")==0:
+        return False
+    p.sendline("connect "+macaddr)
+    v=p.expect(l)
+    if v==0:
+        return True
+    else:
+        return False
+
+while not pair(mac):
+    sleep(3)
+while not connect(mac):
+    sleep(3)
+print("connected")
+p.sendline("quit")
+while not p.terminated or tried_to_terminate_n_times > 3:
+    if not "tried_to_terminate_n_times" in dir():
+        tried_to_terminate_n_times=0
+    p.terminate()
+    tried_to_terminate_n_times=tried_to_terminate_n_times+1
+
+if not p.terminated:
+    p.kill(9)
+if not p.terminated:
+    print("bluetoothctl terminated: "+str(p.terminated))

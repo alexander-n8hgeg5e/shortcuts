@@ -1,0 +1,6 @@
+#!/bin/fish
+
+# submodul checkout to what superproject expects.
+
+git submodule sync --recursive
+git submodule update --init --no-fetch --checkout --recursive

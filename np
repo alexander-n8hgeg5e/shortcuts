@@ -1,0 +1,2 @@
+#!/bin/fish
+ionice -c3 nice -n19 $argv

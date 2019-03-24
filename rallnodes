@@ -1,0 +1,115 @@
+#!/bin/fish
+
+function parse_args -a global_varname_args -a global_return_varname_cmdline -a global_return_varname_options -a global_varname_possible_options
+
+    set optioncounter 0
+    
+    set -l args $$global_varname_args
+    set -l possible_options $$global_varname_possible_options
+    
+
+    
+        for j in (seq  1 ( count $args ) ) # counts the argvs starting with 1
+            for i in $possible_options
+    	    #echo comp: $i $args[$j]
+                if test $args[$j] = $i
+                    set optioncounter (math $optioncounter + 1)
+    	        set options $options $i
+    	        end
+    	    end
+    	    # done one arg, if found no option done with option counting, set done 1 to break the while loop, use break ot break the for loop.
+	    #echo $optioncounter
+    	    if test $optioncounter -lt $j # last option done
+    	    set done 1
+    	    break
+    	    end
+        end
+
+    
+    if not test (count $options) -eq $optioncounter
+        echo fix code bro
+        exit 1
+    end
+    if test ( math (count $args) - $optioncounter ) -gt 0  # make sure there is some cmdline after the last option
+        set cmdline $args[ (math $optioncounter + 1 )..-1 ]
+    else
+        # no cmdline
+        set cmdline ''
+    end
+    set -g $global_return_varname_cmdline $cmdline; or return 1
+    set -g $global_return_varname_options $options; or return 1
+end
+
+
+function is_option_set -a arg -a global_return_varname_options
+    set -l options $$global_return_varname_options
+    for i in $options
+        if test $arg = $i
+	    return 0
+	end
+    end
+    return 1
+end
+
+function d
+    if is_option_set -d options; or is_option_set --debug options
+         echo $argv[1..-1]
+    end
+end
+
+# parse args
+set -g argv_global $argv
+set -g possible_options -v --verbose -h --help -q --quiet -d --debug
+parse_args argv_global cmdline options possible_options
+
+d cmdl: $cmdline
+d options: $options
+d count options: (count $options)
+d possible options: $possible_options
+d count possible options: (count $possible_options)
+
+if is_option_set -h options
+    echo 'rallnodes: rallnodes runs progs on all nodes    '
+    echo 'Usage:                                          '
+    echo '    rallnodes [options] [cmdline]               '
+    echo 'Options:                                        '
+    echo '        -v | --verbose                          '
+    echo '        -q | --quiet                            '
+    echo '        -h | --help                             '
+end
+
+
+
+function do -a cmds
+   for i in (cat /etc/nodelist)
+       if test $i = (hostname)
+            if is_option_set -v options; or is_option_set --verbose options ; and not is_option_set --quiet options; and not is_option_set -q options
+                echo cmd: eval $cmds
+                eval $cmds
+	    else
+	        eval $cmds ^ /dev/null > /dev/null
+	    end
+            set -g statusliste $statusliste $status
+       else
+            if is_option_set -v options; or is_option_set --verbose options; and not is_option_set --quiet options; and not is_option_set -q options
+                  echo cmd: ssh $i $cmds
+                  ssh $i $cmds
+            else
+                  ssh $i $cmds ^ /dev/null > /dev/null
+	    end
+            set -g statusliste $statusliste $status
+       end
+   end
+end
+
+
+do $cmdline
+
+if not is_option_set -q options; and not is_option_set --quiet options 
+    echo -n returncodes:
+    for i in $statusliste
+       echo -n ' '$i
+    end
+    echo
+end
+

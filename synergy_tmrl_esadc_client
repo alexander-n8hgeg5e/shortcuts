@@ -1,0 +1,6 @@
+#!/bin/fish
+if test (hostname) = esadc
+     ssh -N synergy_tunnel_tmrl_esadc &
+end
+killall synergy-core
+rind synergy-core --client -f localhost

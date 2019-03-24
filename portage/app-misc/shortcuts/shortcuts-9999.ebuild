@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
-inherit git-r3 eutils
+inherit git-r3 eutils scons-utils
 DESCRIPTION="shortcuts"
 HOMEPAGE=""
 EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shortcuts.git"
@@ -10,15 +10,22 @@ EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shor
 LICENSE=""
 SLOT="0"
 KEYWORDS=""
-IUSE=""
+IUSE="rind neovim github pyopen"
 
 DEPEND=""
-RDEPEND="${DEPEND} dev-python/pexpect"
+RDEPEND="${DEPEND} dev-python/pexpect
+                   rind? ( app-misc/rind )
+                   neovim? ( app-editors/neovim[python,tui,clipboard]
+				             app-misc/tmux
+						   )
+                   github? ( dev-python/github3 )
+                   pyopen? ( app-misc/pyopen )
+				   "
 src_configure(){
 	true;
 }
 src_compile(){
-	true;
+    escons
 }
 
 
@@ -113,8 +120,8 @@ dobin rgu
 dobin rguc
 dobin rgc
 dobin gic      # file collison , should be gc
-dosym ${EPREFIX}/usr/bin/rgc ${EPREFIX}/usr/bin/rgic    # alias
-dosym ${EPREFIX}/usr/bin/sgc ${EPREFIX}/usr/bin/sgic    # alias
+dosym rgc usr/bin/rgic    # alias
+dosym sgc usr/bin/sgic    # alias
 dobin sgc
 dobin sg.
 dobin sg.c
@@ -158,4 +165,47 @@ dobin mknewappuser
 dobin saau
 dobin ba
 dobin ne
+dobin dg
+dobin haw
+dobin preloadwins
+dobin i
+dobin compile_in_kernel_loaded_modules
+dobin realtime
+dobin nvim_open_browsertab
+dobin synergy_tmrl_esadc_client
+dobin synergy_tmrl_esadc_server
+dobin tmux_nvim_update_nvim_listen_addr
+dobin tmrl_blo
+dobin rh
+dobin rl
+dobin xc
+dobin tmrlfs
+dobin sed_inplace_insert_between_lines
+dobin sed_inplace_insert_dobin_into_ebuild
+dobin rallnodes
+dobin screen_layout
+dobin check_synergy_ssh_connection
+dobin _check_synergy_ssh_connection
+dobin menu/r_menuwin
+dobin menu/l_menuwin
+dobin menu/menu_run
+dobin menu/menu_search
+dobin qb
+dobin startprefix_bash
+dobin ginf
+dobin pcfs
+dobin gip
+dobin gb
+dobin set_portage_access_to_code
+dobin unabsorb_git_dirs
+dobin random_seq
+dobin get_free_nodes
+dobin check_node
+dobin check_nodes
+dobin get_nodes_load
+dobin get_node_load
+dobin list_my_procs_on_nodes
+dobin list_proc_on_node_by_pid
+dobin list_my_procs_on_node
+dobin list_my_procs_on_nodes_sorted
 }

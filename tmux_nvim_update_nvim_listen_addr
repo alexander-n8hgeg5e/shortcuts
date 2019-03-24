@@ -1,0 +1,4 @@
+#!/bin/fish
+#set tmuxcmd "tmux -S /tmp/tmux-"(id -u)"/"(hostname)
+
+#eval $tmuxcmd set-environment -g NVIM_LISTEN_ADDRESS  $NVIM_LISTEN_ADDRESS

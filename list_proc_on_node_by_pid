@@ -1,0 +1,39 @@
+#!/bin/fish
+
+    set node $argv[1]
+    set pid $argv[2]
+    set timeout $argv[3]
+
+    set pid (string trim $pid)
+    set t1 (date '+%s.%N')
+    #set cpu_sys_time ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f3')
+    #set cpu_user_time ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f2')
+    #set cpu_time1 (math $cpu_sys_time + $cpu_user_time )  # time the process used cpu 
+    set cpu_time1 (string trim ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f1')) ^ /dev/null # time the thing is there
+    #echo times1: $cpu_sys_time $cpu_user_time $cpu_time1 $real_time1
+    #ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat'
+    sleep 5
+    set t2 (date '+%s.%N')
+    #ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat'
+    #set cpu_sys_time  ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f3')
+    #set cpu_user_time ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f2')
+    #set cpu_time2 (math $cpu_sys_time + $cpu_user_time )  # time the process used cpu 
+    set cpu_time2 (string trim ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/schedstat|cut -d\  -f1')) ^ /dev/null # time the thing is there
+    #echo times2: $cpu_sys_time $cpu_user_time $cpu_time2 $real_time2
+    set delta_cpu  ( math $cpu_time2   - $cpu_time1  ) ^ /dev/null
+    set delta_time ( math $t2 - $t1 )             ^ /dev/null
+    #echo delta cpu and time :  $delta_cpu  $delta_time 1>2&
+    if test $delta_cpu -eq 0
+           set cpu_usage_5s 0
+    else if test $delta_time -eq 0
+           echo strange time error 1>&2
+           set cpu_usage_5s inv 
+    else
+           set cpu_usage_5s (math -s1 $delta_cpu / $delta_time / 1000000 ) > /dev/null
+    end
+    set cpu_usage_f (printf '%5.1f' $cpu_usage_5s)
+    set pidf (printf '%6.6u' $pid)
+    set node_f (printf '%4.4s' $node)
+    set comm_f (printf  '%15.15s'   ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/comm')) ^ /dev/null
+    set cmdline ( ssh $node -o ConnectTimeout=$timeout 'cat /proc/'$pid'/cmdline') ^ /dev/null
+    echo $node_f" : "$pidf" : "$cpu_usage_f" : "$comm_f" : "$cmdline

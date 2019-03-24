@@ -1,0 +1,43 @@
+#!/bin/fish
+set default_timeout 2
+
+function timeout_counter -a seconds
+   echo connect timeout is $seconds 1>&2
+   echo give one more sec to get value 1>&2
+   for i in (seq (math $seconds + 1) -1 0)
+         sleep 1
+	 if test $i -gt 0
+	      echo timeout in $i seconds. 1>&2
+	 else
+	      echo timeout! 1>&2
+	 end
+   end
+end
+
+function get_val -a nameofval -a val
+   if test (count (string split ' ' $val)) -eq 1; and test ( string length $val ) -gt 0
+         echo $val
+   else
+         eval 'echo $default_'(echo $nameofval)
+   end
+end
+
+set timeout (get_val timeout $argv[1]) 
+
+for i in (random_seq 1 15)
+     # hope is this goes to background
+     list_my_procs_on_node "pc"$i $timeout &
+end
+
+
+#timeout 
+timeout_counter $timeout
+
+# cleanup
+for i in (jobs -p)
+   kill $i
+end
+sleep 0.3
+for i in (jobs -p)
+   kill -s9 $i
+end

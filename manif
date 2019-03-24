@@ -4,7 +4,22 @@ function ff --description 'gimme ebuild'
     find . -name '*.ebuild' -type f
 	end
 
+
+function fff --description 'gimme manifs'
+    find . -name '*.ebuild' -type f
+	end
+
 for i in (ff)
 	echo $i
-	sudo ebuild $i manifest
+	ebuild $i manifest
+
+    chown :portage $i
+	chmod  g+r $i
 end
+
+
+for i in (fff)
+    chown :portage $i
+	chmod  g+r $i
+end
+    

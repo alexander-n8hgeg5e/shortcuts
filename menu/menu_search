@@ -1,0 +1,42 @@
+#!/bin/fish
+cat > /dev/shm/menu_search_in
+xdotool search --class menuwin windowunmap --sync |logger -p user.debug
+xdotool search --class menuwin windowkill |logger -p user.debug
+set winid (xdotool getactivewindow)
+set pl (xdotool getmouselocation|cut -d' ' -f1|cut -d: -f2|string trim)
+set leftx ( xdotool getwindowgeometry $winid | grep Position:|cut -d: -f2|string trim|cut -d, -f1 )
+set width ( xdotool getwindowgeometry $winid | grep Geometry:|cut -d: -f2|string trim|cut -dx -f1 )
+echo w: $width|logger -p user.debug
+set pos  (math ( math (echo $width) / 2 ) + $leftx )
+echo pos: $pos |logger -p user.debug 
+echo id: $winid|logger -p user.debug
+
+if test $pl -gt 1280
+    set menucmd 'r_menuwin' ;echo r|logger -p user.debug
+else if test $pl -le 1280
+    set menucmd 'l_menuwin' ;echo l|logger -p user.debug
+else 
+    if test $pos -gt 1280
+         set menucmd 'r_menuwin' ;echo r|logger -p user.debug
+    else
+          set menucmd 'l_menuwin' ;echo l|logger -p user.debug
+    end
+end
+
+echo $menucmd|logger -p user.debug
+eval "$menucmd &"
+set c 0
+while not test $c -gt 5000
+      set c (math $c + 1)
+      set menuwinid ( xdotool search --class menuwin; set s $status )
+      echo $menuwinid|logger -p user.debug
+      if test $status -eq 0
+          cat /dev/shm/menu_search_in|dmenu  -f -i -l 66 $argv -w (xdotool search --class menuwin) > /dev/shm/menu_search_out|logger -p user.debug
+	  break
+      end
+      sleep 0.01|logger -p user.debug
+end
+xdotool search --class menuwin windowunmap --sync |logger -p user.debug
+xdotool search --class menuwin windowkill |logger -p user.debug
+xdotool windowactivate --sync $winid|logger -p user.debug
+cat /dev/shm/menu_search_out

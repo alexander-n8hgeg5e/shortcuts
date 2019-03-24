@@ -1,0 +1,10 @@
+#!/bin/fish
+################################
+# allow portage access to code #
+################################
+# set group portage for all code
+sudo chown -R :portage $HOME/code
+# set read access and x access to dirs
+sudo chmod -R g=rX $HOME"/code"
+set guid bit for the dirs so new dirs and files will be of portage group
+for j in (find $HOME"/code" -type d);chmod g+s $j ;end

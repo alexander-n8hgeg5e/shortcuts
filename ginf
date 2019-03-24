@@ -1,0 +1,2 @@
+#!/bin/fish
+git --git-dir=infiles.git --work-tree=/mnt/home/stud-uabir $argv

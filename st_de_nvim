@@ -1,2 +1,2 @@
 #!/bin/fish
-st -e ssh -t de nvim
+st -e ssh -t de fish -c nvim

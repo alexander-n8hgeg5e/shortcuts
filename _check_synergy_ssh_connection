@@ -1,0 +1,6 @@
+#!/bin/bash
+while true
+   do ping -q -c1 -4 -n -w 1 -W 1 tmrl 2>&1 1>/dev/null||synergy_tmrl_esadc_client -O exit
+   sleep 3
+done
+

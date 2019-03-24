@@ -1,2 +1,2 @@
 #!/bin/fish
-w3m "google.de/search?q=$argv"
+eval $BROWSER "\"google.de/search?q=$argv\""

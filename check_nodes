@@ -1,0 +1,4 @@
+#!/bin/fish
+for i in (random_seq 1 15);
+         check_node pc$i $argv &
+end

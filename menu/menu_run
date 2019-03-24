@@ -1,0 +1,2 @@
+#!/bin/fish
+eval ( dmenu_path | menu_search ^ /dev/null)

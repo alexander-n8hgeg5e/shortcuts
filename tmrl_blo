@@ -1,0 +1,6 @@
+#!/bin/fish
+if test (hostname) != tmrl
+    ssh tmrl 'echo 0 |sudo dd of=/sys/class/backlight/intel_backlight/brightness'
+else
+    echo 0 |sudo dd of=/sys/class/backlight/intel_backlight/brightness
+end

@@ -1,0 +1,5 @@
+.sconsign.dblite
+menu
+*.o
+l_menuwin
+r_menuwin

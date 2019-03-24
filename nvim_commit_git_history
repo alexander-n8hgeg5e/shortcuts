@@ -1,3 +1,9 @@
 #!/bin/fish
-/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ add $argv
-/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ commit -m'nvim auto commit' $argv
+/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ add -f $argv; or set addfailed 1
+/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ commit -m'nvim auto commit' $argv 2>&1 > /dev/null
+set a (/usr/bin/git --git-dir=$HOME/.nvim_history.git --work-tree=/ status --untracked-files=no --short $argv)
+if test -z $a; and not test $addfailed = 1
+     exit 0
+else
+     exit 1
+end

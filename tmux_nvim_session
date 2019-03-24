@@ -1,14 +1,15 @@
 #!/bin/fish
+mkdir -p /tmp/tmux-(id -u) 
 set tmuxcmd "tmux -S /tmp/tmux-"(id -u)"/"(hostname)
-if not test $argv[1] -eq ""
-      set sessionname nvim_(echo $argv[1] |tr -c '[[:alnum:]]' _)
-else
-      set sessionname nvim_(pwd|tr -c '[[:alnum:]]' _)
-end
+
+set sessionname $argv[1]
+
 if eval $tmuxcmd  has-session -t $sessionname
         eval $tmuxcmd attach-session -t $sessionname
 elseif set -q TMUX
         eval $tmuxcmd switch-client -t $sessionname
+elseif not test $argv[2] -eq ""
+        eval $tmuxcmd new-session -s $sessionname -c $argv[2]
 else
         eval $tmuxcmd new-session -s $sessionname
 end

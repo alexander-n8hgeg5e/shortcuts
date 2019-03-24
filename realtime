@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo chrt -r -p $argv[2] (ps -C argv[1] --format  pid|grep [[:digit:]])

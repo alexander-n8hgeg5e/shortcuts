@@ -1,0 +1,2 @@
+#!/bin/fish
+check_nodes $argv|grep -v 'high load'|grep -v failed|cut -d':' -f1|tr -d ' '

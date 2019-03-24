@@ -1,0 +1,178 @@
+#!/bin/fish
+set preloadlistfile $HOME/".preloadwins"
+set hideexcludelistfile $HOME/".preload_hide_exclude"
+set -g donefile /tmp/preloadwins_done
+set pscmd "ps -Ao comm"
+
+function hide
+    set out (xprop -root|egrep '^_NET_CLIENT_LIST'|cut -d'#' -f2|tr , ' '|tr -s [:space:])
+    set out (string trim $out)
+    set -g hideliste (string split ' ' $out)
+    #set -g hideliste (string match -v (get_current_win) $hideliste)
+    exclude_excludefile_from_hideliste
+    #echo $liste
+    for i in $hideliste
+        set pidcmd "wmctrl -i -r "$i" -b add,hidden"
+        #echo $pidcmd
+        eval $pidcmd
+    end
+end
+
+function exclude_prog_from_hideliste -a progname
+    for i in (string split ' ' (string trim (get_pids_by_cmd $progname)))
+        for id in (string split " " (string trim (get_win_ids_by_pid $i)))
+           #echo id , pid , progname : $id , $i , $progname
+           if not test $id = ""
+                  #echo excluding $id
+	          set -g hideliste (string match -v $id $hideliste)
+	   end
+	end
+    end
+    #echo $hideliste
+end
+
+function exclude_excludefile_from_hideliste
+     for j in ( cat $hideexcludelistfile )
+          exclude_prog_from_hideliste $j
+     end
+end
+
+function get_win_ids_by_pid -a pid
+    set out (xprop -root|egrep '^_NET_CLIENT_LIST'|cut -d'#' -f2|tr , ' '|tr -s [:space:])
+    set out (string trim $out)
+    set out (string split ' ' $out)
+    for i in $out
+        set pidcmd "xprop -id "$i"|grep _NET_WM_PID|cut -d'=' -f2"
+	set pidd (eval $pidcmd)
+	set pidd (string trim $pidd)
+	if test $pidd = $pid
+	   set id_liste $id_liste $i 
+	end
+    end
+    echo $id_liste
+end
+
+
+function get_pids_by_cmd -a cmd
+    set out (echo (string trim (ps -A --format pid,comm|egrep " "$cmd'$'))|cut -d' ' -f1)
+    for i in $out
+        #echo $i
+        set pids (string trim $pids) $i
+    end
+    echo $pids
+end
+
+function get_current_win
+   set WINDOWID (xprop -root _NET_ACTIVE_WINDOW | grep -o "0x.*")
+   echo $WINDOWID
+end
+
+function runone -a one
+    set script "$one;echo $one >> $donefile;"
+    #echo $script
+    rind fish -c $script&
+end
+
+function setprogress
+set done ( math $already_running_counter + $donecounter )
+set -g progress "progress: $done / $preloadlistfilelen"
+end
+
+function pid2cmd -a pid
+    set out (ps -A --format pid,comm|grep $pid)
+    set out (string trim $out)
+    set pids (echo $out|cut -d" " -f2)
+    echo (echo $pids | head -n1)
+end
+
+    
+
+
+function getwindowcmds
+    set out (xprop -root|egrep '^_NET_CLIENT_LIST'|cut -d'#' -f2|tr , ' '|tr -s [:space:])
+    set out (string trim $out)
+    set -e liste
+    set win_ids (string split ' ' $out)
+    for i in $win_ids
+        set pidcmd "xprop -id "$i"|grep _NET_WM_PID|cut -d'=' -f2"
+        set pid (eval $pidcmd)
+        set pid (string trim $pid)
+	set cmd (pid2cmd $pid)
+	if not test $cmd = ""
+               set liste $liste $cmd
+	end
+     end
+     echo $liste
+end
+
+function checkdone1 -a prog
+   set liste (string split ' ' (getwindowcmds))
+   #echo cmds : $liste
+   for i in $liste
+       if test $i = $prog
+            echo $prog >> $donefile
+	    #echo found $prog
+	    set donecounter (math $donecounter + 1)
+	    set -g preloadlist (string match -v $prog $preloadlist)
+	    #echo list: $preloadlist
+	    break
+       end
+   end
+end
+
+function checkdone
+    #echo $preloadlist
+    for i in (string split ' ' $preloadlist)
+           #echo checking $i
+           checkdone1 $i
+    end
+end
+
+#var and file setup
+rm $donefile
+touch $donefile
+set -g started_counter 0
+set -g donecounter 0
+set -g already_running_counter 0
+set -g donefilelen 0
+set preloadlistfilelen (cat $preloadlistfile|wc -l)
+set -g preloadlist (cat $preloadlistfile)
+
+# check for already running and start progs
+for i in (cat $preloadlistfile)
+    if eval $pscmd ^ /dev/null| grep $i > /dev/null
+        set -g already_running_counter (math $already_running_counter + 1)
+        set -g preloadlist (string match -v $i $preloadlist) 
+    else
+        runone $i
+        set started_counter (math $started_counter + 1)
+    end
+end
+
+# print info
+#echo already running: $already_running_counter
+setprogress
+echo $progress
+
+# if something was started , wait for showing up on screen
+if test $started_counter -gt 0
+    while true
+        checkdone
+        set -g donefilelen (cat $donefile|wc -l)
+        set progressold $progress
+        setprogress
+        if test (math $donecounter + $already_running_counter) -eq $preloadlistfilelen
+                 setprogress
+                 echo $progress
+                 break
+        else
+	     if not test $progressold = $progress
+	          echo $progress
+	     end
+    	     sleep 1
+        end
+    end
+end
+#get_pids_by_cmd firefox
+#get_pids_by_cmd st
+hide

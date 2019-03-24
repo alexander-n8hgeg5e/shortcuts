@@ -1,0 +1,112 @@
+#!/bin/fish
+function indent -a deep
+   set space '      '
+   for i in (seq $deep)
+     echo -n $space
+   end
+end
+
+echo -n searching for repos
+for i in (find -L -name '*.ebuild' -type f)
+     set pn ( basename (dirname $i))
+     #indent 1;echo packname: $pn
+     set egit_repo_uri_string_ (egrep '^[ ]*EGIT_REPO_URI' $i|cut -d= -f2)
+     set egit_repo_uri_string ( string trim $egit_repo_uri_string_ )
+     if test -n "$egit_repo_uri_string"
+          echo -n .
+	  #indent 2;echo -n $indent $egit_repo_uri_string
+	  set c (bash -c "source /usr/share/mydefaults/make.default;PN=$pn;echo $egit_repo_uri_string")
+	  set d (string split ' ' $c)
+	  #echo '  'thingscount=(count $d) :
+	  for j in (seq (count $d))
+	       #indent 7;echo $d[$j]
+	       set all $all $d[$j]
+	       echo -n .
+	  end
+     end
+end
+echo done
+if test $argv[1] = -v
+    echo $all
+end
+#echo '##########################################################################################'
+#echo '###########################                           ####################################'
+#echo '###########################                           ####################################'
+#echo '###########################   search of repos done    ####################################'
+#echo '###########################                           ####################################'
+#echo '###########################                           ####################################'
+#echo '##########################################################################################'
+
+
+#all2 all the local repos
+echo -n extracting the local ones
+set counter 0
+for i in $all
+      if string match -r '.*'$HOME'/code.*' $i > /dev/null
+          #indent 5;echo d1
+          set all2 $all2 $i
+	  and set counter (math $counter + 1)
+          echo -n .
+      end
+end
+echo done
+echo found $counter local repos
+
+echo -n searching for repos with .git dir is a file
+set counter 0
+for i in $all2
+      test -f $i'/.git'
+      and set all3 $all3 $i
+      and set counter (math $counter + 1)
+      echo -n .
+end
+echo done
+echo found $counter repos with .git dir is a file
+
+
+#all4 the .git dirs for the .git file
+echo -n extracting .git dir of .git file of repos with .git file
+set counter 0
+for i in $all3
+      set p (cat $i'/.git'|cut -d':' -f2)
+      set all4 $all4 $i'/'(string trim $p)
+      and set counter (math $counter + 1)
+      echo -n .
+end
+echo done 
+echo found $counter .git dirs that are from .git files
+#echo '##########################################################################################'
+#echo '###########################                           ####################################'
+#echo '###########################                           ####################################'
+#echo '###########################       search done         ####################################'
+#echo '###########################                           ####################################'
+#echo '###########################                           ####################################'
+#echo '##########################################################################################'
+
+echo -n setting owner and group for all local repos
+for i in $all2  ; for j in (find $i);sudo chown :portage $j ;end;and echo -n .;end
+echo done
+echo -n setting owner and group for all linked .git dirs
+for i in $all4  ; for j in (find $i);sudo chown :portage $j ;end;and echo -n .;end
+echo done
+echo -n setting guid bit for all dirs in all local repos
+for i in $all2  ; for j in (find $i -type d);chmod g+s $j ;end;and echo -n .;end
+echo done
+echo -n setting guid bit for all dirs in all linked .git dirs
+for i in $all4  ; for j in (find $i -type d);chmod g+s $j ;end;and echo -n .;end
+echo done
+echo -n setting user and group permissions on all files inside all local repos
+for i in $all2  ; for j in (find $i -type f);chmod u+rw,g+r $j ;end;and echo -n .;end
+echo done
+echo -n setting user and group permissions on all files in all linked .git dirs
+for i in $all4  ; for j in (find $i -type f);chmod u+rw,g+r $j ;end;and echo -n .;end
+echo done
+echo -n setting user and group permissions on all dirs in all linked .git dirs
+for i in $all2  ; for j in (find $i -type d);chmod u+rx,g+rx $j ;end;and echo -n .;end
+echo done
+echo -n setting user and group permissions on all dirs in all linked .git dirs
+for i in $all4  ; for j in (find $i -type d);chmod u+rx,g+rx $j ;end;and echo -n .;end
+echo done
+echo checking git option
+for i in $all2 ; cd $i ; git config -l|grep core.sharedRepository;and echo -n .; end 
+echo done

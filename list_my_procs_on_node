@@ -1,0 +1,13 @@
+#!/bin/fish
+set node $argv[1]
+
+if test ( string length $argv[2] -gt 0)
+    set timeout $argv[2]
+else
+    set  timeout 3
+end
+set a (ssh $node -o ConnectTimeout=$timeout "ps -u stud-uabir -o pid --no-header")
+
+for pid in $a
+     list_proc_on_node_by_pid $node $pid $timeout &
+end

@@ -1,0 +1,2 @@
+#!/bin/fish
+git branch --format '%(align:25,left)%(refname:short)%(end)  %(align:30,right)%(committerdate)%(end)  %(align:15,left)%(objectname:short)%(end)  %(align:20,right)%(contents:subject)%(end)' --sort committerdate  --all

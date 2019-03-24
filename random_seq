@@ -1,0 +1,21 @@
+#!/bin/fish
+set -e l
+set done 0
+while test $done -eq 0
+    set found 0
+    set a (random $argv[1] $argv[2])
+    for i in $l
+         if test $i = $a
+	       set found 1
+	 end
+    end
+    if test $found -eq 0
+         set l $l $a
+    end
+    if test (count $l) = ( math  $argv[2] - $argv[1])
+         set done 1
+    end
+end
+for i in $l
+   echo $i
+end

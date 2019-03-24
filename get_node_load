@@ -1,0 +1,29 @@
+#!/bin/fish
+
+set default_timeout 3
+
+function check_loadavg -a val
+    if test (count (string split ' ' $val)) = 5
+         return 0
+    else
+         return 1
+    end
+end
+
+function get_val -a nameofval -a val
+   if test (count (string split ' ' $val)) -eq 1; and test ( string length $val ) -gt 0
+         echo $val
+   else
+         eval 'echo $default_'(echo $nameofval)
+   end
+end
+
+set ssh_host $argv[1]
+set timeout (get_val timeout $argv[2])
+
+set l (ssh -o ConnectTimeout=$timeout $ssh_host 'cat /proc/loadavg' ^ /dev/null)
+if check_loadavg $l
+        echo $ssh_host : $l
+else
+        echo failed 1>&2
+end

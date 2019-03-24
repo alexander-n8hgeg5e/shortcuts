@@ -1,0 +1,53 @@
+#!/bin/fish
+
+set default_max_load 0.5
+set default_faktor_1 3
+set default_faktor_2 2
+set default_faktor_3 1
+
+function check_loadavg -a val
+    if test (count (string split ' ' $val)) = 5
+         return 0
+    else
+         return 1
+    end
+end
+
+function get_val -a nameofval -a val
+   if test (count (string split ' ' $val)) -eq 1; and test ( string length $val ) -gt 0
+         echo $val
+   else
+         eval 'echo $default_'(echo $nameofval)
+   end
+end
+
+set ssh_host (get_val ssh_host $argv[1]) 
+set max_load (get_val max_load $argv[2]) 
+set faktor_1 (get_val faktor_1 $argv[3])
+set faktor_2 (get_val faktor_2 $argv[4])
+set faktor_3 (get_val faktor_3 $argv[5])
+#echo host: $ssh_host
+#echo max load: $max_load
+#echo factors: $faktor_1 $faktor_2 $faktor_3
+
+set l (ssh -o ConnectTimeout=5 $ssh_host 'cat /proc/loadavg' ^ /dev/null)
+if check_loadavg $l
+    set a ( echo $l |cut -d' ' -f1 )
+    set b ( echo $l |cut -d' ' -f2 )
+    set c ( echo $l |cut -d' ' -f3 )
+    begin
+        set aa (math $a '*' 3)
+        set bb (math $b '*' 2)
+        set cc (math $c '*' 1)
+        set sum (math $aa + $bb + $cc)
+	set divider (math $faktor_1 + $faktor_2 + $faktor_3)
+        set value (math $sum / $divider ) ^ /dev/null
+    end
+    if test $value -lt $max_load
+        echo $ssh_host : $l
+    else
+       echo high load : $ssh_host : $l
+    end
+else
+    echo host query failed: $ssh_host
+end

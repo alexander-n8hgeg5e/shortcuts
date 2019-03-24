@@ -1,0 +1,2 @@
+#!/bin/fish
+eval $BROWSER "\"https://duckduckgo.de/html/?q=$argv\""

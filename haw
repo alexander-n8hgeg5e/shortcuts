@@ -1,0 +1,10 @@
+#!/bin/fish
+set out (xprop -root|egrep '^_NET_CLIENT_LIST'|cut -d'#' -f2|tr , ' '|tr -s [:space:])
+set out (string trim $out)
+set liste (string split ' ' $out)
+#echo $liste
+for i in $liste
+    set cmd "wmctrl -i -r "$i" -b add,hidden"
+    #echo $cmd
+    eval $cmd
+end

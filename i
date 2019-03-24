@@ -1,0 +1,2 @@
+#!/bin/fish
+ipython7

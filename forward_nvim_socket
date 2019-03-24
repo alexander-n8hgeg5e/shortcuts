@@ -1,0 +1,5 @@
+#!/bin/fish
+set remote_host $argv[1]
+set nvimsock (basename (dirname $NVIM_LISTEN_ADDRESS))
+
+ssh -NR '/tmp/nvim_forward_from_'(hostname)'_'$nvimsock':'$NVIM_LISTEN_ADDRESS $USER'@nvim_socket_forward_to_'$remote_host

@@ -1,0 +1,6 @@
+#!/bin/fish
+killall synergy-core
+rind synergy-core --server --address 127.0.0.1:24801 -f &
+if test (hostname) = esadc
+     ssh -N synergy_tunnel_tmrl_esadc
+end

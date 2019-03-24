@@ -1,0 +1,6 @@
+#!/bin/fish
+set pidf /tmp/synergy_checker.pid
+
+/sbin/start-stop-daemon --stop --pidfile $pidf
+
+/sbin/start-stop-daemon --wait 100 --background --interpreted --user $USER --start ./_check_synergy_ssh_connection --make-pidfile --pidfile $pidf 

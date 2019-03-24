@@ -1,6 +1,9 @@
 #!/bin/fish
-if test $argv[1] -eq ""
-        tmux -S /tmp/tmux-(id -u)/(hostname) new-session -c $argv[1]
+mkdir -p /tmp/tmux-(id -u)
+if test (count $argv) -eq 1
+        tmux -S /tmp/tmux-(id -u)/(hostname) new-session $argv[1]
+else if test (count $argv) -eq 2
+        tmux -S /tmp/tmux-(id -u)/(hostname) new-session $argv[1] -c argv[2]
 else
         tmux -S /tmp/tmux-(id -u)/(hostname) new-session
 end

@@ -1,0 +1,5 @@
+#!/bin/fish
+for i in (lsmod |cut -d' ' -f1|grep -v Module)
+    set var (echo $i|tr [a-z] [A-Z])
+    sudo sed -i "s/$var\=m/$var=y/" .config
+end

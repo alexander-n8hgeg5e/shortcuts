@@ -1,0 +1,2 @@
+#!/bin/fish
+for i in (git ls-files -s|grep 160000|tr \t ' '|cut -d' ' -f4);echo './'$i ;end

@@ -1,0 +1,134 @@
+#!/bin/fish
+
+function indent -a deep
+   set space '      '
+   for i in (seq $deep)
+     echo -n $space
+   end
+end
+
+function clean_module_dir -a module_dir
+    set dirs_to_check_for_clean ( find $module_dir -maxdepth 1 -mindepth 1 -type d )
+	for i in $dirs_to_check_for_clean
+	      begin;rmdir $i ^ /dev/null 1> /dev/null;end
+		  and echo deleted dir: $i
+	end 
+	      begin;rmdir $module_dir ^ /dev/null 1> /dev/null ;end
+		  and echo deleted dir: $module_dir
+end
+				
+
+echo -n searching for repos with .git dir is a dir
+set -e all
+set counter 0
+for i in (find -name '.git' -type d)
+      test -d $i
+      and set all $all $i
+      and set counter (math $counter + 1)
+      echo -n .
+end
+echo done
+echo found $counter repos with .git dir is a file
+
+echo -n extracting worktree link" "
+set counter 0
+set -e all2
+for i in $all
+      #echo i: $i
+      set p (cat $i"/config"|egrep  '[ ]*worktree[ ]*\=[ ]*'|cut -d'=' -f2)
+      #echo p: $p
+      and set all2 $all2 $i' : '(string trim $p)
+      and set counter (math $counter + 1)
+      echo -n .
+end
+echo " "done 
+echo found $counter worktree links inside the repos
+
+echo -n generating cmd list" "
+set sed_base_cmd "sed -i '/[ ]*worktree[ ]*=[ ]*[^ ]\\+/d'"
+set counter 0
+set skipped_counter 0
+set not_found_counter 0
+set -e cmds1
+for i in $all2
+        echo $i
+	  set to (echo $i|cut -d':' -f1)
+      and set to (string trim $to)
+
+	  and set from (echo $i|cut -d':' -f2)
+      and set from (string trim $from)
+           and echo $from
+	   and set from (echo $to|rev|cut -d'/' -f2-|rev)"/"$from
+	  
+      and if not test -d $from
+              echo not $from
+              and set cmds1 $cmds1 $sed_base_cmd" "$to"/config"
+              and set counter (math $counter + 1)
+	  end
+      and echo -n . ; or echo -n x
+end
+echo done
+
+if test (count $cmds1) -gt 0
+for i in $cmds1
+    echo $i
+end
+echo
+end
+ 
+if test $counter -eq 1
+ echo -n "made 1 line with mv cmd. "
+else if test $counter -gt 1
+ echo -n made $counter" lines with mv cmds. "
+end
+if test $skipped_counter -eq 1
+ echo -n Skipped one cmd because of .git dir has modules inside.
+else if test $skipped_counter -gt 1
+ echo -n Skipped $skipped_counter cmds because of .git dirs have modules inside..
+end
+if test $not_found_counter -eq 1
+ echo Skipped one cmd because of .git dir not found.
+else if test $not_found_counter -gt 1
+ echo Skipped $not_found_counter cmds because of .git dirs not found.
+else
+  echo
+end
+
+if test (count $cmds1) -gt 0
+echo
+read -P"Want to run the cmds? (y/n) :" answer
+if test $answer = "y"
+   for i in $cmds1
+      eval $i
+   end
+end
+end
+if test (count $cleanup_cmds) -gt 0
+  echo
+  echo These are the cleanup cmds:
+  for i in $cleanup_cmds
+     echo $i
+  end
+  read -P"Want to run cleanup? (y/n) :" answer
+  if test $answer = "y"
+   for i in $cleanup_cmds
+      eval $i
+   end
+  end
+end
+
+
+
+
+
+
+	  
+
+
+
+
+
+
+
+	  
+

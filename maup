@@ -1,5 +1,5 @@
 #!/bin/fish
 manif
-set_portage_repo_perms
+set_portage_access_to_code
 git add -u
 git commit -m'manifest update'

@@ -1,5 +1,25 @@
 #!/bin/fish
 set remote_host $argv[1]
-set nvimsock (basename (dirname $NVIM_LISTEN_ADDRESS))
+set nvimsockdir "/tmp/"(basename (dirname $NVIM_LISTEN_ADDRESS))
 
-ssh -NR '/tmp/nvim_forward_from_'(hostname)'_'$nvimsock':'$NVIM_LISTEN_ADDRESS $USER'@nvim_socket_forward_to_'$remote_host
+test -S $NVIM_LISTEN_ADDRESS
+and lsof $NVIM_LISTEN_ADDRESS|egrep -q '^nvim'
+and echo already working socket
+and exit 1
+
+if not test -d $nvimsockdir
+     echo creating dir $nvimsockdir
+     mkdir $nvimsockdir
+end
+set ssh_opts  '-o' 'ControlPath=/tmp/ssh_control_sock:%u@%L_made_nvim_socket_tunnel_to_tmrl'
+set ssh_opts  $ssh_opts '-o' 'ExitOnForwardFailure=yes'
+set ssh_opts  $ssh_opts '-o' 'StreamLocalBindUnlink=yes'
+
+
+if ssh $remote_host test -S $NVIM_LISTEN_ADDRESS; and begin;ssh $remote_host lsof $NVIM_LISTEN_ADDRESS|egrep -q '^nvim' ;end
+     # sock is at remote
+     rind ssh -vvv $ssh_opts -NL $NVIM_LISTEN_ADDRESS'_remote:'$NVIM_LISTEN_ADDRESS $remote_host
+else 
+   echo no sock on remote
+   exit 1
+end

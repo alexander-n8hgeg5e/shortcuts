@@ -7,4 +7,4 @@ sudo chown -R :portage $HOME/code
 # set read access and x access to dirs
 sudo chmod -R g=rX $HOME"/code"
 set guid bit for the dirs so new dirs and files will be of portage group
-for j in (find $HOME"/code" -type d);chmod g+s $j ;end
+for j in (find $HOME"/code" -type d);sudo chmod g+s $j ;end

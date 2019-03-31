@@ -9,11 +9,13 @@ EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shor
 
 LICENSE=""
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="~amd64"
 IUSE="rind neovim github pyopen"
 
 DEPEND=""
 RDEPEND="${DEPEND} dev-python/pexpect
+                   >=dev-python/columnize-0.3.9
+				   x11-misc/wmctrl
                    rind? ( app-misc/rind )
                    neovim? ( app-editors/neovim[python,tui,clipboard]
 				             app-misc/tmux
@@ -208,4 +210,6 @@ dobin list_my_procs_on_nodes
 dobin list_proc_on_node_by_pid
 dobin list_my_procs_on_node
 dobin list_my_procs_on_nodes_sorted
+dobin get_submodule_path_list
+dobin wget_em
 }

@@ -13,13 +13,13 @@ for i in (ff)
 	echo $i
 	ebuild $i manifest
 
-    chown :portage $i
-	chmod  g+r $i
+    sudo chown :portage $i
+    sudo chmod  g+r $i
 end
 
 
 for i in (fff)
-    chown :portage $i
-	chmod  g+r $i
+    sudo chown :portage $i
+    sudo chmod  g+r $i
 end
     

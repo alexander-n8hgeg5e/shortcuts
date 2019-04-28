@@ -1,0 +1,36 @@
+#!/bin/fish
+set remote_host $argv[1]
+set socket $HOME"/.local/share/clipster/clipster_sock"
+
+function get_clipsters_running
+     for i in (ps --no-headers -C python3 -o pid);ps --no-headers --pid (echo $i | tr -d [[:blank:]]) -o cmd |egrep -q 'python3.*clipster' ; and echo $i;end 
+end
+
+# get clipsters pid list
+set clipsters (get_clipsters_running)
+
+# test if working local sockets exist
+test -S $socket
+and for i in $clipsters;
+      echo $i
+      lsof $socket|egrep  $i|egrep  'python3'|grep clipster_sock
+      and set found
+      and break
+end
+set -q found and echo already working socket
+and exit 1
+
+set ssh_opts  '-o' 'ControlPath=/tmp/ssh_control_sock:%u@%L_made_clipster_socket_tunnel_to_'$remote_host
+set ssh_opts  $ssh_opts '-o' 'ExitOnForwardFailure=yes'
+set ssh_opts  $ssh_opts '-o' 'StreamLocalBindUnlink=yes'
+
+
+
+if ssh $remote_host test -S $socket; and begin;ssh $remote_host lsof $socket|egrep -q '^python3' ;end
+     # sock is at remote
+     # delete local one
+     ssh $ssh_opts -NL $socket"_remote:"$socket $remote_host
+else 
+   echo no sock on remote
+   exit 1
+end

@@ -43,7 +43,7 @@ static void x_connect ()
 
 static void create_window ()
 {
-    menu_box.width = 1200;
+    menu_box.width = 1366;
     menu_box.height = 768;
     menu_box.window = 
         XCreateSimpleWindow (menu_box.display,

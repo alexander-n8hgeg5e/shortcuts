@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo btrfs sub snapshot / /snapshots/snapshot-(date -Is)

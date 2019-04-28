@@ -1,0 +1,25 @@
+#!/bin/fish
+set running_kernel linux-(uname -r)
+and sudo eselect kernel list
+and echo enter kernel num
+and set num (read)
+and sudo eselect kernel set $num
+sudo mv "/usr/src/"$running_kernel"/.git" "/usr/src/linux/"
+cd "/usr/src/"$running_kernel
+and begin
+  sudo ln -s ../linux/.git .
+  sudo cp .config ../linux/.config
+end
+cd /usr/src/linux
+and begin
+  sudo git stash push -m original_kernel_source_backup
+  sudo git checkout -- .
+  sudo make olddefconfig
+  and sudo ionice -c3 nice -n19 make -j4
+  and sudo mount /boot
+  and sudo btrfs sub snap -r /boot/. /boot/snapshots/(date -Iseconds)
+  and sudo make install
+  and sudo make modules_install
+  and sudo dmsetup mknodes
+  and sudo grub-mkconfig > /boot/grub/grub.cfg
+end

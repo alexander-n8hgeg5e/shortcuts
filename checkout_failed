@@ -1,0 +1,20 @@
+#!/bin/fish
+
+# the failed path:
+set p $argv[1]; or exit 1
+set _status 1;
+
+# remember the current dir
+set basedir $PWD; or exit 1
+
+# get hash
+cd (dirname $p);or exit 1
+set hash (begin;git ls-tree HEAD|grep \t(basename $p)'$' ;end |tr \t ' ' |cut -d' '  -f3);
+echo $hash
+cd $basedir; or exit 1
+
+# checkout hash
+cd $p; or exit 1
+git checkout $hash;and set _status 0
+cd $basedir
+exit $_status

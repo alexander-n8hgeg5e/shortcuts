@@ -2,6 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
+PYTHON_COMPAT=( python3_6 )
 inherit git-r3 eutils scons-utils
 DESCRIPTION="shortcuts"
 HOMEPAGE=""
@@ -122,8 +123,8 @@ dobin rgu
 dobin rguc
 dobin rgc
 dobin gic      # file collison , should be gc
-dosym rgc usr/bin/rgic    # alias
-dosym sgc usr/bin/sgic    # alias
+dosym rgc ${EPREFIX}/usr/bin/rgic    # alias
+dosym sgc ${EPREFIX}/usr/bin/sgic    # alias
 dobin sgc
 dobin sg.
 dobin sg.c
@@ -185,7 +186,6 @@ dobin tmrlfs
 dobin sed_inplace_insert_between_lines
 dobin sed_inplace_insert_dobin_into_ebuild
 dobin rallnodes
-dobin screen_layout
 dobin check_synergy_ssh_connection
 dobin _check_synergy_ssh_connection
 dobin menu/r_menuwin
@@ -212,4 +212,33 @@ dobin list_my_procs_on_node
 dobin list_my_procs_on_nodes_sorted
 dobin get_submodule_path_list
 dobin wget_em
+dobin snap
+dobin gbrd
+dobin gbr
+dobin gprh
+dobin gcb
+dobin get_dotf_gitdirs
+dobin get_root_gitdirs
+dobin get_home_gitdirs
+dobin pp
+dobin gh
+dobin ds
+dobin gsu
+dobin gsd
+dobin guno
+dobin kernel_update
+dobin github
+dobin gsbrd
+dobin gisfor
+dobin gcb
+dobin gbs
+dobin gsuf
+dobin "gsu!"
+dobin gscb
+dobin checkout_failed
+dobin conky_all
+dobin parse_xrandr_conf
+dobin setup_xrandr
+dobin setup_conky
+dobin set_max_cpu_f
 }

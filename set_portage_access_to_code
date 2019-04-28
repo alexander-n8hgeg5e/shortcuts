@@ -2,9 +2,20 @@
 ################################
 # allow portage access to code #
 ################################
-# set group portage for all code
-sudo chown -R :portage $HOME/code
-# set read access and x access to dirs
-sudo chmod -R g=rX $HOME"/code"
-set guid bit for the dirs so new dirs and files will be of portage group
-for j in (find $HOME"/code" -type d);sudo chmod g+s $j ;end
+
+set dirs $HOME'/code/.git/modules' $HOME'/.git/modules/code' $HOME'/code'
+
+
+for i in $dirs
+    # set group portage for all code
+    sudo chown -R :portage $i
+    # set read access and x access to dirs
+    sudo chmod -R g=rX $i
+    #set guid bit for the dirs so new dirs and files will be of portage group
+    for j in (find $i -type d);sudo chmod g+s $j ;end
+end
+
+for i in $HOME'/.git' $HOME
+     sudo chmod g=x $i
+     sudo chown :portage $i
+end

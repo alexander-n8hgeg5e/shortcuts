@@ -1,0 +1,11 @@
+#!/bin/fish
+set n1 $argv[1]
+and set n2 $argv[1]"_"(date '+%F')
+and set n22 $argv[1]"_"(date '+%F-%H-%M')
+and begin
+  git branch -m $n1 $n2
+  or git branch -m $n1 $n22
+end
+and git submodule init
+and git submodule sync --recursive
+and git submodule foreach --recursive fish -c "git branch --format '%(refname:short)'|grep '^"$argv[1]"$';and begin;git branch -m $n1 $n2;or git branch -m $n1 $n22;end"

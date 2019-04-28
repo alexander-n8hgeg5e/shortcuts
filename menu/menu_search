@@ -11,12 +11,12 @@ set pos  (math ( math (echo $width) / 2 ) + $leftx )
 echo pos: $pos |logger -p user.debug 
 echo id: $winid|logger -p user.debug
 
-if test $pl -gt 1280
+if test $pl -gt 1366
     set menucmd 'r_menuwin' ;echo r|logger -p user.debug
-else if test $pl -le 1280
+else if test $pl -le 1366
     set menucmd 'l_menuwin' ;echo l|logger -p user.debug
 else 
-    if test $pos -gt 1280
+    if test $pos -gt 1366
          set menucmd 'r_menuwin' ;echo r|logger -p user.debug
     else
           set menucmd 'l_menuwin' ;echo l|logger -p user.debug
@@ -31,7 +31,7 @@ while not test $c -gt 5000
       set menuwinid ( xdotool search --class menuwin; set s $status )
       echo $menuwinid|logger -p user.debug
       if test $status -eq 0
-          cat /dev/shm/menu_search_in|dmenu  -f -i -l 66 $argv -w (xdotool search --class menuwin) > /dev/shm/menu_search_out|logger -p user.debug
+          cat /dev/shm/menu_search_in|dmenu -fn Monospace:size=12 -f -i -l 66 $argv -w (xdotool search --class menuwin) > /dev/shm/menu_search_out|logger -p user.debug
 	  break
       end
       sleep 0.01|logger -p user.debug

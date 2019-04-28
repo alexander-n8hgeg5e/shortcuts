@@ -1,0 +1,6 @@
+#!/bin/fish
+    git remote update $argv[1] 
+and git push $argv[1] $argv[2]
+or  git push $argv[1] $argv[2]:$argv[2]_(hostname)
+or  git push $argv[1] $argv[2]:$argv[2]_(hostname)_(date '+%F')
+or  git push $argv[1] $argv[2]:$argv[2]_(hostname)_(date '+%F-%H-%M')

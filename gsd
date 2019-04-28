@@ -1,0 +1,2 @@
+#!/bin/fish
+git diff --submodule=diff $argv

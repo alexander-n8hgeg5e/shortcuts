@@ -1,0 +1,2 @@
+#!/bin/fish
+git submodule foreach --recursive fish -c "$argv"

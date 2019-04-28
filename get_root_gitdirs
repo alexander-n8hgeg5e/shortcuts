@@ -1,0 +1,4 @@
+#!/bin/fish
+set -x GIT_WORK_TREE /
+set -x GIT_DIR /.root.git
+sudo git submodule foreach -q --recursive 'echo $sm_path'

@@ -1,0 +1,67 @@
+#!/bin/fish
+
+function  parse_conf -a filename
+    set have_args 0
+    for line_i in ( cat $filename )
+        # Convert the line to a list, split on whitespace.
+	# This good for shell stuff.
+	set line_args (string split -n ' ' -- $line_i)
+	# Check there is something
+        if test (count $line_args)  -gt 0
+	    # Is this a filename ?
+	    # Check by simply testing the file,
+	    # so don't name the files after the xrandr args
+            set file_of_line_i (dirname $filename)'/'$line_i
+            if test -f $file_of_line_i
+	          # Got a file and args of one xrandr call are
+		  # not supposed to be splitted over multiple files,
+		  # so check if we have args and
+		  # echo the xrandr cmd line, so it can
+		  # be called by the calling code.
+		  # Then parse the found file with this func.
+	          if test $have_args -eq 1
+	        	        echo xrandr $args
+				set have_args 0
+	          end
+                  parse_conf $file_of_line_i
+	    else
+	        # it no filename, so
+	        # get the first word of the line
+		set first_word $line_args[1]
+		# split the first word to char list
+		set first_word_char_list (string split -n '' -- $first_word)
+		# and get the first char
+	        set first_char $first_word_char_list[1]
+	        if test $first_char = ":"
+		      # means do collect args for a xrandr call
+		      # and means from until here,
+		      # args belong to a independent xrandr call
+		      # reconstruct the line without the ":" keychar
+		      set first_word (string join '' -- $first_word_char_list[2..-1])
+		      set line_args $first_word $line_args[2..-1]
+		      # as the args belong to a independent call
+		      # echo the cmdline to get the $args list free
+	              if test $have_args -eq 1
+	        	        echo xrandr $args
+				set have_args 0
+	              end
+		      # capture the new args
+	              set args $line_args
+	              set have_args 1
+		else if not test $first_char = "#"
+		      # not ":"-keychar and not comment, so
+		      # capture args
+	              set args $args $line_args
+		end
+	    end
+	end
+    end
+    # all lines parsed,
+    # if have some args,
+    # echo em to get the job done
+    if test $have_args -eq 1
+         echo xrandr $args
+    end
+end
+
+parse_conf $argv[1]

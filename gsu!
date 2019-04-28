@@ -1,0 +1,176 @@
+#!/bin/fish
+
+function print_no_fix_found_msg -a error_out
+    echo nothing found to infer a fix. stderr: (echo $error_out|tail)
+end
+
+############      the grep lines and the relations to fix nums   ##############
+
+            ###### Manual #######
+	    # add grep line to grep_line-list, and add corresponding fix-func number below.
+	    # only one string and one number per entry
+	    # this way they stay in sync
+	    # same with path grep info
+
+
+         set -g grep_strings                "Die folgenden unversionierten Dateien im Arbeitsverzeichnis würden"
+	 set -g fix_nums                         2
+	 set -g get_path_nums                    0
+
+	 set -g grep_strings $grep_strings  "Ihre lokalen Änderungen in den folgenden Dateien würden beim Auschecken" 
+	 set -g fix_nums $fix_nums               2
+	 set -g get_path_nums $get_path_nums     0
+
+         set -g grep_strings $grep_strings  "Konnte '[^']*' in Submodul\-Pfad '[^']*' nicht auschecken"
+	 set -g fix_nums $fix_nums               1
+	 set -g get_path_nums $get_path_nums     1
+
+         set -g grep_strings $grep_strings  "Konnte aktuellen Commit in Submodul\-Pfad '[^']*' nicht finden\."
+	 set -g fix_nums $fix_nums               1
+	 set -g get_path_nums $get_path_nums     1
+
+############################
+function extract_path_1 -a error_msg
+	     # extract path
+	     set -e p
+	     for i in $error_msg
+	         # be carful with "and" exit code is somewhat non intuitiv...
+	         set pp (echo $i|egrep -o "Submod.*nicht")
+		 # need subm.*nicht, so -> and
+	         and set pp (echo $pp|egrep -o "'.*'")
+		 # need to remove subm.*nicht, so -> and
+		 and set append (string trim (string trim -c"'" $pp))
+		 # no more and because string trim can return exit code != 0
+		 set p $p $append
+	     end
+
+	     # pick the first one
+	     test (count $p) -gt 1
+	     and set p $p[1]
+	     
+	     #check path
+	     test (string length $p) -gt 0;
+	     and test -e $p
+	     # if path is not good, delete it
+	     or set -e p
+	     echo $p
+end
+
+function extract
+         set -e found
+	 set -e path_list
+	 for i in (seq (count $grep_strings))
+	       set -e _found
+	       set -e _error_msg
+	       set -e _get_path_func_num
+	       # fix_nums[$i] contains corresponding fix-num of grep string in grep_strings[$i]
+	       set _error_msg (echo $argv|grep -o $grep_strings[$i];and set _found $i)
+	       # always append to the found and the error_msg array
+	       # so information can be reused
+	       if set -q _found
+		    set found $found $i
+		    # extract path
+		    set _get_path_func_num $get_path_nums[$i]
+		    if test $_get_path_func_num != 0
+		           set path_list $path_list ("extract_path_"$_get_path_func_num $_error_msg)
+		    end
+	       else
+	            # nothing found , write 0 to remember
+		    set found $found 0
+	       end
+	 end
+
+	 #return stuff
+	 echo $found
+	 echo $path_list
+end
+ 
+function fix_1 -a path
+        # fix func that does the impossible checkout of a non existing reference
+        set cmd $HOME'/code/shortcuts/checkout_failed'
+        $cmd $path
+end
+function fix_2 -a path
+     # fix func that backups files, so checkout can proceed
+     set start_dir $PWD
+     cd $path
+     and gcb do_backup_for_checkout_(date +%y_%m_%d_%H_%M_%S)
+     and g.c -m backup_for_checkout
+     cd $start_dir
+end
+
+function done
+   set -q var_done
+   and test $var_done -eq 1
+   and return 0
+   or set -g var_done 0
+   return 1
+end
+
+function print_loop_count
+   # if var exists
+   set -gq loop_counter
+   # add 1
+   and set -g loop_counter (math $loop_counter + 1)
+   # otherwise set it to one
+   or set -g loop_counter 1
+   # echo the count
+   echo loop count = $loop_counter
+end
+
+function main
+    # use the cool done func
+    echo Starting gsu fix loop
+    while not done
+        done;and echo done!
+        print_loop_count
+        # do gsu (full featured git submodule update), capture error output and status
+        set error_out ( begin; gsu; set gsu_status $status;end 1>/dev/null 2>|cat )
+        if test $gsu_status != 0
+
+	     # it failed... ,what is the use case of this prog
+    	     echo ERROR
+	     
+	     # extract information from output
+	     # extract func gives 2 lines, one with possible fix numbers
+	     # and second one with path of git repo
+    	     set extracted (extract $error_out)
+	     
+	     # split the line that contains the numbers, to list
+	     set found (string split ' ' $extracted[1])
+	     # check if there is something, if so , it should be a existing path
+	     # no path , no fix operation
+	     if test (string length $extracted[2]) -gt 0
+	        set path $extracted[2]
+	        for i in $found
+		    if test $i != 0
+		         set fixfunc "fix_"$fix_nums[$i]
+    	                 echo Going to try $fixfunc in path $path .
+		         # call the fixfunc, capture error output and status
+                         set error_out ( begin; $fixfunc $path; set cmd_status $status;end 1>/dev/null 2>|cat )
+    	                 if test $cmd_status != 0
+    	                     echo  ERROR $fixfunc failed.
+    	                     echo limited stderr out:
+		             echo $error_out|cut -c-150|tail -n 3
+    	                     echo path: $path
+    	                     echo extr. line1: $extracted[1]
+    	                     echo extr. line2: $extracted[2]
+		         else
+		             echo Fix with $fixfunc succeeded.
+    	                 end
+		    end
+		end
+	     else
+	        echo No path in extracted lines, can not infer a fix.
+    	        echo extr. line1: $extracted[1]
+    	        echo extr. line2: $extracted[2]
+    	     end
+	else
+	   # gsu succeeded
+	   echo done
+	   set -g var_done 1
+        end
+    end
+end
+
+main $argv

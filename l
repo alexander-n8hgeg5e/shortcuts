@@ -10,7 +10,7 @@ ps -C synergy-core h -o comm |grep synergy-core -q;set was_running $status
 ps -C synergy-core h -o cmd |grep -q '\-\-client';set is_client $status
 ps -C synergy-core h -o cmd |grep -q '\-\-server';set is_server $status
 if test $was_running -eq 0; killall -s HUP synergy-core;end
-
+xset dpms force off&
 xtrlock
 
 if test $was_running -eq 0

@@ -1,0 +1,10 @@
+#!/bin/fish
+
+function  xrandr_it -a filename
+     set cmdlines (parse_xrandr_conf $HOME"/.xrandr.conf")
+     for cmdline in $cmdlines
+           eval $cmdline
+     end   
+end
+
+xrandr_it $HOME'/'.xrandr.conf

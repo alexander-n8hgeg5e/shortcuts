@@ -1,2 +1,2 @@
-#!/bin/bash
-dotf status -s
+#!/bin/fish
+diffstat -CE -u $argv

@@ -48,7 +48,7 @@ static void create_window ()
     menu_box.window = 
         XCreateSimpleWindow (menu_box.display,
                              menu_box.root,
-                             1281, /* x */
+                             1367, /* x */
                              0, /* y */
                              menu_box.width,
                              menu_box.height,

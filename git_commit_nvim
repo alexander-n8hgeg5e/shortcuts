@@ -1,15 +1,2 @@
-#!/usr/bin/python3
-from sys import argv
-from os import environ
-import neovim
-path=environ['NVIM_LISTEN_ADDRESS']
-nvim = neovim.attach('socket',path=path)
-
-
-win_id=nvim.call('win_getid')
-nvim.command('tabnew')
-nvim.command('e '+argv[1])
-nvim.command('map <buffer> <C-W> <Esc><Esc>:wq<CR>:call win_gotoid('+str(win_id)+')<CR>i<CR>')
-nvim.command('map! <buffer> <C-W> <Esc><Esc>:wq<CR>:call win_gotoid('+str(win_id)+')<CR>i<CR>')
-nvim.feedkeys('i')
-input('done? press enter or so')
+#!/bin/fish
+e -w $argv

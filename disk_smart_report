@@ -1,6 +1,41 @@
 #!/bin/fish
- for i in a b c ;
-   echo $i
-   sudo smartctl -AH /dev/sd$i|grep Pre-fail
-   echo
+for i in a b c d
+    for line in ( sudo smartctl -iHA /dev/sd$i )
+	    set var var_$i
+		set $var $$var $line 
+	end
 end
+function align -a a -a b  -a w1 -a w2
+   echo -n (echo $a'                                '|cut -c1-$w1 )
+   echo -n " : "
+   echo -n (echo $b'                                '|cut -c1-$w2 )
+end
+
+
+function scan_keyword -a keyw -a line
+	echo $line |grep -q $keyw
+	and set var1  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |rev|cut -d' ' -f1|rev)
+	and set var2  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |cut -d' ' -f1)
+	and if test $keyw = 'Device Model'
+	     set var2 $keyw
+	end
+	and align $var2 $var1 40 20
+end
+
+set keywords "Device Model" "Realloc" "Read_Error" "Pending" "Power_On_Hours"
+
+for i in a b c d
+    set var var_$i
+	set -e outp
+	for kw in $keywords
+          for l in $$var
+		      set outp $outp (scan_keyword $kw $l)
+		 end
+	end
+	echo
+	for thing in $outp
+	     echo $thing
+	end
+
+end
+

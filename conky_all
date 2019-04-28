@@ -1,0 +1,4 @@
+#!/bin/fish
+rind conky -c ~/.config/conky/conky_left.conf
+rind conky -c ~/.config/conky/conky_esadc.conf
+rind conky -c ~/.config/conky/conky.conf 

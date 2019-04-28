@@ -1,0 +1,8 @@
+from Sun import Sun
+
+coords = {'longitude' : 145, 'latitude' : -3
+
+sun = Sun()
+
+# Sunset time UTC (decimal, 24 hour format)
+print sun.getSunsetTime( coords )['decimal']

@@ -1,0 +1,15 @@
+#!/usr/bin/python3
+import github
+p=input('pass :')
+gh=github.MainClass.Github(login_or_token='alexander-n8hgeg5e', password=p)
+del p
+user=gh.get_user()
+user.get_repos()
+repos=user.get_repos()
+print('defined stuff:')
+print('gh (github object)')
+print('user')
+print('repos')
+print('iterate printing the repos...')
+for i in repos:
+   print(i)

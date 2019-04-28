@@ -1,0 +1,2 @@
+#!/bin/fish
+git checkout -b $argv[1]

@@ -1,2 +1,2 @@
 #!/bin/fish
-sudo sshfs -o allow_other pc:/ /mnt/pc
+sshfs pc:/ /mnt/pc

@@ -1,0 +1,2 @@
+#!/bin/fish
+git ls-files|cut -d/ -f1|uniq

@@ -1,0 +1,2 @@
+#!/bin/fish
+dotf submodule foreach -q --recursive 'echo $sm_path'

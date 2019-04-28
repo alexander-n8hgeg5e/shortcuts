@@ -1,2 +1,2 @@
 #!/bin/bash
-find $HOME/zugangsdaten $HOME/.password-store -name "*$1*"
+find $HOME/.zugangsdaten $HOME/.password-store -name "*$1*"

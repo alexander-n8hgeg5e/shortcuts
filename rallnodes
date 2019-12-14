@@ -81,7 +81,7 @@ end
 
 
 function do -a cmds
-   for i in (cat /etc/nodelist)
+   for i in (cat "$EPREFIX"/etc/nodelist)
        if test $i = (hostname)
             if is_option_set -v options; or is_option_set --verbose options ; and not is_option_set --quiet options; and not is_option_set -q options
                 echo cmd: eval $cmds

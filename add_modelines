@@ -1,0 +1,41 @@
+#!/usr/bin/python3
+from os import environ
+from os.path import sep as psep
+from sys import argv
+from shlex import split as shsplit
+from subprocess import call,check_output,DEVNULL
+
+modelinefilepath=argv[1]
+
+
+def make_modeline(m):
+    return [m['mode_name'],str( m['hz'] * m['htotal'] * m['vtotal'] /1000/1000 ) , str(m['width']),str(m['hstart']),str(m['hend']),str(m['htotal']),str(m['height']),str(m['vstart']),str(m['vend']),str(m['vtotal']),m['hsync']+'hsync',m['vsync']+'vsync']
+
+with open(modelinefilepath) as f:
+    modelines = eval(f.read())
+
+
+for m in modelines:
+    modeline = make_modeline( m )
+    print(m)
+    mm=m.copy()
+    mm.update({'mode_name': m['mode_name']+'_copy'})
+    print(mm)
+    modelinedupe = make_modeline( mm )
+
+    display = check_output(['hostname']).decode().strip() + ':'+environ['DISPLAY'].split(':')[-1]
+    print(display)
+
+    rm0 = [['xrandr','--delmode', m['displays'][display]['outputname'], m['mode_name'] ]]
+    rm0 += [['xrandr','--rmmode', m['mode_name'] ]]
+    rm1 = [['xrandr','--delmode', mm['displays'][display]['outputname'], mm['mode_name'] ]]
+    rm1 += [['xrandr','--rmmode', mm['mode_name']]]
+    add0 = [['xrandr','--newmode' ]+  modeline ]
+    add0 +=[['xrandr','--addmode' , m['displays'][display]['outputname'] , m['mode_name'] ]]
+    add1 = [['xrandr','--newmode']+  modelinedupe ]
+    add1 += [['xrandr','--addmode' , mm['displays'][display]['outputname'], mm['mode_name'] ]]
+    switch0 = [ 'xrandr', '--output' ,m['displays'][display]['outputname'],'--mode', m['mode_name'] ]
+    switch1 = [ 'xrandr', '--output' ,m['displays'][display]['outputname'],'--mode', m['mode_name']+'_copy' ]
+    
+    for i in rm1+add1+[switch1]+rm0+add0+[switch0]:
+        print(str(call(i,stderr=DEVNULL)!=True) + ' : '+' '.join(i))

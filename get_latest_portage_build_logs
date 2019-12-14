@@ -1,0 +1,2 @@
+#!/bin/fish
+for i in (find /var/tmp/portage -mindepth 2 -maxdepth 2 -type d -printf "%p %Cs\n"|grep -Ev '^\/var\/tmp\/portage\/\.'|sort -k2|tail -n5|cut -d' ' -f1);cat $i/temp/build.log ;end

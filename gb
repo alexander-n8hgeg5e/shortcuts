@@ -1,2 +1,18 @@
 #!/bin/fish
-git branch --format '%(align:25,left)%(refname:short)%(end)  %(align:30,right)%(committerdate)%(end)  %(align:15,left)%(objectname:short)%(end)  %(align:20,right)%(contents:subject)%(end)' --sort committerdate  --all|cut -c-160|tail -n40
+set args $argv
+test $args[1] = branch
+    and set args $args[2..-1]
+set n 1.02
+set c1 50 
+set f  (math -s0 $n  '*' $COLUMNS+84)
+
+set sed_escape_seq_pattern '(\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K])'
+
+set sed_rm_lines_starting_with_old_ '/^'$sed_escape_seq_pattern'{1,4}(([^/]*[/])?old_|old[/]).*'$sed_escape_seq_pattern'{1,4}$/d'
+
+
+git branch --color=always --format '%(align:'$c1',left)%(color:blue)%(refname:short)%(color:#000000)%(end)|%(align:14,left)%(color:green)%(committerdate:format:%y_%m_%d|%H:%M)%(color:black)%(end)|%(align:7,left)%(color:#a09900)%(objectname:short)%(color:#000000)%(end)|%(align:20,left)%(color:yellow)%(contents:subject)%(end)' --sort committerdate  --all $args |cut -c-$f|sed -r $sed_rm_lines_starting_with_old_
+
+
+
+

@@ -1,0 +1,101 @@
+#!/usr/bin/python3
+from subprocess import Popen,DEVNULL,check_output
+from time import sleep,time
+from random import randint
+from sys import exit,argv
+from argparse import ArgumentParser
+from shutil import get_terminal_size
+from os import environ
+
+def parse_args():
+    parser=ArgumentParser("watch files")
+    parser.add_argument("-f","--file-to-watch",action="store",type=str,default=None)
+    parser.add_argument("-c",'--file-path-cmd',action="store",type=str,default=None)
+    parser.add_argument("-i",'--update-interval',action="store",type=int,default=1)
+    return parser.parse_args()
+args=parse_args()
+
+def popenterm():
+    p0.terminate()
+    print(".",end="")
+    p1.terminate()
+    print(".",end="")
+    p0.kill()
+    print(".",end="")
+    p1.kill()
+    print(".",end="")
+
+def get_file_len(file_path): 
+    return int(check_output(["fish" ,"-c","cat "+file_path+"|wc -l"]).decode().strip())
+
+tmpfile= "/dev/shm/.pywatch_"+str(time())+"_"+str(randint(1000,9999))+".tmp"
+if args.file_path_cmd:
+    file_path_part="("+args.file_path_cmd+")"
+elif args.file_to_watch:
+    file_path_part= args.file_to_watch
+
+ui=str(args.update_interval)
+file_len=get_file_len(file_path_part)
+term_lines=get_terminal_size().lines
+
+def get_cmd0(ui,file_path_part,term_lines=None,file_len=None):
+    if term_lines is None:
+        term_lines=get_terminal_size().lines
+    if file_len is None:
+        file_len=get_file_len(file_path_part)
+    compress = (file_len + 2 > term_lines)
+    if compress:
+        compress_part="|tr '\n' '@'"
+    else:
+        compress_part=""
+    return['fish','-c','while true;set f '+file_path_part+';echo $f > '+tmpfile+'; cat $f '+compress_part+' >> '+tmpfile+' ;sleep '+ui+';end']
+
+def get_p0(ui,file_path_part,p0=None,file_len=None,term_lines=None):
+    if not p0 is None:
+        p0.terminate()
+        p0.kill()
+    cmd0=get_cmd0(ui,file_path_part,term_lines=term_lines,file_len=file_len)
+    return Popen(cmd0,stdout=DEVNULL)
+
+def get_p1(cmd1,term_lines,p1=None):
+    if not p1 is None:
+        p1.terminate()
+        p1.kill()
+        env=dict(environ.copy())
+    return Popen(cmd1,env=env.update({'LINES':term_lines}))
+
+
+cmd0=get_cmd0(ui,file_path_part,file_len=file_len)
+cmd1=['watch','-t','-x', '-n'+ui, 'cat', tmpfile]
+
+
+try:
+    p0=Popen(cmd0,stdout=DEVNULL)
+    p1=Popen(cmd1,term_lines)
+    done=False
+    counter=0
+    while not done:
+        if counter%(5*args.update_interval)==0:
+            new_term_lines=get_terminal_size().lines
+            if new_term_lines != term_lines:
+                p0=get_p0(ui,file_path_part,p0=p0,term_lines=new_term_lines,file_len=file_len)
+                p1=get_p1(cmd1,new_term_lines,p1=p1)
+        elif counter%(10*args.update_interval)==0:
+            new_term_lines = get_terminal_size().lines
+            new_file_len   = get_file_len(file_path_part)
+            if new_term_lines != term_lines or new_file_len != file_len:
+                p0=get_p0(ui,file_path_part,p0=p0,term_lines=new_term_lines,file_len=new_file_len)
+                p1=get_p1(cmd1,new_term_lines,p1=p1)
+        if p0.poll() is not None or p1.poll() is not None:
+            done=True
+        sleep(1)
+except KeyboardInterrupt:
+    pass
+print("terminating subprocesses...",end="")
+popenterm()
+for i in range(5):
+    if p0.poll() is not None and p1.poll() is not None:
+        print("done")
+        exit()
+    sleep(0.01)
+print("something refused to die, watch out, maybe zombies arround")

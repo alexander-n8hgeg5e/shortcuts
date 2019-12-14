@@ -1,0 +1,7 @@
+#!/bin/fish
+#
+if test "$argv[1]" = d
+    grep --exclude-dir '.git*' -rI -B20 -A5 $argv[2..-1] doc*
+else
+    grep --exclude-dir '.git*' -rI $argv
+end

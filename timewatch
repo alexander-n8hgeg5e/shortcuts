@@ -1,0 +1,16 @@
+#!/usr/bin/python3
+
+from time import localtime,sleep
+from os import environ
+
+
+while True:
+    t = localtime()
+    h = t.tm_hour
+
+    if  18 <= h < 19 :
+        cmd = ['killall' , '-u' , environ['USER'] ]
+        call(cmd)
+
+    sleep(3)
+    

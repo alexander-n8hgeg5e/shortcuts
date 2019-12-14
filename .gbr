@@ -1,0 +1,2 @@
+#!/bin/fish
+git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME branch -m $argv[1] $argv[2]

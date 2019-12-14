@@ -11,7 +11,7 @@ EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shor
 LICENSE=""
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="rind neovim github pyopen"
+IUSE="rind neovim github pyopen X"
 
 DEPEND=""
 RDEPEND="${DEPEND} dev-python/pexpect
@@ -23,12 +23,15 @@ RDEPEND="${DEPEND} dev-python/pexpect
 						   )
                    github? ( dev-python/github3 )
                    pyopen? ( app-misc/pyopen )
+				   X? ( x11-apps/xset dev-python/psutil dev-util/scons )
 				   "
 src_configure(){
 	true;
 }
 src_compile(){
-    escons
+	if use X;then
+    	escons
+	fi
 }
 
 
@@ -70,7 +73,6 @@ dobin nvim_commit_git_history
 dobin nvim_git_history
 dobin obexit
 dobin p1
-dobin pc
 dobin pwfind
 dobin rg
 dobin rg
@@ -100,7 +102,7 @@ dobin st_nvim
 dobin t
 doman mutt-notmuch.1
 dobin list_firewall
-dobin setXkeyboardstuff
+dobin setup_x
 dobin gu
 dobin g.
 dobin ga
@@ -123,8 +125,8 @@ dobin rgu
 dobin rguc
 dobin rgc
 dobin gic      # file collison , should be gc
-dosym rgc ${EPREFIX}/usr/bin/rgic    # alias
-dosym sgc ${EPREFIX}/usr/bin/sgic    # alias
+dosym rgc /usr/bin/rgic    # alias
+dosym sgc /usr/bin/sgic    # alias
 dobin sgc
 dobin sg.
 dobin sg.c
@@ -190,10 +192,10 @@ dobin check_synergy_ssh_connection
 dobin _check_synergy_ssh_connection
 dobin menu/r_menuwin
 dobin menu/l_menuwin
+dobin menu/menuwin
 dobin menu/menu_run
 dobin menu/menu_search
 dobin qb
-dobin startprefix_bash
 dobin ginf
 dobin pcfs
 dobin gip
@@ -239,6 +241,125 @@ dobin checkout_failed
 dobin conky_all
 dobin parse_xrandr_conf
 dobin setup_xrandr
-dobin setup_conky
 dobin set_max_cpu_f
+dobin maups
+dobin gsb
+dobin gsc
+dobin git_change_commit_date
+dobin datef
+dobin git_del_all_worktree_conf
+dobin ghb
+dobin elpauc!
+dobin elpauc
+dobin elpauc!!
+dobin gcmb
+dobin gbrod
+dobin gbro
+dobin git_update_process
+dobin get_latest_portage_build_logs
+dobin write_latest_portage_build_logs_to_shm
+dobin klima_off
+dobin klima_on
+dobin sc
+dobin xauth_push
+dobin ovpn
+dobin invert_and_darken_screen
+dobin darken_screen
+dobin blink
+dobin dedupe
+dobin dotf_gsu
+dobin .g
+dobin .g.
+dobin .g.c
+dobin .ga
+dobin .gb
+dobin .gbr
+dobin .gbrd
+dobin .gbro
+dobin .gbrod
+dobin .gbs
+dobin .gcb
+dobin .gcmb
+dobin .gh
+dobin .ghb
+dobin .gi
+dobin .gic
+dobin .gl
+dobin .gpc
+dobin .gprh
+dobin .grt
+dobin .gsb
+dobin .gsbrd
+dobin .gsc
+dobin .gscb
+dobin .gsd
+dobin .gsu
+dobin .gsuf
+dobin .gu
+dobin .guc
+dobin .guno
+dobin .gd
+dobin .gdc
+dobin grt
+dobin gd
+dobin gdc
+dobin erc
+dobin uerc
+dobin uerc!
+dobin uerc!!
+dobin xauth_pull
+dobin xis
+dobin tmrlso
+dobin youtube
+dobin xi
+dobin gg
+dobin sed_comment_exclude_git
+dobin prepare_nvim_git_history
+dobin n
+dobin screen_on_control_1
+dobin screen_on_control
+dobin colorfade
+dobin mm
+dobin .gdcs
+dobin .gds
+dobin gds
+dobin gdcs
+dobin gidb
+dobin mirrorlink
+dobin homelink
+dobin run_env_eprefix_shebang
+dobin timewatch
+dobin old
+dobin feedkeys_screen
+dobin wm_conf_adj
+dobin add_modelines
+dobin pav
+dobin k
+dobin pyprep
+dobin webserv
+dobin tt
+dobin I
+dosym gur /usr/bin/git-unpack-refs    # alias
+dobin git-unpack-refs
+dobin gco
+dobin synergy_skyscraper
+dobin pw
+dobin lf
+dobin pf
+dobin iit
+dobin iit2
+dobin iit3
+dobin iit4
+dobin it
+dobin it1
+dobin it2
+dobin it3
+dobin it4
+dobin py
+dobin cl
+dobin p2c
+dobin pw2handy
+dobin G
+dobin group_access
+dobin check_git
 }

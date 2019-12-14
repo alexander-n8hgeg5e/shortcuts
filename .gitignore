@@ -1,1 +1,3 @@
 .sconsign.dblite
+.git.backup_by_unabsorb_git_dirs_prog
+__pycache__

@@ -1,0 +1,3 @@
+#!/bin/fish
+set filter_string TTY=(string split " " (string split -m2 / (tty)))[-1]" "
+echo top -o $filter_string

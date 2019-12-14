@@ -1,6 +1,16 @@
 #!/bin/fish
 if test (hostname) = esadc
+     ssh -O exit -o ControlMaster=no synergy_tunnel_tmrl_esadc
      ssh -N synergy_tunnel_tmrl_esadc &
 end
-killall synergy-core
-rind synergy-core --client -f localhost
+killall synergy-core ^ /dev/null
+killall synergys     ^ /dev/null
+killall synergyc     ^ /dev/null
+sleep 1
+killall -s9 synergy-core ^ /dev/null
+killall -s9 synergys     ^ /dev/null
+killall -s9 synergyc     ^ /dev/null
+# start it like this so display var is included in cmd line
+# and can be evaluated by other progs
+set cmd rind synergyc -f --display "$DISPLAY" 127.0.0.1 "2>/dev/null" "1>/dev/null"
+eval $cmd

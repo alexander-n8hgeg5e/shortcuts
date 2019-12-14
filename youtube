@@ -1,0 +1,6 @@
+#!/bin/fish
+tmrlso
+ssh tmrl rind X
+synergy_tmrl_esadc_client 1>&2 2>/dev/null
+ssh tmrl synergy_tmrl_esadc_server 1>&2 2>/dev/null
+patmrl

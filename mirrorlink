@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# setup vars
+[[ -v NHOME ]] && [[ -n ${NHOME} ]] || NHOME=${DEFAULT_NHOME}
+[[ -v PHOME ]] && [[ -n ${PHOME} ]] || PHOME=${DEFAULT_PHOME}
+
+d1=/dev/shm
+d2=/tmp
+
+   [[ -d "${d1}" ]] && [[ -w "${d1}" ]] && tmpdir="${d1}" \
+|| [[ -d "${d2}" ]] && [[ -w "${d2}" ]] && tmpdir="${d2}" \
+|| echo "ERROR: homelink found no tmp dir"
+
+tmplinkp="${tmpdir}/tmp_prefix_link"
+
+# clean
+[[ -e "${tmplinkp}" ]] && rm "${tmplinkp}"
+
+
+
+
+ln -s $NHOME/gentoo_linkme ${tmplinkp}
+mv -T "${tmplinkp}" ${PHOME}/gentoo

@@ -1,0 +1,26 @@
+#!/bin/fish
+#
+set default_minus_mmin_time 60
+
+test (count $argv) -gt 0
+and set minus_mmin_time $argv[1]
+or set minus_mmin_time $default_minus_mmin_time
+
+set basedir $HOME/code
+
+set regex_quoted_basedir (echo $basedir |sed -E 's/\//\\\\\//g')
+set regex_quoted_basedir (echo $regex_quoted_basedir |sed -E 's/ /\\\ /g')
+
+set ebuilds (find -L $HOME/code -mindepth 2  -maxdepth 2 -type d -name portage)
+
+set ebuilds2 (for i in $ebuilds; set a (echo $i|rev|cut -d/ -f2-|rev);echo $a;end)
+
+set todo_ebuils (for i in $ebuilds2;find -L $i -mmin -$minus_mmin_time -type f -printf '%p\n'|sed -E 's/'$regex_quoted_basedir'\///'|cut -d/ -f1;end|sort -u)
+
+for i in $todo_ebuils
+    set found (find -L $basedir/$i/portage -mindepth 1 -maxdepth 2 -printf '%d %P \n')
+    for k in $found
+        test (string sub -l1 $k) = 2;and set atom  (echo $k | cut -d' ' -f2-)
+        and echo $atom
+    end
+end | sort -u

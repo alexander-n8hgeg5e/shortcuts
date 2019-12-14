@@ -1,0 +1,10 @@
+#!/bin/fish
+set html \
+"HTTP/1.1 200 OK
+Content-Type: text/html; charset=UTF-8
+<!doctype html>
+<html>
+<body>$argv</body></html>
+"
+
+echo -e $html\x00|nc -N -C -l -p 8080

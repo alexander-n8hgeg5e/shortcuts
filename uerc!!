@@ -1,0 +1,5 @@
+#!/bin/fish
+
+set a (erc $argv[1])
+eval elpau!! $a
+	

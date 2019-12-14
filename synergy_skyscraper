@@ -1,0 +1,54 @@
+#!/bin/fish
+
+function synergy_server_start
+    wm_conf_adj on
+    # make the synergy port free in case ssh listens on it
+    sudo kill (lsof -i:24800 -t)
+    sleep 1
+    sudo kill -s9 (lsof -i:24800 -t)
+    #set cmd_synergys sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergys -f --display "$DISPLAY" -c "$HOME""/.synergy.conf" -a 127.0.0.1 -d DEBUG1 \&
+    set cmd_synergys sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergys -f --display "$DISPLAY" -c "$HOME""/.synergy.conf" -a 127.0.0.1 \&
+    eval $cmd_synergys
+end
+
+function synergy_client_start
+    ssh xsky killall synergys ^ /dev/null
+    ssh xsky killall synergyc ^ /dev/null
+    ssh xsky killall synergy-core ^ /dev/null
+    set cmd_synergyc sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergyc -f --display "skyscraper:0" -n skyscraper 127.0.0.1 \&
+    eval $cmd_synergyc
+end
+
+function synergy_stop
+    # unconditionally kill synergy-core, because is wrong version
+    killall -s HUP synergy-core 2>/dev/null
+
+    # ps -o cmd -> full cmdline
+    # ps -o comm -> only cmds bin name without path
+
+    # get state of running servers
+    set  out (ps -C synergys -o pid,cmd --no-headers)
+    set server_pids (for i in $out ; echo $i | grep -Eo "^[ ]*[0-9]+" ; end)
+
+    # get state of running clients
+    set  out ( ps -C synergyc -o pid,cmd --no-headers )
+    set client_pids (for i in $out ; echo $i | grep -Eo "^[0-9]+" ; end)
+    
+    #stop em 
+    set pids_to_stop $server_pids $client_pids
+    for pid in $pids_to_stop
+        kill $pid 2> /dev/null
+    end
+    wm_conf_adj off
+end
+
+if contains $argv "stop"
+    synergy_stop
+end
+if contains $argv "starts"
+    synergy_server_start
+end
+
+if contains $argv "startc"
+    synergy_client_start
+end

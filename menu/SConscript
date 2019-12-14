@@ -1,4 +1,5 @@
 #!python
 Program("r_menuwin",['r_menuwin.c'],LIBPATH=['/usr/lib','/lib'],CPPPATH=['#/usr/include'],LIBS=['X11'])
 Program("l_menuwin",['l_menuwin.c'],LIBPATH=['/usr/lib','/lib'],CPPPATH=['#/usr/include'],LIBS=['X11'])
+Program("menuwin",['menuwin.c'],LIBPATH=['/usr/lib','/lib'],CPPPATH=['#/usr/include'],LIBS=['X11'])
 

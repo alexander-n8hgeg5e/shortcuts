@@ -1,0 +1,12 @@
+#!/bin/bash
+
+dir="${HOME}/.nvim_history.git" || exit 3
+
+if [[ -d "${dir}" ]];then
+    git --work-tree=/ --git-dir="${dir}" status -s --untracked-files=no > /dev/null && exit 0 || exit 6
+else
+    mkdir  "${dir}" || exit 8
+    git --git-dir="${dir}" --work-tree=/ init &&  exit 0 || exit 9
+fi
+
+echo "SYSTEM ERROR" 1>&2

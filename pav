@@ -1,0 +1,28 @@
+#!/usr/bin/python3
+from subprocess import check_call,check_output
+from sys import argv
+from re import match
+
+
+
+def convert(v):
+    a=int('0x'+v,16)
+    a=a/((16**len(v))-1)
+    return int(a * (2**16))
+
+
+cmd=['pactl','list','sinks']
+outplines=check_output(cmd).decode().splitlines()
+
+number_sinks=0
+for i in outplines:
+    if i[0:4]=='Sink':
+        number_sinks+=1
+
+
+
+for i in range(number_sinks):
+    volume=convert(argv[1])
+    cmd=['pactl','set-sink-volume', str(i) ,str(volume)]
+    print(str(cmd)+' Volume: '+str(round(100*volume/(2**16)))+'%')
+    check_call(cmd)

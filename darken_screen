@@ -1,0 +1,5 @@
+#!/bin/fish
+set o $argv[1]
+xcalib -o $o -c 
+xcalib -o $o -gc 1 -b 0 -co 100 -a 
+xcalib -o $o -blue 1 0 50 -green 1 0 50 -a

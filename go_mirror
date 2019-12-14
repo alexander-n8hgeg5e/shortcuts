@@ -1,0 +1,209 @@
+#!/bin/bash
+
+# Copyright 2006-2014 Gentoo Foundation; Distributed under the GPL v2
+# $Id: startprefix.in 61219 2012-09-04 19:05:55Z grobian $
+# Fabian Groffen <grobian@gentoo.org> -- 2007-03-10
+
+indentspace_1="    "
+typeset -g indentspace_1
+where_to_go="go_mirror"
+typeset -g where_to_go
+newhome(){
+if [[ -n ${1} ]];then
+    #[[ -v PHOME ]] && [[ -n $PHOME ]] && echo error already phome var >&2 && exit 4
+    export PHOME="${HOME}"
+    export NHOME="${1}"||exit 1
+    export HOME="${1}"||exit 2
+fi
+}
+link_git(){
+    echo -n searching and linking '*.git' ...
+    cutlen=$(echo "${PHOME}/"|wc -c)
+    while IFS= read -r -d '' file; do
+        name="${NHOME}/"$(echo $file|cut -c${cutlen}-)
+        dir_name=$(dirname ${name})
+        target="${file}"
+        #echo ln -s "${file}" "${NHOME}/"$(echo $file|cut -c${cutlen}-)
+        echo -n .
+        [[ -h ${name} ]] && rm "${name}"
+        [[ -e ${dir_name} ]] ||  "mkdir -p ${dir_name}"
+        ln -s "${file}" "${name}"
+    done < <(find "${PHOME}" -name '*.git' -print0)
+
+    echo done
+    echo  
+}
+
+del_git_links(){
+    echo -n removing '*.git' symlinks ...
+    while IFS= read -r -d '' file; do
+        echo -n .
+        [[ -h "${file}" ]] && rm "${file}"
+        echo -n .
+    done < <(find "${NHOME}" -name '*.git' -type l -print0)
+    echo done
+    echo  
+}
+
+asksync(){
+    direction="${1}"
+    indentspace="    "
+    marker=" * "
+    gen_sync_info "${direction}" "${indentspace}" "${marker}"
+    newline="\n\n${indentspace}"
+    header="\n todo:\n ####${newline}"
+    question="do ? (y/[n]/e)${newline}"
+
+    if [[ "${direction}" == "12" ]];then
+        gitsymlinkcreateinfo="${marker}create .git symlinks on target${newline}"
+        gitsymlinkremoveinfo="${marker}delete .git symlinks on target${newline}"
+    else
+        gitsymlinkcreateinfo=""
+        gitsymlinkremoveinfo=""
+    fi
+
+    echo -e "${header}${gitsymlinkremoveinfo}${syncinfo}${gitsymlinkcreateinfo}${question}"
+    read a
+
+    if [[ "${a}" == y ]];then
+
+        if [[ "${direction}" == "12" ]];then
+            message 0 'removeing *.git symlinks on 2'
+            del_git_links
+        fi
+        
+        message 1  "rsync:\n${syncinfo}"
+        mirrorsync 1 ${direction} "${del}" 0
+        if [[ $? -eq 20 ]];then
+            echo code 20
+            exit 20
+        fi 
+
+        if [[ "${direction}" == "12" ]];then
+            message 2 'linking git dirs...'
+            link_git
+        fi
+    elif [[ "${a}" == "" ]] || [[ "${a}" == "n" ]];then
+        true
+    else
+        exit 69
+    fi
+}
+
+gen_sync_info(){
+
+    syncinfo="error"
+    typeset -g syncinfo
+    del=""
+    typeset -g del
+
+    direction_info="direction:"
+    delmode=""
+    delmodeinfostart="with !DELETE MODE! : \""
+    delmodeinfoend="\""
+    marker="${3}"
+    markerspace="   "
+    newline="\n${indentspace_1}${markerspace}"
+    last_newline="\n${indentspace_1}"
+    dirinfo1="1: ${PHOME}"
+    dirinfo2="2: ${NHOME}"
+    
+
+    if [[ "${1}" == "12" ]];then
+        [[ "${del2}" -eq 1 ]] && del=del2 || del="no delete"
+        direction_info="${direction_info} 1->2"
+        dirinfo="${dirinfo1}${newline}${dirinfo2}"
+
+    elif [[ "${1}" == "21" ]];then
+        [[ "${del1}" -eq 1 ]] && del=del1 || del="no delete"
+        direction_info="${direction_info} 2->1"
+        dirinfo="${dirinfo2}${newline}${dirinfo1}"
+    fi
+    echo $del
+    delmodeinfo="${delmodeinfostart}${del}${delmodeinfoend}"
+    syncinfo="${marker}${direction_info}  ${delmodeinfo}${newline}${dirinfo}${newline}${last_newline}"
+}
+
+replace_link(){
+    linktoreplace="${PHOME}/gentoo"
+    target="${NHOME}/gentoo_linkme"
+    link_backup="${linktoreplace}.backup"
+    echo "replace: ${linktoreplace}"
+    echo "target: ${target}"
+    echo "backup: ${link_backup}"
+    if [[ -h "${linktoreplace}" ]];then
+        /bin/mv "${linktoreplace}" "${link_backup}" || return
+    fi
+    if [[ -e "${target}" ]];then
+        /bin/ln -s "${target}" "${linktoreplace}" || return
+    fi
+}
+restore_link(){
+       [[ -v link_backup ]]\
+    && [[ -n $link_backup ]]\
+    && [[ -v linktoreplace ]]\
+    && [[ -n $linktoreplace ]]\
+    || [[ -n ${PHOME} ]]\
+    && linktoreplace="${PHOME}/gentoo"\
+    && link_backup="${linktoreplace}.backup" || return 1
+    /bin/mv $link_backup $linktoreplace\
+    && [[ -h ${linktoreplace} ]]\
+    && echo link restored successfully || return 2
+}
+ask_ready(){
+    echo "${1} (enter to continue)"
+    read a
+}
+
+################
+###   main   ###
+################
+# What is our prefix?
+export EPREFIX="${HOME}/gentoo"
+dirname="${go_mirror_home_cache}"
+#newhome "${1}/${dirname}"||exit $(( 2 + $? ))
+newhome "/mnt/localstorage/${dirname}"||exit 80
+mkdir -p "${NHOME}/${dirname}" || exit 3
+
+################################
+###   load bash prefix lib   ###
+################################
+if [[ -e "${NHOME}/code/shortcuts/prefix_lib.bash" ]] && \
+    cmp "${NHOME}/code/shortcuts/prefix_lib.bash" "${PHOME}/code/shortcuts/prefix_lib.bash" ;then
+    source "${NHOME}/code/shortcuts/prefix_lib.bash"
+else
+    echo '#################################################################'
+    echo '###   WARNING: useing PHOME'\''s prefix_lib.bash, not synced         ###'
+    echo '#################################################################'
+    source "${PHOME}/code/shortcuts/prefix_lib.bash"
+fi
+argparse ${@}
+
+asksync 12
+
+ask_ready "Ready to replace link ?"
+mirrorlink 
+#replace_link || exit 4
+
+cd ${HOME}
+
+#####################
+###   go mirror   ###
+#####################
+if [[ -e "${NHOME}/code/shortcuts/startprefix_bash" ]] && \
+    cmp "${NHOME}/code/shortcuts/startprefix_bash" "${PHOME}/code/shortcuts/startprefix_bash" ;then
+    source "${NHOME}/code/shortcuts/startprefix_bash"
+else
+    echo '#################################################################'
+    echo '###   WARNING: useing PHOME'\''s startprefix, not synced         ###'
+    echo '#################################################################'
+    source "${PHOME}/code/shortcuts/startprefix_bash"
+fi
+
+############################
+###   back from prefix   ###
+############################
+asksync 21
+#restore_link || echo error link could not restored && exit 5
+echo leaving mirror...
+

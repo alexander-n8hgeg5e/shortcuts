@@ -1,4 +1,8 @@
 #!/bin/fish
+set args $argv
+test $args[1] = submodule
+    and test $args[2] = update
+    and set args $args[3..-1]
 git submodule init
 git submodule sync --recursive
-git submodule update --init  --checkout --recursive --no-fetch $argv
+git submodule update --init  --checkout --recursive --no-fetch $args

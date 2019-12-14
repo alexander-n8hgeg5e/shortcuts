@@ -1,0 +1,95 @@
+#!/usr/bin/python3
+
+from sys import argv,exit,stderr
+
+if argv[1] not in ['on','off']:
+    print('need first arg to be: "on" or "off"',file=stderr)
+    exit(1)
+
+
+def desktop2key(d):
+    cmd=['hostname']
+    if check_output(cmd).decode().strip()!='esadc':
+        return None
+    if int(d)==0:
+        return str(1)
+    if int(d)==1:
+        return str(3)
+    
+
+from os import environ
+filenames={}
+filenames.update({'spectrwm' : environ['HOME'] + '/.spectrwm.conf' })
+filenames.update({ 'i3' : environ['HOME'] + '/.config/i3/config.part.esadc:0' })
+
+
+
+from subprocess import check_call,call,check_output,CalledProcessError
+
+patterns={}
+i3_pat='bindsym[ ]*Ctrl[ ]*[+][ ]*Mod1[ ]*[+][ ]*[qe][ ]*workspace[ ]*[0-9]+'
+spectrwm_pat='bind[^=]+[=][ ]*Mod1[ ]*[+][ ]*Control[ ]*[+][ ]*[qwert]'
+patterns.update({'i3':i3_pat})
+patterns.update({'spectrwm':spectrwm_pat})
+
+
+if argv[1] == 'on':
+    sed_on_cmds = {}
+    for k,v in patterns.items():
+        sed_on_cmds.update({ k : ['s/^[^#]*('+ v +')/#\\1/' ]})
+
+    on_cmds={}
+    for k,v in filenames.items():
+        on_cmds.update({ k : ['sed','-i','-r', " ; ".join( sed_on_cmds[k] ), v ]})
+
+    for v in on_cmds.values():
+        check_call(v)
+
+if argv[1] == 'off':
+    sed_off_cmds = []
+
+    sed_off_cmds = {}
+    for k,v in patterns.items():
+        sed_off_cmds.update({ k : ['s/^([ ]*)[#]*[# ]*[#]('+ v +')/\\1\\2/']})
+
+    off_cmds={}
+    for k,v in filenames.items():
+        off_cmds.update({ k : ['sed','-i','-r', " ; ".join( sed_off_cmds[k] ), v ]})
+
+    for v in off_cmds.values():
+        check_call(v)
+
+    cmd=[ 'sudo', 'killall', 'synergys' ]
+    call(cmd) 
+    cmd = ['sudo', 'killall', 'synergyc' ]
+    call(cmd)
+    cmd = [ 'sudo', 'killall', 'synergy-core' ]
+    call(cmd)
+
+# reload wm
+#cmd = [ 'xdotool', 'getactivewindow' ]
+#activewin0=check_output(cmd).decode().strip()
+#cmd = [ 'xdotool', 'getwindowfocus' ]
+#activewin1=check_output(cmd).decode().strip()
+cmd = [ 'xdotool', 'get_desktop' ]
+desktop=check_output(cmd).decode().strip()
+#print(activewin0)
+#print(activewin1)
+cmds=[]
+cmds.append(['killall','-sHUP','spectrwm'])
+cmds.append(['i3-msg','-t','command','reload'])
+
+for cmd in cmds:
+    try:
+        check_call(cmd)
+    except CalledProcessError:
+        pass
+
+#cmd = [ 'xdotool', 'windowactivate',activewin0 ]
+#call(cmd)
+#cmd = [ 'xdotool', 'windowfocus',activewin1 ]
+#call(cmd)
+from time import sleep
+sleep(1)
+cmd = [ 'xdotool', 'key','ctrl+alt+'+desktop2key(desktop) ]
+call(cmd)

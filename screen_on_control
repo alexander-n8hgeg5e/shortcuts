@@ -1,0 +1,33 @@
+#!/bin/fish
+
+# init
+set displays "$DISPLAY"
+set screen_on_control_1_cmd screen_on_control_1
+
+if test "$hostnamE" = esadc
+    sudo rc-service -q skyscraper status
+    if test $status -eq 0
+        set displays $displays "skyscraper:0"
+    end
+end
+# init end
+
+# cleanup
+set pids (ps -e -o pid,cmd\
+         |grep -E '[ ]*[1-9][0-9]*[ ]\S*fish[ ]+\S*/screen_on_control_1'\
+         |grep -oE '^[ ]*[1-9][0-9]*' )
+
+for pid in $pids
+    kill $pid
+end
+
+# start per display the control prog
+#
+set last_display_index (count $displays)
+set pre_last_display_index (math $last_display_index - 1)
+
+for i in (seq $pre_last_display_index)
+    $screen_on_control_1_cmd $displays[$i] &
+end
+
+eval $screen_on_control_1_cmd $displays[$last_display_index]

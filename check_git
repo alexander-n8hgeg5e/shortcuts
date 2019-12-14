@@ -1,0 +1,9 @@
+#!/bin/fish
+set fkwds (cat ~/.filterkwds)
+
+for j in $fkwds
+	for i in (git ls-files)
+		grep -H -n -i "$j" "$i"
+	end
+	read
+end

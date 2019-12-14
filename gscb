@@ -1,6 +1,10 @@
 #!/bin/fish
-git checkout -b $argv[1]
+set args $argv
+test "$args[1]" = checkout
+    and test "$args[2]" = "-b"
+    and set -- args "$args[3..-1]"
+git checkout -b $args[1]
 and git submodule init
 and git submodule sync --recursive
-and git submodule foreach --recursive fish -c "git checkout -b $argv[1]"
+and git submodule foreach --recursive fish -c "git checkout -b $args[1]"
     

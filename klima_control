@@ -1,0 +1,20 @@
+set state 0 
+set counter 100
+set value 0.0855
+while true
+    echo counter= $counter
+    set data (string split ' ' (sensors|grep -Eo '^(fan1|^temp1)[:][ ]+[+0-9.]+'|tr -s ' '|cut -d' ' -f2|tr -d '+'))
+
+    test (echo (math $data[2] / $data[1])" > $value"|bc) -eq 1 
+    and set counter (math "$counter + 1")
+    or set counter (math "$counter - 1")
+
+    test $counter -gt 103 ; and test $state -eq 0 ; and set state 1 ; and klima_on 
+    test $counter -lt  97 ; and test $state -eq 1 ; and set state 0 ; and klima_off 
+
+    test $counter -gt 110 ; and set counter 110
+    test $counter -lt 90  ; and set counter 90 
+
+    echo counter= $counter
+    sleep 3
+end

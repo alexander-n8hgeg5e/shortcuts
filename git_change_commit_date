@@ -1,0 +1,3 @@
+#!/bin/fish
+set -x GIT_COMMITTER_DATE (date -Is -d $argv)
+git commit --amend --no-edit --date $GIT_COMMITTER_DATE

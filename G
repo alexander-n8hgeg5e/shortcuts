@@ -1,0 +1,40 @@
+#!/usr/bin/python3
+
+xcalib_args_reset  = ['-c','-a']
+xcalib_cmdbase=['xcalib']
+
+from sys import path
+from os import environ
+from pylib.screen_utils import get_connected_output_count_at_env_layout_index
+from sys import stdout,exit,stderr
+from sys import argv
+from os import stat,chmod
+from warnings import warn
+from subprocess import check_call
+from argparse import ArgumentParser
+
+def parse_args():
+    a=ArgumentParser()
+    global args
+    a.add_argument(dest="screen_index",type=int)
+    a.add_argument(dest="gamma_correction",type=float)
+    args=a.parse_args()
+    args.screen_index-=1
+
+parse_args()
+
+
+data_key=str(args.screen_index)
+
+outp_index,x_display=get_connected_output_count_at_env_layout_index(args.screen_index,return_x_display=True)
+
+xcalib_output_args=['-o',str(outp_index)]
+
+reset_cmd=xcalib_cmdbase+xcalib_output_args+xcalib_args_reset
+cmd=xcalib_cmdbase+xcalib_output_args+['-gc']+[str(args.gamma_correction)]
+env=environ.copy()
+env.update({"DISPLAY":x_display})
+print(reset_cmd)
+print(cmd)
+check_call(reset_cmd,env=env)
+check_call(cmd,env=env)

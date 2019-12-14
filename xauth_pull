@@ -1,0 +1,3 @@
+#!/bin/fish
+# pull args:       remote_display ,  remotehost   ,     local_display
+ssh $argv[2] xauth nextract - $argv[1] | rev|cut -d" " -f1|rev | xargs xauth add $argv[3] .

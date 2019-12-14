@@ -3,10 +3,13 @@ waitmsg='>> waiting for ANYKEY <<'
 from logging import INFO, DEBUG, WARNING
 LOGLEVEL=WARNING
 EWMH_SUPPORT=True
-socketfile='/tmp/ioufoiusufiosur'
+socketfilebase='/tmp/ioufoiusufiosur'
+socketfile=None
+hostname=None
+pagerfilepath='/dev/shm/pagerfile'
 
 #####   logging   ########################
-try:
+try:                            #{{{
     from logging import Formatter as LogFormatter
     from logging import getLogger
     #from logging.handlers import RotatingFileHandler
@@ -24,20 +27,22 @@ try:
     handler.setFormatter( LogFormatter( '%(asctime)s %(levelname)s %(funcName)s: %(message)s' ) )
     l.addHandler(handler)
 except KeyboardInterrupt as e: raise e
-except Exception         as e: print(e)
+except Exception         as e: print(e)        #}}}
 
 ######     imports        ##############
-from sys import argv
+#{{{
+from sys import argv,stdin
 from sys import exit
-from os import environ
+from os import environ,isatty
 from os.path import abspath,isdir,exists,split,basename,isdir,stat
 from os.path import join as pathjoin
 from os import mkdir
 from os import stat as stat_file
 import neovim
-from subprocess import getstatusoutput
+from subprocess import getstatusoutput,DEVNULL #}}}
 
-# setup global vars
+#####      setup global vars   #####
+#{{{
 have_sockets = False
 sockets=None
 generated_focus_of_nvim_by_socketnum_list=False
@@ -45,11 +50,26 @@ generated_incomplete_monitor_positions_list=False
 nvims=None
 back=False
 generated_pos_of_nvim_by_sock_list=False
+generated_pos_of_nvim_by_sock=False
 generated_monitor_widths=False
 generated_visible_win_list=False
 generated_nvims_visible_state_by_socket=False
 generated_win_id_list_by_socket_index=False
+generated_visible_nvims_list=False
+generated_screens=False
+generated_xservers_dict_and_sock2xserver_list=False
+generated_x_display_list=False
+generated_win_id_to_geom_dict=False
+generated_win_id_xserver_dict_list_by_socket_index=False
 
+try:
+    eroot=environ["EROOT"]
+except KeyError:
+    eroot='/'
+# }}}
+
+#####    parse args     ######
+#{{{
 import argparse
 parser=argparse.ArgumentParser( description="opens file in new nvim tab")
 parser.add_argument("-w","--wait", action="store_true", help= "Wait until confirmationn by a keypress after opening the file/s" )
@@ -59,45 +79,126 @@ parser.add_argument( "-v",'--verbose',action="store_true", help="be verbose and 
 parser.add_argument( "-s",'--select-socket',action="store", type=int , default=0 , help="scan nvim sockets and use number of found socket, 0 is the last opened nvim")
 parser.add_argument( "-1", action='store_const', const=1 , dest='select_socket', help="same as -s1")
 parser.add_argument( "-d",'--debug',action="store_true", help="enable debug logging")
+parser.add_argument( "-C",'--command',action="store", default=None, help="run this command in the somehow choosen nvim")
 parser.add_argument( '--git',action="store_true", help="use settings for edit git things. Commits and like that.")
 parser.add_argument( "-t",'--new-tab',action="store_true", help="open in new tab in every case")
 parser.add_argument( "--testing",action="store_true", help="testing mode, runs some hardcoded func during develpement")
 parser.add_argument( "-g",'--guess', action="store_true",  default=False, help="do guessing things")
 parser.add_argument( "--scan", action="store_true",  default=False, help="only scan and write a socket list file")
-parser.add_argument('files', metavar='files', nargs='+', type=str, help='files to open')
-##parser.add_argument()
+parser.add_argument('files', nargs='*', default=[] , type=str, help='files to open')
+##parser.add_argument()   #}}} 
 
 def d(msg):
-    pass
-    ##l.debug(msg)
+    pass   #{{{
+    ##l.debug(msg)   #}}} 
 
+def gen_screens():
+    global generated_screens   #{{{
+    global screens
+    global screen_layout
+    if generated_screens and mode is 0:
+        return
+    if generated_screens and mode is 1:
+        return
+    global screen_utils
+    from pylib import screen_utils
+    screen_layout=screen_utils.parse_screen_layout_env_var()
+    if len(screen_layout) == 0:
+        return None
+    screens = []
+    screens.append( { 'server' : screen_layout[0]['x_server'] , 'x' : 0 , 'y' : 0 } )
+    for screen in screen_layout[1:]:
+            oldscreen=screens[-1]
+            screens.append( { 'server' : screen['x_server'] , 'x' : int(screen['size'][0])+oldscreen['x'] , 'y' : 0 } )   #}}} 
+         
 def is_sock(path):
-    return stat.S_ISDIR(stat_file(path).st_mode)
+    return stat.S_ISDIR(stat_file(path).st_mode)   #{{{   #}}} 
+
+def get_hostname():
+    global hostname   #{{{
+    if hostname == None:
+        from platform import node
+        hostname=node()
+    return hostname   #}}} 
 
 def is_prob_nvim_sock(path):
-            exit_code , output = getstatusoutput(["lsof "+ path])
+            exit_code , output = getstatusoutput(["lsof "+ path])   #{{{
             if int(exit_code) == 0 and output[0:4].find("nvim"):
                 return True
             else:
-                return False
+                return False   #}}} 
 
 def gen_visible_win_list(mode=0):
-    global generated_visible_win_list
+    global generated_visible_win_list   #{{{
+    global visible_win_list
     focused_nvim_index_ = focused_nvim_index()
     if generated_visible_win_list and mode==0:
         return
     if generated_visible_win_list and mode==1:
         return
+
     attach_nvims()
-    global visible_win_list
-    l = nvims[focused_nvim_index_].call("system","xdotool search --onlyvisible '.*' ^ /dev/null").splitlines()
+
     visible_win_list=[]
-    for i in l:
-        visible_win_list.append(int(i))
-    generated_visible_win_list=True
+    generated_visible_win_list=True   #}}} 
+
+def gen_xservers_dict_and_sock2xserver_list(mode=0):
+    """   #{{{
+    xservers := {"display_string" : [list_of_nvim_socket_indexes] }
+    """
+    global generated_xservers_dict_and_sock2xserver_list
+    global xservers
+    global sock2server_list
+    if generated_xservers_dict_and_sock2xserver_list and mode is 0:
+        return
+    if generated_xservers_dict_and_sock2xserver_list and mode is 1:
+        return
+    gen_screens()
+    gen_win_id_list_by_socket_index()
+    xservers={}
+    sock2server_list=[]
+    for i in screen_layout:
+        sock2server_list.append(s)
+        if not s in xservers.keys():
+            xservers.update( { s : [i] } )
+        else:
+            xservers[s].append(i)
+    generated_xservers_dict_and_sock2xserver_list=True   #}}} 
+
+def gen_x_display_list(mode=0):
+    """   #{{{
+    """
+    global generated_x_display_list
+    global x_display_list
+    gen_screens()
+    if generated_x_display_list and mode is 0:
+        return
+    if generated_x_display_list and mode is 1:
+        return
+    x_display_list=[]
+    for screen in screen_layout:
+        if screen['x_server'] not in x_display_list:
+            x_display_list.append(screen['x_server'])
+    generated_x_display_list=True   #}}} 
+
+def gen_win_id_to_geom_dict(mode=0):
+    """   #{{{
+    """
+    global generated_win_id_to_geom_dict
+    if generated_win_id_to_geom_dict and mode is 0:
+        return
+    if generated_win_id_to_geom_dict and mode is 1:
+        return
+    gen_screens()
+    gen_win_id_list_by_socket_index()
+    win_id_to_geom_dict={}
+    for winid in win_id_list_by_socket_index:
+        win_id_to_geom_dict.update({winid:xdotool_utils.get_win_geometry(str(winid))})
+
+    generated_win_id_to_geom_dict=True   #}}} 
 
 def gen_nvims_visible_state_by_socket(mode=0):
-    global generated_nvims_visible_state_by_socket
+    global generated_nvims_visible_state_by_socket   #{{{
     if generated_nvims_visible_state_by_socket and mode is 0:
         return
     if generated_nvims_visible_state_by_socket and mode is 1:
@@ -106,36 +207,37 @@ def gen_nvims_visible_state_by_socket(mode=0):
     nvims_visible_state_by_socket=[]
     gen_visible_win_list()
     gen_win_id_list_by_socket_index()
-    for nvim_win in win_id_list_by_socket_index:
+    for socket_index in range(len(win_id_list_by_socket_index)):
         state=False
         for visible_win in visible_win_list:
-            #l.debug("visible win: "+ str(type(visible_win)))
-            #l.debug("nvim win   : "+ str(type(nvim_win)))
-            if visible_win == nvim_win:
+            # visible_win := ( server_display_string , win_id )
+            servermatch = visible_win[0] == sock2server_list[socket_index]
+            win_id_match = visible_win[1] == win_id_list_by_socket_index[socket_index]
+            if servermatch and win_id_match: 
                 #l.debug("found")
                 state=True
         nvims_visible_state_by_socket.append(state)
-    generated_nvims_visible_state_by_socket=True
+    generated_nvims_visible_state_by_socket=True   #}}} 
 
 def list2int(l):
-    r=[]
+    r=[]   #{{{
     for i in l:
         r.append(int(i))
-    return r
+    return r   #}}} 
 
 def nvim_is_focused_win( socket ):
-    for i in range(len(sockets)):
+    for i in range(len(sockets)):   #{{{
         if sockets[i] == socket:
-            return focus_of_nvim_by_socketnum_list[i]
+            return focus_of_nvim_by_socketnum_list[i]   #}}} 
    
 def sum_of_list(l):
-    sum=0
+    sum=0   #{{{
     for i in l:
         sum = sum + i
-    return sum
+    return sum   #}}} 
 
 def __get_active_win_pos_str(count_most, isleft = None):
-    ret=''
+    ret=''   #{{{
     for i in range(count_most):
         if isleft:
             ret = ret + 'l'
@@ -143,39 +245,33 @@ def __get_active_win_pos_str(count_most, isleft = None):
             ret = ret + 'r'
         else:
             raise Exception("isleft is not left nor right,... ")
-    return ret
+    return ret   #}}} 
 
 def get_active_win_pos():
-    """
+    """   #{{{
     returns the horizontal center pos of win as int
     """
-    attach_nvims(mode=0)
-    focused_nvim_index_ = focused_nvim_index()
-    win_width       = int(nvims[focused_nvim_index_].call('system','xdotool getactivewindow getwindowgeometry|grep Geometry:|cut -d: -f2|string trim|cut -dx -f1'))
-    x_pos_left_edge = int(nvims[focused_nvim_index_].call('system','xdotool getactivewindow getwindowgeometry|grep Position:|cut -d: -f2|string trim|cut -d, -f1'))
-    x_pos = x_pos_left_edge + win_width / 2 # so x-center of win defines where the win is
-    return x_pos
+    global active_win_id
+    global active_win_geo
+    global xdotool_utils
+    from pylib.xutils import xdotool_utils
+    active_win_id = xdotool_utils.get_active_win_id()
+    if active_win_id:
+        active_win_geo=xdotool_utils.get_win_geometry(active_win_id)
+    return int(active_win_geo['pos'][0])   #}}} 
 
-def get_win_x_pos( int_win_id ):
-    """
+def get_win_x_pos( xserver, int_win_id ):
+    """   #{{{
     returns the horizontal center pos of win as int
     """
-    attach_nvims(mode=0)
-    focused_nvim_index_ = focused_nvim_index()
-    try:
-        ##l.debug( "win id: " + str( int_win_id ))
-        win_width       = int(nvims[focused_nvim_index_].call('system','xdotool getwindowgeometry ' +str(int_win_id)+ '|grep Geometry:|cut -d: -f2|string trim|cut -dx -f1'))
-        x_pos_left_edge = int(nvims[focused_nvim_index_].call('system','xdotool getwindowgeometry ' +str(int_win_id)+ '|grep Position:|cut -d: -f2|string trim|cut -d, -f1'))
-        x_pos = x_pos_left_edge + win_width / 2 # so x-center of win defines where the win is
-    except TypeError as e:
-        x_pos = None
-    except ValueError as e:
-        x_pos = None
-    ##l.debug("return x_pos: "+str(x_pos))
-    return x_pos
+    geo=xdotool_utils.get_win_geometry(str(int_win_id),x_display=xserver)
+    return int(geo['pos'][0])+int(geo['size'][0]/2)   #}}} 
+
+def gen_sock_2_pos_list():
+    cmd=[ '-S', '/tmp/tmux-1000/default', 'list-panes', '-F', '"#{pane_id} #{session_name}"' ]   #{{{   #}}} 
 
 def get_win_pos( x_pos ):
-    """
+    """   #{{{
     returns the screen of the horizontal x_pos
     """
     gen_monitor_widths(mode=0)
@@ -186,37 +282,58 @@ def get_win_pos( x_pos ):
                 return monitor_index
         except TypeError:
             pass
-    return None
+    return None   #}}} 
 
 def get_win_id_of_nvim_by_socket_index(socketindex):
-    gen_win_id_list_by_socket_index()
-    return win_id_list_by_socket_index[socketindex]
+    gen_win_id_list_by_socket_index()   #{{{
+    return win_id_list_by_socket_index[socketindex]   #}}} 
 
 def _get_win_id_of_nvim_by_socket_index(socketindex):
-        gen_socketlist_of_nvims(mode=0)
+        gen_socketlist_of_nvims(mode=0)   #{{{
         try:
             nvim_win_id = int( nvims[socketindex].eval("$WINDOWID"))
         except ValueError:
             # if for some reason some nvim sockets do return faulty stuff
             nvim_win_id = None
         #l.debug( "nvim_win_id: "+ str(nvim_win_id ))
-        return nvim_win_id
+        return nvim_win_id   #}}} 
+
+def _get_win_id_and_x_display_of_nvim_by_socket_index(socketindex):
+        gen_socketlist_of_nvims(mode=0)   #{{{
+        for i in x_display_list:
+            try:
+                nvims[socketindex].command('let $DISPLAY="'+i+'"')
+                nvim_win_id =  nvims[socketindex].call('system',['xdotool','getactivewindow'])
+                x_display   =  nvims[socketindex].eval('$DISPLAY')
+                break
+            except ValueError:
+                # if for some reason some nvim sockets do return faulty stuff
+                nvim_win_id = None
+                x_display = None
+        return nvim_win_id,x_display   #}}} 
 
 def gen_win_id_list_by_socket_index(mode=0):
-    global generated_win_id_list_by_socket_index
+    global generated_win_id_list_by_socket_index   #{{{
+    global generated_win_id_xserver_dict_list_by_socket_index
+    global x_display_list
+    global win_id_list_by_socket_index
     if (mode==0) and generated_win_id_list_by_socket_index:
         return
     if (mode==1) and len(generated_win_id_list_by_socket_index) == len(sockets):
         return
-    global win_id_list_by_socket_index
+    gen_x_display_list()
     win_id_list_by_socket_index=[]
+    win_id_xserver_dict_list_by_socket_index=[]
     for socket_index in range(len(sockets)):
             win_id_list_by_socket_index.append(_get_win_id_of_nvim_by_socket_index(socket_index))
+            win_id,x_display = _get_win_id_and_x_display_of_nvim_by_socket_index(socket_index)
+            if win_id:
+                win_id_xserver_dict_list_by_socket_index.append({'win_id':win_id,'x_display':x_display})
     generated_win_id_list_by_socket_index=True
+    generated_win_id_xserver_dict_list_by_socket_index=True   #}}} 
 
-    
 def gen_monitor_widths(mode=0):
-    """
+    """   #{{{
     sets the global monitor width vars.
     So its easier to adress them.
     """
@@ -226,10 +343,10 @@ def gen_monitor_widths(mode=0):
         return
     monitor_widths = environ['monitor_widths'].split(':')
     monitor_widths = list2int(monitor_widths)
-    generated_monitor_widths=True
+    generated_monitor_widths=True   #}}} 
 
 def _get_active_win_pos_str( x_pos, right_border , max_count_x_distance_from_boarder, widths ):
-        """
+        """   #{{{
         returns a string representing the windows pos if pos is in range.
         r means the rightmost, max_count_x_distance_from_boarder = 0 is enough to find and return this
         l means the leftmost
@@ -252,10 +369,10 @@ def _get_active_win_pos_str( x_pos, right_border , max_count_x_distance_from_boa
                  ##l.debug("undefined")
                  # undefined
                  activewin=None
-        return activewin
+        return activewin   #}}} 
     
 def get_active_win_pos_str( x_pos, right_border , widths ):
-    """
+    """   #{{{
     returns a string representing the windows pos.
     r means the rightmost
     l means the leftmost
@@ -276,10 +393,62 @@ def get_active_win_pos_str( x_pos, right_border , widths ):
     else:
         # undefined
         active_win_pos_str=None
-    return active_win_pos_str 
+    return active_win_pos_str    #}}} 
+
+def gen_pos_of_nvim_by_sock(mode=0):
+    """   #{{{
+    modes are: 0 initial generation, do nothing if run again
+               1 try determine if update is needed and update in case
+               2 update all values unconditionally
+    """
+    # var to update
+    global pos_of_nvim_by_sock
+    if mode==0 and generated_pos_of_nvim_by_sock:
+        return
+    if mode==1 and generated_pos_of_nvim_by_sock:
+            if len(pos_of_nvim_by_sock) == len(sockets):
+                return
+            
+    # gen required stuff
+    gen_visible_nvims_list()
+    gen_screens()
+
+    pos_of_nvim_by_sock=[]
+    right_border = sum_of_list(monitor_widths)
+    for nvim_index in visible_nvims_list:
+        win_id = get_win_id_of_nvim_by_socket_index(nvim_index)
+        server = sock2server_list[nvim_index] 
+        win_x_pos = get_win_x_pos(server,win_id)
+        win_pos_index = get_win_pos(win_x_pos)
+        pos=None
+        for screen_index in range(len(screens)):
+            if win_pos_index == screen_index:
+                pos=screen_index
+        pos_of_nvim_by_sock.append(pos)
+    pos_of_nvim_by_sock = pos_of_nvim_by_sock
+    generated_pos_of_nvim_by_sock=True   #}}} 
+
+def gen_visible_nvims_list(mode=0):
+    """   #{{{
+    modes are: 0 initial generation, do nothing if run again
+               1 try determine if update is needed and update in case
+               2 update all values unconditionally
+    """
+    # var to update
+    global visible_nvims_list
+    if mode==0 and generated_visible_nvims_list:
+        return
+    if mode==1 and generated_visible_nvims_list:
+            if len(visible_nvims_list) == len(sockets):
+                return
+    visible_nvims_list=[]
+    gen_nvims_visible_state_by_socket()
+    for socket_index in range(len(nvims_visible_state_by_socket)):
+        if nvims_visible_state_by_socket[socket_index]:
+            visible_nvims_list.append(socket_index)   #}}} 
 
 def gen_incomplete_monitor_positions_list(mode=0):
-    """
+    """   #{{{
     Connects the neovims via sockets in socket-list and returns unreliable list with screen positions in the same order.
     positions are: "r" , "l"
     modes are: 0 initial generation, do nothing if run again
@@ -287,6 +456,7 @@ def gen_incomplete_monitor_positions_list(mode=0):
                2 update all values unconditionally
     """
     # var to update
+    global generated_incomplete_monitor_positions_list
     global pos_of_nvim_by_sock
     if mode==0 and generated_incomplete_monitor_positions_list:
         return
@@ -305,60 +475,27 @@ def gen_incomplete_monitor_positions_list(mode=0):
         else:
             positions.append('_')
     pos_of_nvim_by_sock = positions
-    gen_incomplete_monitor_positions_list=True
-        
+    generated_incomplete_monitor_positions_list=True   #}}} 
             
 def gen_pos_of_nvim_by_sock_list(mode=0):
-    """
+    """   #{{{
     Connects the neovims via sockets in socket-list and returns unreliable list with screen positions in the same order.
     positions are: range(len(monitor widths env var))
     modes are: 0 initial generation, do nothing if run again
                1 try determine if update is needed and update in case
                2 update all values unconditionally
     """
-    ##l.debug("enter")
-    # var to update
-    global pos_of_nvim_by_sock
-    global generated_pos_of_nvim_by_sock_list
-    if mode==0 and generated_pos_of_nvim_by_sock_list:
-        return
-    if mode==1 and generated_pos_of_nvim_by_sock_list:
-            gen_monitor_widths(mode=0)    
-            if len(pos_of_nvim_by_sock) == len(monitor_widths):
-                return
-    gen_monitor_widths(mode=0)
-    gen_socketlist_of_nvims(mode=0)
-    positions=[]
-    right_border = sum_of_list(monitor_widths)
-    # probably more nvims
-    for nvim_index in range(len(nvims)):
-          ##l.debug("nvim index: "+str(nvim_index))
-          pos=None
-          for monitor_index in range(len(monitor_widths)):
-              ##l.debug("monitor index: "+str(monitor_index))
-              win_id = get_win_id_of_nvim_by_socket_index(nvim_index)
-              ##l.debug("win id: "+ str(win_id))
-              win_x_pos = get_win_x_pos(win_id)
-              ##l.debug("win_x_pos: "+str(win_x_pos))
-              win_pos_index = get_win_pos(win_x_pos)
-              ##l.debug("win_pos_index: "+str(win_pos_index))
-              if win_pos_index == monitor_index:
-                  ##l.debug("found monitor: "+str(monitor_index))
-                  pos=monitor_index
-          positions.append(pos)
-    pos_of_nvim_by_sock = positions
-    generated_pos_of_nvim_by_sock_list=True
-    ##l.debug("leave")
+    return   #}}} 
 
 def focused_nvim_index():
-    gen_focus_of_nvim_by_socketnum_list(mode=0)
+    gen_focus_of_nvim_by_socketnum_list(mode=0)   #{{{
     for i in range(len(nvims)):
         if focus_of_nvim_by_socketnum_list[i]:
             return i
-    return None
+    return None   #}}} 
 
 def gen_focus_of_nvim_by_socketnum_list(mode=0):
-    """
+    """   #{{{
     Connects the neovims via sockets in socket-list and returns list with their focus-state(True/False).
     States are True means focus, or False means no focus.
     modes are: 0 initial generation, do nothing if run again
@@ -378,7 +515,10 @@ def gen_focus_of_nvim_by_socketnum_list(mode=0):
     attach_nvims(mode=0)
     for socket_index in range(len(sockets)):
         ##l.debug("calling xdotool getwindowfocus")
-        active_win = int(nvims[socket_index].call( 'system', 'xdotool getwindowfocus' ))
+        try:
+            active_win = int(nvims[socket_index].call( 'system', 'xdotool getwindowfocus' ))
+        except ValueError:
+            pass
         try:
             nvim_win = int( nvims[socket_index].call( 'expand' , "$WINDOWID" ))  # luckily some of my progs saves this to the env
         except ValueError:
@@ -400,11 +540,10 @@ def gen_focus_of_nvim_by_socketnum_list(mode=0):
             states.append(False)
             ##l.debug('focus: False')
     focus_of_nvim_by_socketnum_list = states
-    generated_focus_of_nvim_by_socketnum_list = True
+    generated_focus_of_nvim_by_socketnum_list = True   #}}} 
             
-
 def attach_nvims(mode=0):
-    """
+    """   #{{{
     attach neovim interfaces to the global sockets and set the global nvims
     modes are: 0 initial generation, do nothing if run again
                1 try determine if update is needed and update in case
@@ -427,11 +566,10 @@ def attach_nvims(mode=0):
     except FileNotFoundError:
         # Failed prob because of outdated socketfile
         # so need to update socketfile.
-        scan_for_sockets()
-
+        scan_for_sockets()   #}}} 
 
 def gen_socketlist_of_nvims(mode=0):
-    """
+    """   #{{{
     if unset ,sets the global sockets list
     modes are: 0 initial generation, do nothing if run again
                1 try determine if update is needed and update in case
@@ -455,16 +593,19 @@ def gen_socketlist_of_nvims(mode=0):
             else:
                 v('need to load or scan sockets: '+envsock)
                 load_or_scan_sockets()
-    gen_socketlist_of_nvims=True
+    gen_socketlist_of_nvims=True   #}}} 
                 
 def decide_witch_nvim_sock_to_use_for_edit():
+    global socket_index_to_connect   #{{{
+    socket_index_to_connect=0
+    
     # need some sockets
     gen_socketlist_of_nvims(mode=0)
+    
     # default fallback
-    global socket_index_to_connect
-    socket_index_to_connect=0
     global open_other_monitor
     open_other_monitor=False
+
     # decide
     if len(sockets)==1:
         return
@@ -514,13 +655,15 @@ def decide_witch_nvim_sock_to_use_for_edit():
                 if focus_of_nvim_by_socketnum_list[i]:
                     socket_index_to_connect = i
                     open_other_monitor = False
-                    return
+                    return   #}}} 
 
 def v(msg, **kwargs):
-    if args.verbose:
-        print(msg, **kwargs)
+    if args.verbose:   #{{{
+        print(msg, **kwargs)   #}}} 
 
 def scan_for_sockets():
+    global xdotool_utils   #{{{
+    from pylib.xutils import xdotool_utils
     v('scanning all sockets',end='')
     global sockets
     from os import listdir
@@ -544,16 +687,26 @@ def scan_for_sockets():
             l.info(e)
     v(('.done'))
     sockets = dirs
+    v('found sockets:')
+    socketfile=get_socketfilename()
     f=open(socketfile,mode='wt')
     for socket in sockets:
+         v(str(socket))
          f.write(socket)
          f.write('\n')
     f.close()
-    have_sockets = True
+    have_sockets = True   #}}} 
+    
+def get_socketfilename():
+    global socketfile   #{{{
+    if socketfile is None:
+        socketfile= socketfilebase + "_" + get_hostname()
+    return socketfile   #}}} 
 
 def load_or_scan_sockets():
-    global sockets
+    global sockets   #{{{
     sockets=[]
+    socketfile=get_socketfilename()
     if exists(socketfile):
         ##l.debug("useing socketfile")
         f=open(socketfile,mode='rt')
@@ -562,48 +715,48 @@ def load_or_scan_sockets():
     else:
         ##l.debug("no socketfile")
         scan_for_sockets()
-    ##l.debug(sockets)
+    ##l.debug(sockets)   #}}} 
 
 def remote():
-    bn=basename(sockets[0])
+    bn=basename(sockets[0])   #{{{
     if bn[0:18]=="nvim_forward_from_":
-        return True
+        return True   #}}} 
 
 def get_remote_hostname():
-    a=basename(sockets[0])[18:]
+    a=basename(sockets[0])[18:]   #{{{
     pos=a.find('_')
     hostname=a[:pos]
     print(hostname)
     if len(hostname)==0:
         raise Exception("error1")
-    return hostname 
+    return hostname    #}}} 
     
 def makedir(path):
-    """
+    """   #{{{
     Makes a dir if needed for the file addressed with path.
     If the path is already a dir, nothing happens. 
     """
     thing=abspath(path)
     thing=split(abspath(path))[0] # assuming thing is always a a dir or not existing
     if not exists(thing):
-        mkdir(thing)
+        mkdir(thing)   #}}} 
 
 def autowait(first_file_arg):
-    # don't wait for pass prog. It don't like it, or so.
+    # don't wait for pass prog. It don't like it, or so.   #{{{
     if (not first_file_arg.find("pass") is -1) and (not first_file_arg.find("shm") is -1):
-        wait()
+        wait()   #}}} 
 
 def wait():
-    from sys import stdin
+    from sys import stdin   #{{{
     from tty import setcbreak,tcsetattr,TCSADRAIN,tcgetattr
     old=tcgetattr(stdin)
     setcbreak(stdin)
     print(waitmsg)
     a=stdin.read(1)
-    tcsetattr(stdin, TCSADRAIN, old)
+    tcsetattr(stdin, TCSADRAIN, old)   #}}} 
     
 def gen_target_desktop():
-    """
+    """   #{{{
     target desktop like wmctrl understands desktops
     """
     # use nvim to run cmd because its already running and has display vars, etc. set
@@ -620,10 +773,10 @@ def gen_target_desktop():
                 target_desktop = line.split()[1]
     except KeyboardInterrupt: raise
     except: target_desktop = str(None)
-    return target_desktop
+    return target_desktop   #}}} 
             
 def nvim_open_file(file):
-    makedir(file)
+    makedir(file)   #{{{
     if isdir(file) and args.select_socket == 0 and not args.new_tab:
         pass
     else:
@@ -632,8 +785,7 @@ def nvim_open_file(file):
     if not remote(): 
         nvims[socket_index_to_connect].command( 'e '+abspath(file) )
     else:
-        from platform import node
-        hostname=node()
+        hostname=get_hostname()
         remotehost=get_remote_hostname()
         path_on_remote='/mnt/'+hostname+abspath(file)
         nvims[socket_index_to_connect].command( 'e '+path_on_remote)
@@ -645,23 +797,40 @@ def nvim_open_file(file):
         elif pos_of_nvim_by_sock[ socket_index_to_connect ] == 'l':
             nvims[socket_index_to_connect].call('system','xdotool key --clearmodifiers ctrl+alt+s')
         else:
+            nvims[socket_index_to_connect].call('system','xdotool key --clearmodifiers ctrl+alt+f')   #}}} 
+
+def nvim_run_command(command):
+    if args.select_socket == 0 and not args.new_tab:   #{{{
+        pass
+    else:
+        nvims[ socket_index_to_connect ].call('EventWinLeave')
+        nvims[socket_index_to_connect].command('tabnew')
+
+    nvims[socket_index_to_connect].command( command )
+
+    if open_other_monitor:
+        if pos_of_nvim_by_sock[ socket_index_to_connect ] == 'r':
             nvims[socket_index_to_connect].call('system','xdotool key --clearmodifiers ctrl+alt+f')
+        elif pos_of_nvim_by_sock[ socket_index_to_connect ] == 'l':
+            nvims[socket_index_to_connect].call('system','xdotool key --clearmodifiers ctrl+alt+s')
+        else:
+            nvims[socket_index_to_connect].call('system','xdotool key --clearmodifiers ctrl+alt+f')   #}}} 
 
 def list_to_elementLenList(l):
-    ll=[]
+    ll=[]   #{{{
     for i in l:
         ll.append(len(i))
-    return ll
+    return ll   #}}} 
 
 def gen_target_window_id():
-    global target_window
+    global target_window   #{{{
     try:
         target_window = int(nvims[socket_index_to_connect].call( 'system' , 'echo $WINDOWID' ))
     except ValueError:
-        target_window = None
+        target_window = None   #}}} 
 
 def remember_home_and_to_go_back_there():
-    if len(args.files) == 1:
+    if len(args.files) == 1:   #{{{
         # store winid of inside nvim
         global nvim_win_id
         nvim_win_id = nvims[ socket_index_to_connect ].call( 'win_getid' )
@@ -669,26 +838,26 @@ def remember_home_and_to_go_back_there():
         global back
         back=True
     else:
-        l.error("winback works only with single file")
+        l.error("winback works only with single file")   #}}} 
 
 def setup_way_back():
-    ##l.debug("setup go back stuff")
+    ##l.debug("setup go back stuff")   #{{{
     nvims[socket_index_to_connect].command( "augroup winback")  #start group
     nvims[socket_index_to_connect].command( "au! winback")  #delete the aucmds
     if not open_other_monitor:
           nvims[socket_index_to_connect].command( "au BufUnload <buffer> call win_gotoid("+str(nvim_win_id)+")" )  # finally assign the buffer local autocmd to the group
     elif open_other_monitor:
           nvims[socket_index_to_connect].command( "au BufUnload <buffer> call system('xdotool key --clearmodifiers ctrl+alt+f')")
-    nvims[socket_index_to_connect].command( "augroup end")                  # end group so can be deleted
+    nvims[socket_index_to_connect].command( "augroup end")                  # end group so can be deleted   #}}} 
 
 def enable_debug():
-    l.setLevel( DEBUG )
+    l.setLevel( DEBUG )   #{{{
     for i in l.handlers:
         i.setLevel( DEBUG )
-    ##l.debug( 'debugging enabled' )
+    ##l.debug( 'debugging enabled' )   #}}} 
     
 def table(header,columns):
-    from columnize import columnize as col
+    from columnize import columnize as col   #{{{
     print_list=[]
     headerwidth=0
     for i in range(len(columns)):
@@ -703,16 +872,16 @@ def table(header,columns):
      'array_suffix': '',
      'colfmt': None ,
      'colsep': colsep,
-     'displaywidth': headerwidth + ( len(header) -1 ) * len(colsep),
+     'displaywidth': headerwidth + 2 + ( len(header) -1 ) * len(colsep),
      'lineprefix': '',
      'linesuffix': '\n',
      'ljust': None,
      'term_adjust': False}
     ##l.debug(col_opts[ 'displaywidth'])
-    return col(print_list, opts=col_opts) 
+    return col(print_list, opts=col_opts)    #}}} 
 
 def do_verbose_stuff():
-    gen_focus_of_nvim_by_socketnum_list()
+    gen_focus_of_nvim_by_socketnum_list()   #{{{
     gen_pos_of_nvim_by_sock_list()
     gen_nvims_visible_state_by_socket()
 
@@ -727,18 +896,27 @@ def do_verbose_stuff():
 ### main code
 args=parser.parse_args()
 
+# testing stuff
+#args.verbose=True
+#args.scan=True
+#def exit(*args):
+#    print('exit '+str(*args))
+##### end testing stuff
+
 if args.debug:
     enable_debug()
 
 if args.scan:
     scan_for_sockets()
-    exit()
-
+    if not args.verbose:
+        exit()
 decide_witch_nvim_sock_to_use_for_edit()
 attach_nvims()
 
 if args.verbose:
-    do_verbose_stuff()
+    #do_verbose_stuff()
+    if args.verbose:
+        exit()
 
 if args.testing:
     """
@@ -746,14 +924,22 @@ if args.testing:
     """
     raise Exception('done')
 
-if args.back: 
+if args.back:
     # go back phase 1
     remember_home_and_to_go_back_there()
 
 # open files
-for i in args.files:
-   nvim_open_file(i)
+if not isatty(stdin.fileno()):
+    with open(pagerfilepath,mode="wb") as pf:
+        pf.write(stdin.buffer.read())
+    args.files.append(pagerfilepath)
 
+for i in args.files:
+    nvim_open_file(i)
+
+if args.command:
+    nvim_run_command(args.command)
+        
 if back:
     # go back phase 2
     # this after all win and buffer opening , configure the way back
@@ -761,6 +947,6 @@ if back:
 
 if args.wait:
     wait()
-else:
+elif len(args.files) > 0:
     autowait(args.files[0])
-
+# vim: set foldmethod=marker foldlevel=0 :

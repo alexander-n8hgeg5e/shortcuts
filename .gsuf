@@ -1,0 +1,4 @@
+#!/bin/fish
+git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME submodule init
+git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME submodule sync --recursive
+git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME submodule update --init  --checkout --recursive --nofetch $argv

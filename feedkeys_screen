@@ -1,0 +1,19 @@
+#!/bin/fish
+
+if string match -r '^izbs.*$' "$hostnamE" 
+    test "$argv[1]" = 1;and i3-msg -t command focus left
+    test "$argv[1]" = 2;and i3-msg -t command focus right
+    exit
+end
+
+test "$argv[1]" = 1;and set -x  DISPLAY :0
+test "$argv[1]" = 2;and set -x  DISPLAY skyscraper:0
+test "$argv[1]" = 3;and set -x  DISPLAY :0
+test "$argv[1]" = 4;and set -x  DISPLAY skyscraper:0
+
+xdotool key ctrl+alt+"$argv[1]"
+
+for i in 1 2
+    sleep 0.005
+    xdotool key ctrl+alt+"$argv[1]"
+end

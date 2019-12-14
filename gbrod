@@ -1,0 +1,6 @@
+#!/bin/fish
+set args $argv
+test $args[1] = branch
+    and set args $args[2..-1]
+git branch -m $args[1] old_$args[1]_(date '+%F')
+or git branch -m $args[1] old_$args[1]_(date '+%F-%H-%M')

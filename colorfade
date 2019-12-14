@@ -1,0 +1,17 @@
+#!/bin/fish
+#
+set sleeptime $argv[1]
+
+test -z $sleeptime
+and set sleeptime 1
+
+set colors (cat ~/.colorfade)
+while true
+    for i in $colors
+        set -x DISPLAY :0
+        xsetroot -solid $i
+        set -x DISPLAY skyscraper:0
+        xsetroot -solid $i
+        sleep $sleeptime
+    end
+end

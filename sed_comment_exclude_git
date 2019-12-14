@@ -1,0 +1,19 @@
+#!/bin/fish
+set files (find -type f -regex '\.\/[^.][^g][^i][^t].*')
+test -n $argv[3] ; and set files (for i in  $files;echo $i |grep -Ev $argv[3];end)
+echo files:
+for i in $files
+    echo $i
+end
+set sed_cmd 's/(^.*'"$argv[1]"')/'"$argv[2]"'\1/'
+
+echo
+
+echo "do sed cmd on the files listed above (y/n) ?"
+echo "sed cmd: '$sed_cmd'"
+read a
+if test $a = y
+    for i in $files
+        sed -E -i $sed_cmd $i
+    end
+end

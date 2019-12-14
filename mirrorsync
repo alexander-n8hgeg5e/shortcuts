@@ -1,0 +1,220 @@
+#!/mnt/home/username/gentoo/bin/fish
+
+function interactive_config
+    echo 
+    echo could not setup p1 and p2 from environment
+    echo 
+    #echo "set default values for p1 and p2 (y/n) ?"
+    echo setting default values...
+    echo
+    #read a
+    set a y
+    if test "$a" = "y"
+        set cmd1 'set -g p1 "/mnt/home/""mirrorsync_username""/"'
+        echo set p1 with cmd: $cmd1
+        set cmd2 'set -g p2 "/mnt/localstorage/""home_cache""/"'
+        echo set p2 with cmd: $cmd2
+        echo the trailing slash is needed for rsync
+        #echo "do (y/n) ?"
+        #read a
+        set a y
+        if test "$a" = "y"
+            eval $cmd1
+            and eval $cmd2
+            and return 0
+        end
+        return 26
+    end
+    return 28
+end
+
+#config
+begin
+    test -n $PHOME ; and set p1 "$PHOME""/"
+    and test -n $NHOME ; and set p2 "$NHOME""/"
+    and test -e $p1
+    and test -e $p2
+end ; or interactive_config
+
+set count $argv[1]
+set direction $argv[2]
+set delmode $argv[3]
+
+echo 
+echo p1: "$p1"
+echo p2: "$p2"
+if test -n $delmode
+    if string match -qr 'del1' "$delmode"
+        # delete on origin = PHOME = p1
+        set delete_on_p1 yes
+        set delete_on_p2 no
+    else if string match -qr 'del2' "$delmode"
+        # delete on copy = NHOME = p2
+        set delete_on_p2 yes
+        set delete_on_p1 no
+    else
+        set delete_on_p1 no
+        set delete_on_p2 no
+    end
+else
+    set delete_on_p1 no
+    set delete_on_p2 no
+end
+set -g sleep_time 20
+test -n $argv[4];and set -g sleep_time $argv[4]
+set backup_dir ".rsync_backup"
+set partial_dir ".rsync_partial_dir"
+
+# check
+set -q HOME PHOME
+test $status -ne 0; and exit 38
+test $HOME = $PHOME; and exit 39
+test $delete_on_p1 = yes; and test $delete_on_p2 = yes; and exit 40
+test $delete_on_p1 != yes; and test $delete_on_p1 != no; and echo "set delete_on_p1 option to either yes or no" >&2 ; and exit 41
+test $delete_on_p2 != yes; and test $delete_on_p2 != no; and echo "set delete_on_p2 option to either yes or no" >&2 ; and exit 42
+
+# rsync_delete_opts
+set rsync_delete_opts ""
+set rsync_delete_opts $rsync_delete_opts \'--force\'
+set rsync_delete_opts $rsync_delete_opts \'--delete\'
+set rsync_delete_opts $rsync_delete_opts \'--delete-delay\'
+
+# rsync opts
+set rsync_opts ""
+#set rsync_opts $rsync_opts \'--dry-run\'
+set rsync_opts $rsync_opts \'--verbose\'
+set rsync_opts $rsync_opts \'--itemize-changes\'
+set rsync_opts $rsync_opts \'--update\'   #skip files that are newer on the receiver
+set rsync_opts $rsync_opts \'--recursive\'
+set rsync_opts $rsync_opts \'--links\'
+set rsync_opts $rsync_opts \'--times\'
+set rsync_opts $rsync_opts \'--group\'
+set rsync_opts $rsync_opts \'--owner\'
+set rsync_opts $rsync_opts \'--devices\'
+set rsync_opts $rsync_opts \'--specials\'
+set rsync_opts $rsync_opts \'--backup\'
+set rsync_opts $rsync_opts \'--backup-dir="$backup_dir"\'
+set rsync_opts $rsync_opts \'--partial-dir="$partial_dir"\'
+set rsync_opts $rsync_opts \'--delay-updates\'
+set rsync_opts $rsync_opts \'--filter="- /gentoo.backup"\'
+set rsync_opts $rsync_opts \'--filter="- .git"\'
+set rsync_opts $rsync_opts \'--filter="- *.git"\'
+set rsync_opts $rsync_opts \'--filter="- .git/***"\'
+set rsync_opts $rsync_opts \'--filter="- *.git/***"\'
+set rsync_opts $rsync_opts \'--filter="- $backup_dir/***"\'
+set rsync_opts $rsync_opts \'--filter="- $partial_dir/***"\'
+set rsync_opts $rsync_opts \'--filter="- /gentoo/***"\'
+set rsync_opts $rsync_opts \'--filter="- /gentoo"\'
+
+if test $delete_on_p1 = yes
+    set rsync_opts_to_p1 $rsync_opts $rsync_delete_opts
+else
+    set rsync_opts_to_p1 $rsync_opts
+end
+if test $delete_on_p2 = yes
+    set rsync_opts_to_p2 $rsync_opts $rsync_delete_opts
+else
+    set rsync_opts_to_p2 $rsync_opts
+end
+
+function sync12
+
+    echo
+    set cmd12 rsync $rsync_opts_to_p2 $p1 $p2
+    echo cmd: $cmd12 | sed -r 's/[ ]\'\-\-/\n\'--/g'
+    cond_ask 12
+    and eval $cmd12
+    sleep $sleep_time
+end
+
+function sync21
+    echo
+    set cmd21 rsync $rsync_opts_to_p1 $p2 $p1
+    echo cmd: $cmd21 | sed -r 's/[ ]\'\-\-/\n\'--/g'
+    cond_ask 21
+    and eval $cmd21
+    sleep $sleep_time
+end
+
+function cond_ask_continue -a name
+    set global_varname "global_ask_continue_""$name"
+    set -q $global_varname
+    if not test $status -eq 0
+        set -g $global_varname ""
+    end
+    if test "$$global_varname" = "y"
+        eval $cmd21
+    else if test "$$global_varname" = "n"
+    else
+        echo "continue (y/n) ?"
+        read -g $global_varname
+        test "$$global_varname" = "y"
+    end
+end
+
+function cond_ask -a name
+    set global_varname "global_ask_""$name"
+    set -q $global_varname
+    if not test $status -eq 0
+        echo "do ? (y/[n]/e)"
+        read -g $global_varname
+        echo $$global_varname
+        cond_ask $name
+        return
+    end
+    test "$$global_varname" = "y" ; and return 0
+    test "$$global_varname" = "n" ; and return 163
+    test "$$global_varname" = "e" ; and exit 164
+    return 165
+end
+
+function ask -a thing
+        echo "do $thing (y/[n]/e) ?"
+        read a
+        test "$a" = "y" ; and return 0
+        test "$a" = "e" ; and exit 157
+        return 158
+end
+
+function sync -a direction
+    # check
+    echo $rsync_opts_to_p1|grep delete;and echo $rsync_opts_to_p2|grep delete; and exit 124
+    if test $direction = 12
+        sync12 ; or begin; echo $status;exit;end
+    else if test $direction = 21
+        sync21 ; or exit
+    else
+        exit 130
+    end
+end
+
+set -e inf
+if string match -qr '^[1-9][0-9]*$' "$count"
+    for i in (seq $argv[1])
+        sync "$direction"
+    end
+else if string match -rq '^i([1-9][0-9]*)+$' "$count"
+        set sleep_time (string sub -s2 $count)
+        echo
+        echo sync with sleep: $sleep_time
+        echo
+        while true
+            sync "$direction"
+            echo -n sleeping...
+            sleep $sleep_time
+            echo awake
+        end
+else if string match -rq '^i$' "$count"
+        echo infinite sync mode with no sleep
+        echo
+        while true
+            sync "$direction"
+        end
+else
+    echo error wrong arg nr 1 >&2
+    exit 155
+end
+
+# vim replace stuff
+# %s/\v(^(\s*\S\s*)*(\s*(and|or)\s*)+|^\s*)exit\s*[1-9]+[0-9]*/\=submatch(1) . printf('exit %d',line('.'))/g
+# %s/\v(^(\s*\S\s*)*(\s*(and|or)\s*)+|^\s*)return\s*[1-9]+[0-9]*\s*$/\=submatch(1) . printf('return %d',line('.'))/g

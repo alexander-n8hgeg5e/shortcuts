@@ -1,25 +1,145 @@
 #!/bin/fish
-set running_kernel linux-(uname -r)
-and sudo eselect kernel list
-and echo enter kernel num
-and set num (read)
-and sudo eselect kernel set $num
-sudo mv "/usr/src/"$running_kernel"/.git" "/usr/src/linux/"
-cd "/usr/src/"$running_kernel
-and begin
-  sudo ln -s ../linux/.git .
-  sudo cp .config ../linux/.config
+
+set kernel_build_dir "/var/tmp/portage/kernel_update"
+set kernel_config_git_dir "/usr/src/kernel_config.git"
+
+function install_kernel_dusteater
+    sudo make install
+	and link_kernel
+    and echo kernel install done
 end
-cd /usr/src/linux
-and begin
-  sudo git stash push -m original_kernel_source_backup
-  sudo git checkout -- .
-  sudo make olddefconfig
-  and sudo ionice -c3 nice -n19 make -j4
-  and sudo mount /boot
-  and sudo btrfs sub snap -r /boot/. /boot/snapshots/(date -Iseconds)
-  and sudo make install
-  and sudo make modules_install
-  and sudo dmsetup mknodes
-  and sudo grub-mkconfig > /boot/grub/grub.cfg
+
+function link_kernel
+    begin; sudo test -L /boot/vmlinuz; and sudo rm /boot/vmlinuz ;true;end
+    and set new_kernel_dir (readlink /usr/src/linux)
+    and set new_kernel vmlinuz-(cat /usr/src/$new_kernel_dir/include/config/kernel.release)
+    and echo got new kernel filename: $new_kernel
+    and sudo test -e /boot/$new_kernel
+    and sudo ln -s $new_kernel /boot/vmlinuz
+	and sudo chmod ugo+rx /boot/vmlinuz*
 end
+
+function install_kernel_esadc
+    sudo mount /boot
+    sudo make install
+    and sudo dmsetup mknodes
+	and link_kernel
+    and begin
+	   echo grub cfg...
+       sudo grub-mkconfig |sudo dd of=/boot/grub/grub.cfg
+	   and echo grub cfg written
+    end
+end
+
+function install_kernel
+    and if test $hostnamE = dusteater
+            install_kernel_dusteater
+			and echo kernel install done
+        else if test $hostnamE = esadc
+            install_kernel_esadc
+			and echo kernel install done
+        else
+            return 1
+        end
+end
+function backup_snapshot_boot_dir
+        if test $hostnamE = dusteater
+            backup_snapshot_boot_dir_dusteater
+        else if test $hostnamE = esadc
+            backup_snapshot_boot_dir_esadc
+        else
+            return 1
+        end
+end
+
+function backup_snapshot_boot_dir_esadc
+    sudo mount /boot
+    sudo btrfs sub snap -r /boot/. /boot/snapshots/(date +%y_%m_%d_%H_%M_%S)
+end
+function backup_snapshot_boot_dir_dusteater
+    set fn /boot/backup_(date +%y_%m_%d_%H_%M_%S).tar
+    and set incfn /boot/backup_tar_incremental.inc
+    and sudo tar -cf $fn -g $incfn --exclude '*backup*' /boot
+end
+
+function set_portage_access -a dir
+    sudo chown -R portage "$kernel_build_dir"
+    and sudo chmod -R u+rwX "$kernel_build_dir"
+end
+
+function prepare_build_dir
+    echo -n "preparing kernel build dir: ""$kernel_build_dir"
+    and sudo rm "$kernel_build_dir""/.git"
+    and echo -n .
+    and sudo -u portage mkdir  -p "$kernel_build_dir"
+    and echo -n .
+    and set_portage_access
+    and echo -n .
+    if not sudo -u portage test -L "$kernel_build_dir"/.git; or not sudo -u portage test (readlink "$kernel_build_dir"/.git) = "$kernel_config_git_dir"
+        if not sudo -u portage  ln -s "$kernel_config_git_dir" "$kernel_build_dir"/.git
+            return 1
+        end
+    end
+    sudo -u portage test -L "$kernel_build_dir"/.git; and sudo -u portage test (readlink "$kernel_build_dir"/.git) = "$kernel_config_git_dir"
+    and echo .
+    and sudo rsync --info=none,progress2 -ac --delete --partial --progress --exclude='/.git' --exclude='/.git/***' --exclude='/Documentation/***' /usr/src/linux/ "$kernel_build_dir""/"
+    and echo -n .
+    and set_portage_access
+    and echo -n .
+    if not  begin
+                sudo fish -c 'cd '"$kernel_build_dir"';and git checkout -- .'
+                and sudo git diff --quiet --exit-code
+            end
+        echo error: failed to checkout kernel source at: (run_k pwd)
+        return 1
+    end
+    and echo -n .
+    and sudo chown -R portage "$kernel_build_dir"
+    and sudo chmod -R u+rwX "$kernel_build_dir"
+    and echo -n .
+    and echo done
+end
+
+function run_k -a cmd
+    set cmdline "cd ""$kernel_build_dir"" ; or exit ; "
+    sudo -u portage fish -c "$cmdline""$cmd"
+end
+
+function build_kernel
+    run_k 'make olddefconfig'
+    and run_k 'ionice -c3 nice -n19 make -j4'
+end
+
+function setup
+    set dir $PWD
+    set running_kernel linux-(uname -r)
+    and sudo eselect kernel list
+    and echo enter kernel num
+    and set num (read)
+    and sudo eselect kernel set $num
+    and begin
+            sudo test -L /usr/src/linux/.git
+            or sudo ln -s "../"(basename "$kernel_config_git_dir") /usr/src/linux/.git
+        end
+end
+
+
+function main
+    prepare
+    and prepare_build_dir
+    and build_kernel
+    and run_k 'make modules_install'
+    and echo install modules done
+    and backup_snapshot_boot_dir
+    and echo backup done
+    and echo install_kernel
+    and echo done
+    or begin
+        cd $dir
+        echo FAILED to update kernel
+	return 1
+    end
+    cd $dir
+end
+
+#main

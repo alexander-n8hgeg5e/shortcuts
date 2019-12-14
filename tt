@@ -1,0 +1,36 @@
+#!/bin/bash
+
+if [[ -n "${hostnamE}" ]];then
+    host="${hostnamE}"
+elif [[ -n "${hostname}" ]];then
+    host="${hostname}"
+else
+    host="$(hostname)"
+fi
+
+if [[ -v DISPLAY ]] && [[ -n "${DISPLAY}" ]] ; then
+    p0="$(echo ${DISPLAY}|cut -d":" -f1)"
+    p1="$(echo ${DISPLAY}|cut -d":" -f2)"
+    [[ -z $p0 ]] && p0="${host}"
+    display="${p0}_${p1}"
+    display="$(echo "${display}" | sed -E 's/[^a-zA-Z0-9]/_/g')"
+fi
+
+echo $display
+
+xpos="$(xdotool getactivewindow getwindowgeometry | grep Position: |cut -d: -f2 | sed -r 's/\s*(\w*)\s*/\1/'| cut -d, -f1)"
+session_name="${display}_${xpos}"
+
+socket_name="${host}"
+echo socket name: $socket_name
+
+if [[ -e "/tmp/tmux-$(id -u)" ]];then
+    echo tmux attach...
+    echo $session_name
+    tmux -L "${socket_name}" new-session -A -s "${session_name}"
+else
+    echo new tmux session
+    echo $session_name
+    tmux -L "${socket_name}" new-session -s "${session_name}"
+fi
+    

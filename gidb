@@ -1,0 +1,3 @@
+#!/bin/fish
+for i in (seq 0 $argv[1]);set back (string repeat -n$i "^") ;echo -e '\n\n######################################################\n' git diff $argv[2..-1]between HEAD^"$back" HEAD"$back" '\n#################################' ; git diff $argv[2..-1] HEAD^"$back" HEAD"$back";echo '############
+#####################';end

@@ -1,7 +1,10 @@
 #!/usr/bin/python3
+from os.path import expanduser
 import github
+with open(expanduser("~/.github_username")) as f:
+    github_username=f.read().strip()
 p=input('pass :')
-gh=github.MainClass.Github(login_or_token='alexander-n8hgeg5e', password=p)
+gh=github.MainClass.Github(login_or_token=github_username, password=p)
 del p
 user=gh.get_user()
 user.get_repos()

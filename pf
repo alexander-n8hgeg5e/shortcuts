@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+from subprocess import Popen,DEVNULL,check_output
+from time import sleep,time
+from random import randint
+from sys import exit,argv
+from argparse import ArgumentParser
+from os import environ
+from os import set_blocking
+
+readmsg_time=1
+
+def parse_args():
+    parser=ArgumentParser("follow files")
+    parser.add_argument(dest='file_path_cmd',nargs=1,action="store",type=str,default=None)
+    parser.add_argument(dest='file_path_cmd_args',nargs='*',action="store",type=str,default=[])
+    parser.add_argument("-i",'--read-loop-sleep',action="store",type=float,default=0.01)
+    parser.add_argument("-u",'--update-interval',action="store",type=float,default=5)
+    return parser.parse_args()
+args=parse_args()
+
+def popenterm():
+    p1.terminate()
+    print(".",end="")
+    p1.kill()
+    print(".",end="")
+
+def get_file_path():
+    cmd=args.file_path_cmd+args.file_path_cmd_args
+    outp=check_output(cmd)
+    return outp.decode().strip()
+
+buffer=""
+linebuffer=[]
+nothing_to_read_counter=0
+
+def open_file( blocking=False ):
+    global file
+    file=open(filepath)
+    set_blocking(file.fileno() , blocking )
+
+def read_file():
+    global buffer
+    global linebuffer
+    global filepath
+    global nothing_to_read_counter
+    buffer+=file.read()
+    lines=buffer.split("\n")
+    ll=len(lines)
+    if ll>1:
+        linebuffer+=lines[:-1]
+        buffer=linebuffer[-1]
+        nothing_to_read_counter=0
+    else:
+        nothing_to_read_counter+=1
+
+def print_buffer():
+    global linebuffer
+    for line in linebuffer:
+        print(line)
+    linebuffer=[]
+
+def msgbox(msg):
+    msglen=len(msg)
+    print((msglen+12)*"#")
+    print("###   ",end="")
+    print(msg,end="")
+    print("   ###")
+    print((msglen+12)*"#")
+
+filepath=get_file_path()
+
+msgbox("Following file: "+filepath)
+sleep(readmsg_time)
+
+try:
+    open_file()
+    counter=0
+    while True:
+        if counter%( args.update_interval / args.read_loop_sleep ) == 0 or nothing_to_read_counter > 10:
+            _filepath=get_file_path()
+            if _filepath != filepath:
+                set_blocking(file.fileno(),True)
+                read_file()
+                print_buffer()
+                msgbox("Following annother file; path: "+_filepath)
+                filepath=_filepath
+                file.close()
+                open_file()
+                read_file()
+                sleep(readmsg_time)
+                print_buffer()
+        else:
+            read_file()
+            print_buffer()
+        sleep(args.read_loop_sleep)
+        counter+=1
+except:
+    file.close()
+    raise

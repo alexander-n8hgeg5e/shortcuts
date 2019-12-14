@@ -1,0 +1,29 @@
+#!/bin/fish
+
+set display_var_backup $DISPLAY
+set screen_on_file /tmp/screen_on
+set sleep_time 20
+
+
+set -x DISPLAY "$argv[1]"
+echo 
+echo screen_on control loop starting ...
+echo running on display: $DISPLAY
+echo udateing every $sleep_time seconds
+echo 
+
+function terminate --on-signal HUP --on-signal KILL --on-signal TERM --on-signal QUIT
+    set -x DISPLAY $display_var_backup
+    exit
+end
+
+while true
+    if test -f $screen_on_file
+        xset dpms force on
+        xset -dpms
+    else
+        xset '+dpms'
+    end
+
+    sleep $sleep_time
+end

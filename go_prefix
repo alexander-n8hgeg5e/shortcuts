@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Copyright 2006-2014 Gentoo Foundation; Distributed under the GPL v2
+# $Id: startprefix.in 61219 2012-09-04 19:05:55Z grobian $
+# Fabian Groffen <grobian@gentoo.org> -- 2007-03-10
+
+# What is our prefix?
+export EPREFIX="${HOME}/gentoo"
+
+where_to_go="go_prefix"
+typeset -g where_to_go
+
+source ${HOME}/code/shortcuts/prefix_lib.bash
+
+argparse ${@}
+
+source ${HOME}/code/shortcuts/startprefix_bash

@@ -1,0 +1,84 @@
+#!/bin/fish
+
+function prepare_fresh_target_dir
+     set r (random)
+     and set sourcedir $PWD
+     and set mergedir /tmp/merge$r
+     and mkdir $mergedir
+     and echo $mergedir
+end
+
+function get_merge_in
+    set merge_in (gitsuperpush -f ~/.gitpacks/pc  -C 'echo $PWD ;gh')
+    for i in $merge_in
+         echo $i
+    end
+end
+
+function count_merge_in
+     begin;set dir $PWD;for i in (seq (math (count $merge_in) / 2));cd $merge_in[(math "$i * 2 -1 ")];echo $PWD;end;cd $dir;end|wc -l
+end
+function count_repos
+     gsp -f ~/.gitpacks/pc -C 'echo $PWD'|wc -l
+end
+
+function make_tags
+    gsp -f ~/.gitpacks/pc -C 'echo $PWD;git tag -d merge'
+    gsp -f ~/.gitpacks/pc -C 'echo $PWD;git tag merge'
+end
+
+function count_tags
+    gsp -f ~/.gitpacks/pc -C 'echo $PWD;git tag -l merge'|egrep '^merge$'|wc -l
+end
+
+function clone
+   gsp -f ~/.gitpacks/pc -oD -c3 -b merge
+end
+
+function count_target_tags
+    gsp -f ~/.gitpacks/pc -c3 -C 'git tag --points-at'|egrep '^merge$'|wc -l
+end
+
+
+
+
+function grep_source_refs
+       gsp -f ~/.gitpacks/pc  -C 'echo $PWD ; echo (gb|grep -E "^pc/"|tail -n1|cut -d"|" -f1)'
+end
+
+function get_srefs
+    set srefs (grep_source_refs)
+    for i in $srefs
+        echo (string trim $i)
+    end	
+end
+
+function check_srefs 
+   for i in ( seq (math (count $argv) / 2  ))
+         set a (math $i \* 2 \- 1)
+         set b (math $i \* 2 )
+         test -n $argv[$b]
+	 and echo $argv[$a]
+	 and echo $argv[$b]
+   end
+end
+
+function tag_srefs
+   set dir $PWD
+   for i in ( seq (math (count $argv) / 2  ))
+         set a (math $i \* 2 \- 1)
+         set b (math $i \* 2 )
+         cd  $argv[$a]
+	 and git tag sref $argv[$b]
+   end
+   cd $dir
+end
+
+function fetch_refs
+     gsp -f ~/.gitpacks/pc -C'git fetch --tag origin sref' -c3
+end
+
+
+function checkout
+       gsp -f ~/.gitpacks/pc -C'git checkout sref --' -c3
+end

@@ -1,10 +1,41 @@
-#!/bin/fish
+#!/usr/bin/python3
+from subprocess import check_call,check_output,call
+from sys import argv,exit
+from os import environ
+from os.path import exists,sep as psep
 
-function  xrandr_it -a filename
-     set cmdlines (parse_xrandr_conf $HOME"/.xrandr.conf")
-     for cmdline in $cmdlines
-           eval $cmdline
-     end   
-end
+def xrandr_it(filename):
+     cmdlines=check_output(['parse_xrandr_conf', filename ]).decode().split("\n")
+     for cmdline in cmdlines:
+           if len(cmdline.strip()) > 0:
+                call(cmdline.split(" "))
 
-xrandr_it $HOME'/'.xrandr.conf
+
+if len(argv) > 1 :
+    xrandr_conf_file_path = environ["HOME"] + "/.xrandr.conf_"+argv[1]
+    modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]
+else:
+    display=environ["DISPLAY"].split(":")
+    if display[0]=='':
+            display.pop(0)
+    print(display)
+    if len(display) == 1 :
+        postfix=environ["hostnamE"]+":"+display[0]
+    elif len(display) >= 2:
+        postfix=environ["DISPLAY"]
+    else:
+        # no display, so no xrandr
+        exit(1)
+    xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + postfix
+    if not exists( xrandr_conf_file_path ):
+        postfix=environ["hostnamE"]
+    xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + postfix
+    if not exists( xrandr_conf_file_path ):
+        exit(1)
+    modelinefile = environ['HOME']+psep+'.modelines_'+postfix
+
+if exists(modelinefile):
+    check_call( ['add_modelines', modelinefile] )
+
+xrandr_it( xrandr_conf_file_path )
+

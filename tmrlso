@@ -1,0 +1,3 @@
+#!/bin/fish
+echo 0 |ssh tmrl sudo dd of=/sys/class/backlight/intel_backlight/brightness
+

@@ -1,0 +1,57 @@
+#!/bin/fish
+test (count $argv) -ge 1; and set showstr   $argv[1];or set showstr blinky-default
+test (count $argv) -ge 2; and set nr_blink  $argv[2];or set nr_blink 5
+test (count $argv) -ge 3; and set fg        $argv[3];or set fg magenta
+test (count $argv) -ge 4; and set nr_lines  $argv[4];or set nr_lines default
+test (count $argv) -ge 5; and set nr_cols   $argv[5];or set nr_cols default
+test (count $argv) -ge 6; and set bg        $argv[6];or set bg black
+test (count $argv) -ge 7; and set t_on      $argv[7];or set t_on 0.3
+test (count $argv) -ge 8; and set t_off     $argv[8];or set t_off 0.3
+#echo $showstr $nr_lines $fg $bg $t_on $t_off 1>&2
+set showstrlen (string length $showstr)
+
+function blink_n -a nr_blink
+    for i in (seq $nr_blink)
+        if test $nr_lines = default
+            set nr_lines $LINES
+        end
+        if test $nr_cols = default
+            set nr_cols $COLUMNS
+        end
+        tput el1;tput cr
+        color $fg $bg
+        set repeatcount ( math 'floor('(math (math $nr_cols + 1 )/ ( math $showstrlen + 1 ) )')' )
+        if test $repeatcount -lt 1
+            echo error: not enough horizontal space 1>&2
+            exit 1
+        end
+        set line (string repeat -n ( math $repeatcount - 1 ) $showstr" ")$showstr
+        for i in (seq ( math $nr_lines - 1 ))
+            echo $line
+        end
+        echo -n $line
+        sleep $t_on
+        # reset background befor delete
+        color off
+        for i in (seq ( math $nr_lines - 1 ))
+            # delete line
+            tput el1
+            # cursor one line up
+            tput cuu1
+        end
+        # delete first line
+        tput el1
+        # cursor at starting pos
+        tput cr
+        sleep $t_off
+    end
+end
+
+if test $nr_blink -eq -1
+    # blink forever
+    while true
+        blink_n 10
+    end
+else
+    blink_n $nr_blink
+end

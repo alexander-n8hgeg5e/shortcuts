@@ -1,0 +1,81 @@
+#!/bin/fish
+function vent_break -a t
+    if  test $t -lt 8
+        set a 8
+    end
+    rf 120 12>&1 >&1 2>&1 > /dev/null
+    sleep $t
+    rf 121  2>&1 >  /dev/null
+end
+
+function countdown
+     echo
+     for i in (seq $argv[1] -1 1)
+         test -f /tmp/klima_startup
+         and break
+         echo -n " t = -"$i" "
+         for j in (seq 10)
+             sleep 0.05
+             echo -n .
+         end
+         for j in (seq 10)
+             sleep 0.05
+             tput dch 2
+         end
+         tput el1;tput cr
+     end
+     echo " >> zero << "
+end
+function done
+    echo
+    echo Done for now, hope ya getn proper frozen !
+    echo 
+    echo Call me if you need my help, bro !
+end
+
+echo 
+echo Hello, i\'m the klima startup prog.
+echo I try to make the coolmaker thing going...
+echo
+
+rf 241  2>&1 > /dev/null
+
+tmux -S /tmp/tmux.minicom.socket kill-session -t rfcc_minicom ^ /dev/null 
+tmux -S /tmp/tmux.minicom.socket new-session -s rfcc_minicom -d minicom -D /dev/ttyACM0
+sleep 1
+
+rfcc a  2>&1 > /dev/null
+touch /tmp/klima_prob_running
+
+rm /tmp/klima_startup ^ /dev/null
+
+fish -c 'read -P "" -s;and touch /tmp/klima_startup'&
+rf 121  2>&1 > /dev/null
+for j in (seq 2)
+    for i in (seq 7)
+        echo 'sending code "cool"...'
+        rfcc d 2>&1 > /dev/null
+        echo 
+        echo Getin bit cooler \?
+        echo Cool air from above \?
+        echo Beep Beep is annoying \?
+        echo
+        echo 'Press "Enter" to stop me from fiddeling around with this thing.'
+        echo
+        vent_break 5
+        test -f /tmp/klima_startup
+        and break
+    end
+    test -f /tmp/klima_startup
+    and done
+    and break
+    echo 'sending "mode cycle" code after countdown...'
+    countdown 10
+    test -f /tmp/klima_startup
+    and done
+    and break
+    rfcc b
+    vent_break 8
+end
+
+tmux -S /tmp/tmux.minicom.socket kill-session -t rfcc_minicom ^ /dev/null 

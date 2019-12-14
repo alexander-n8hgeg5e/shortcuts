@@ -1,4 +1,394 @@
-#!/bin/fish
-for i in (random_seq 1 15);
-         check_node pc$i $argv &
-end
+#!/usr/bin/python3
+
+
+from os import environ
+from os.path import sep,expandvars,expanduser
+from subprocess import Popen,PIPE,CalledProcessError,DEVNULL
+from time import sleep
+from pprint import pprint
+from re import match,search,sub
+
+default_nodelist_file=environ['HOME']+sep+'.nodelist'
+
+configpy="${HOME}/.check_nodes_conf.py"
+configpy=expandvars(expanduser(configpy))
+
+
+with open(configpy) as cf:
+    eval(cf.read())
+
+
+proc_pid_stat_fieldnames=['pid', 'comm', 'state', 'ppid', 'pgrp', 'session', 'tty_nr', 'tpgid', 'flags', 'minflt', 'cminflt', 'majflt', 'cmajflt', 'utime', 'stime', 'cutime', 'cstime', 'priority', 'nice', 'num_threads', 'itrealvalue', 'starttime', 'vsize', 'rss', 'rsslim', 'startcode', 'endcode', 'startstack', 'kstkesp', 'kstkeip', 'signal', 'blocked', 'sigignore', 'sigcatch', 'wchan', 'nswap', 'cnswap', 'exit_signal', 'processor', 'rt_priority', 'policy', 'delayacct_blkio_ticks', 'guest_time', 'cguest_time', 'start_data', 'end_data', 'start_brk', 'arg_start', 'arg_end', 'env_start', 'env_end', 'exit_code']
+
+
+import argparse
+parser=argparse.ArgumentParser( description="check node whether it is suitable for calculations")
+parser.add_argument("-u","--ssh-host", action="store",type=str ,help= "this is the ssh host string" )
+parser.add_argument("-l","--max-load", default=0.5 ,type=float ,action="store", help = "max load of node that is considered to be suitable" )
+parser.add_argument( "-f1",'--faktor-1',default=3,action="store",type=float, help="faktor for calc ..." )
+parser.add_argument( "-f2",'--faktor-2',default=2,action="store",type=float, help="faktor for calc ..." )
+parser.add_argument( "-f3",'--faktor-3',default=1,action="store",type=float, help="faktor for calc ..." )
+parser.add_argument( "-v",'--verbose',default=False,action="store_true")
+parser.add_argument( "-s",'--score',default=False,action="store_true")
+parser.add_argument( "-c",'--check',default=False,action="store_true")
+parser.add_argument( "-m",'--max-score', default=10 ,action="store",type=float)
+parser.add_argument( "-f", '--file', default=default_nodelist_file , action="store", type=str )
+args=parser.parse_args()
+
+
+def init():
+    if args.verbose:
+        for k in args.keys():
+            print(args[k])
+    gen_nodes_list()
+
+def gen_get_stat_field_of_pid_script(pids, statfield_regex):
+
+    fields = match_in_list(statfield_regex , proc_pid_stat_fieldnames)
+    
+    fields_=[]
+    for i in fields:
+        fields_.append(str(i))
+    fields=fields_
+    cmds=[]
+    sep='@'
+    ids = ['id',None,None,None]
+    for t in [0,5]:
+        ids[1] = ids[0] + sep +'t' + str(t)
+        if not t == 0:
+            cmds.append('sleep '+str(t))
+        for pid in pids:
+            ids[2]= ids[1] + sep +'p' + str(pid)
+            for f in fields:
+                ids[3] = ids[2] + sep +'f' + f +sep
+                cmds.append('echo -n "'+ ''.join(ids[3])+'"')
+                cmds.append('echo $(cat /proc/'+str(pid)+'/stat|cut -d\' \' -f'+f +')')
+    return ';'.join(cmds)
+
+def gen_tail_head_line_cutout_cmd( line_nr ):
+    return 'tail -n+'+str(line_nr)+' | head -n1'
+    
+def match_in_list( regex , l ):
+    indexes=[]
+    for i in range(len(l)):
+        if match( regex , l[i] ):
+            indexes.append(i)
+    return indexes
+    
+def gen_nodes_list():
+    with open(args.file,'rt') as f:
+        txt=f.read()
+    lines=txt.splitlines()
+    global nodes
+    nodes = []
+    for l in lines:
+        nodes.append(l.strip())
+
+
+def parse_popens(popens_dict,parsefunc,checkfunc=None,sleeptime=0.01):
+    """
+    takes the popens and polls for output to parse and check.
+    returns a dict like the popen dict used for input.
+    """
+    ok={}
+    #counter=0
+    while not len(ok.keys()) == len(popens_dict.keys()):
+        #counter+=1
+        #print(counter)
+        for pk in popens_dict.keys():
+            popen=popens_dict[pk]
+            if not pk in ok.keys():
+                poll=popen.poll()
+                if not poll is None:
+                    pout = popen.stdout.read()
+                    if not pout is None:
+                        stuff = parsefunc(pout)
+                        if checkfunc is not None:
+                            ok.update({ pk : checkfunc( stuff ) })
+                        else:
+                            ok.update({ pk : stuff  })
+                    else:
+                        loadavg_ok.update({ pk : None})
+        sleep(sleeptime)
+    return ok
+            
+def parse_loadavg(loadavg):
+
+    if loadavg is None:
+        return None
+    try:
+        loadavg=loadavg.decode().splitlines()[0].split(' ')
+        if not len(loadavg) == 5:
+            print('warning: len of loadavg string not ok, string: '+str(loadavg))
+            return None 
+    except IndexError:
+            return None
+
+
+    a=float(loadavg[0])
+    b=float(loadavg[1])
+    c=float(loadavg[2])
+    return  ( a, b, c )
+
+def parse_xorg_users(data):
+    """
+    ['lsof -c Xorg -F0L']
+    """
+    lines=data.splitlines()
+    
+    lines_=[]
+    for line in lines:
+        lines_.append( line.strip(b'\00').split( sep=b'\00' ) )
+    lines=lines_
+        
+    lines_=[]
+    for i in lines:
+        line=[]
+        for j in i:
+            line.append(j.decode().strip())
+        lines_.append(line)
+    lines=lines_
+
+    users=[]
+    for i in lines:
+        if i[0][0] == 'p':
+            pid=i[0][1:]
+            pidline=True
+        else:
+            pidline=False
+        for j in i:
+            if j[0] == 'L' and pidline:
+                users.append(j[1:])
+    return users
+
+
+def time_rate_loadavg(t):
+    d=t
+    if d is None:
+        return None
+    for i in d:
+        if i is None:
+            return None
+
+    a=d[0]
+    b=d[1]
+    c=d[2]
+
+    f1 = args.faktor_1
+    f2 = args.faktor_2
+    f3 = args.faktor_3
+    return ( a * f1 + b * f2 + c * f3 ) / ( f1 + f2 + f3 )
+     
+def check_loadavg_ok(t):
+    return _check_loadavg_ok(time_rate_loadavg(t))
+
+def _check_loadavg_ok(value):
+    if value < args.max_load:
+        return True
+    else:
+        return False
+
+def gen_remote_running_popens(remote_cmd,nodes,connect_timeout=5,include_stderr=False):
+
+    if include_stderr:
+        stderr=PIPE
+    else:
+        stderr=DEVNULL
+
+    popens={}
+    for node in nodes:
+        cmd = ['ssh', '-o', 'ConnectTimeout='+str(connect_timeout), node , remote_cmd]
+        try:
+           p = Popen(cmd,stdout=PIPE,stderr=DEVNULL)
+           popens.update({ node : p })
+        except CalledProcessError:
+            print('warning: CalledProcessError')
+            print(e)
+    return popens
+
+def gen_userlist_popens():
+    remote_cmd = 'ps -e -o user|sort -u'
+    return gen_remote_running_popens(cmd)
+
+def parse_userlist_popens(data):
+    txt=data.decode()
+    lines=txt.splitlines()
+    
+    lines_=[]
+    for line in lines:
+        if line in humans and not line=='root' and not line in users_myself:
+            lines_.append(line)
+    lines=lines_
+    return lines
+
+def parse_home_dir_users_popens(data):
+    txt=data.decode()
+    lines = txt.splitlines()
+    return lines
+
+def parse_xserver_pids(data):
+    txt=data.decode()
+    lines=txt.splitlines()
+    lines_=[]
+    for line in lines:
+        lines_.append(line.strip())
+    lines=lines_
+    return lines
+
+def is_no_human(username):
+    for i in nohumans_re_match:
+        if match(i,username):
+            return True
+    return False 
+
+def is_human(username):
+    for i in humans_re_match:
+        if match(i,username):
+            return True
+    return False 
+
+def gen_humans():
+    global humans
+    humans_dict = ( parse_popens(popensdict['home_dir_users'], parse_home_dir_users_popens ) )
+    humans=[]
+    for k in humans_dict.keys():
+        for i in humans_dict[k]:
+            for i in humans_dict[k]:
+                if not i in humans and ( not is_no_human(i) or is_human(i) ):
+                    humans.append(i)
+
+def gen_display_servers_cpu_time_popens(xserver_pids):
+    popens = {}
+    #print(xserver_pids)
+    for k in xserver_pids.keys():
+        per_host_cmd = gen_get_stat_field_of_pid_script( xserver_pids[k] , '^.*time$')
+        popens.update(gen_remote_running_popens( per_host_cmd ,nodes=[k] ) )
+    return popens
+
+def parse_display_servers_cpu_times(data):
+    txt=data.decode()
+    lines=txt.splitlines()
+    times={}
+    for line in lines:
+        key   = sub('^id[@](t[0-9]+[@]p[0-9]+[@]f[0-9]+)[@].*$','\\1',line)
+        value = sub('^id[@]t[0-9]+[@]p[0-9]+[@]f[0-9]+[@](.*)$','\\1',line)
+        keyfields=key.split('@')
+        dict_to_update = times
+        while len(keyfields) > 0:
+            if len(keyfields) == 1:
+                dict_to_update.update({keyfields[0]:value})
+            else:
+                if not keyfields[0] in dict_to_update.keys():
+                    dict_to_update.update( {keyfields[0]:{} } )
+            dict_to_update = dict_to_update[keyfields[0]]
+            keyfields=keyfields[1:]
+    return times
+
+def eval_display_server_cpu_times(times):
+    deltas={}
+    for pc in times.keys():
+        pid_deltas={}
+        pid_delta_list=[]
+        if len(times[pc].keys()) == 2:
+            t0_key=list(times[pc].keys())[0]
+            t1_key=list(times[pc].keys())[1]
+            for pid in times[pc][t0_key].keys():
+                field_deltas={}
+                fields_sum=0
+                for field in times[pc][t0_key][pid].keys():
+                    delta = int(times[pc][t1_key][pid][field]) - int(times[pc][t0_key][pid][field])
+                    field_deltas.update({field : delta })
+                    fields_sum+=delta
+                #pid_deltas.update({pid:field_deltas})
+                pid_deltas.update({pid:fields_sum})
+                pid_delta_list.append(fields_sum)
+        #deltas.update( {pc : pid_deltas })
+        if len(pid_delta_list) > 0:
+            deltas.update( {pc : max(pid_delta_list) })
+    return deltas
+
+def check_nodes():
+    scores=score_nodes(return_dict=True)
+    for node in nodes:
+        if scores[node] <= args.max_score:
+            print(node)
+
+def gen_score_loadavg(loadavg):
+    lavg = time_rate_loadavg(loadavg)
+    if lavg is None:
+        return None
+    if lavg > args.max_load:
+        score = (lavg/args.max_load) **2
+    else:
+        score = (lavg/args.max_load)
+    return score
+
+def gen_score_prog_users(prog_users_per_node):
+    l=len(prog_users_per_node)
+    if l == 0:
+        return 0
+    else:
+        return l*0.2
+
+def gen_score_display_server_cpu_times(t):
+    if t == 0:
+        return 0
+    elif t <= 2:
+        return t*0.1
+    else:
+        return t*0.3
+
+def score_nodes(return_dict=False):
+    scores={}
+    for n in nodes:
+        score=0
+        try:
+            score+=gen_score_loadavg(loadavg[n])
+            score+=gen_score_display_server_cpu_times(display_server_cpu_times[n])
+            score+=gen_score_prog_users(prog_users[n])
+            score=score*100/3
+        except TypeError:
+            score=9999999999
+        scores.update({n:score})
+    
+    done=[]
+    if not return_dict:
+        while not len(done)==len(scores):
+            minval=999999999999
+            minkey=None
+            for k in scores.keys():
+                if scores[k] <= minval and not k in done:
+                    minval=scores[k]
+                    minkey=k
+            done.append(minkey)
+            print('{0:4s}'.format(minkey),end=' : ')
+            print('{0:.0f}'.format(scores[minkey]))
+    else:
+        return scores
+        
+def get_data():
+    global popensdict,xserver_pids,prog_users,loadavg,display_server_cpu_times
+    #popensdict.update({ 'xorg_users' :  gen_remote_running_popens('lsof -c Xorg -F0L' , nodes ) })
+    #xorg_users=parse_popens(popensdict['xorg_users'], parse_xorg_users )
+    popensdict={}
+    popensdict.update({ 'prog_users' :  gen_remote_running_popens('ps -e -o user|sort -u' , nodes ) })
+    popensdict.update({ 'loadavg' : gen_remote_running_popens('cat /proc/loadavg' , nodes ) })
+    popensdict.update({ 'home_dir_users' :  gen_remote_running_popens('ls -1 /mnt/home|sort -u' , nodes ) })
+    gen_humans()
+    popensdict.update({ 'xserver_pids' :  gen_remote_running_popens('ps -CXwayland -CXorg --no-headers -o pid |sort -u' , nodes ) })
+    xserver_pids=parse_popens( popensdict['xserver_pids'], parse_xserver_pids)
+    popensdict.update({ 'display_server_cpu_times' : gen_display_servers_cpu_time_popens(xserver_pids) })
+    prog_users=parse_popens( popensdict['prog_users'], parse_userlist_popens )
+    loadavg=parse_popens(popensdict['loadavg'], parse_loadavg )
+    display_server_cpu_times_=parse_popens(popensdict['display_server_cpu_times'],parse_display_servers_cpu_times)
+    display_server_cpu_times=eval_display_server_cpu_times(display_server_cpu_times_)
+
+# main part
+if args.check or args.score:
+    init()
+    get_data()
+    if args.check:
+        check_nodes()
+    if args.score:
+        score_nodes()
+

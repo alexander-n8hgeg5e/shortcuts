@@ -1,2 +1,2 @@
 #!/bin/fish
-list_my_procs_on_nodes | sort -b -u  -t':' -k1,3.1r
+list_my_procs_on_nodes | sort -b  -k1g,2g

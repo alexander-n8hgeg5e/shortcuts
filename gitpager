@@ -1,0 +1,5 @@
+!#/bin/fish
+cat > /dev/shm/gitpage&
+cat /dev/shm/gitpage | 
+and 
+|wc -l) -gt 20; and begin; cat /dev/shm/gitpage|tig --pretty=raw ;end; or cat /dev/shm/gitpage;echo $argv'

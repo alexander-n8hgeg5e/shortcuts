@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+from subprocess import check_call
+from sys import argv,path
+from os.path import expanduser,sep as psep
+path.append(expanduser('~/code/pylib/pylib'))
+from os import makedirs
+from run_utils.run import Cmdrunner
+
+
+pwname=argv[1]
+
+gpgsig='48C21BD6E4D988BD'
+password_source_path=expanduser('~/.password-store')
+pw_tmp_subfolder='2handy'
+postfix='.gpg'
+
+target_hostname='handy'
+target_dir_path='/sdcard/.password-store'
+
+
+source_file_path=password_source_path+psep+pwname+postfix
+tmp_dir_path=expanduser(password_source_path+psep+pw_tmp_subfolder)
+
+cmds=[]
+cmds+=[[makedirs,tmp_dir_path,{'exist_ok':True}] ]
+cmds+=[['cp', source_file_path,tmp_dir_path+psep ]]
+cmds+=[['pass', 'init', '-p', pw_tmp_subfolder , gpgsig ]]
+cmds+=[['ssh',target_hostname,'mkdir -p ' + target_dir_path ]]
+cmds+=[['rsync', '-rcivb', tmp_dir_path+psep, target_hostname+':'+target_dir_path+psep ]]
+cmds+=[['ssh',target_hostname,"git --work-tree="+target_dir_path+" --git-dir="+target_dir_path+"/.git add -- "+pwname+".gpg" ]]
+cmds+=[['ssh',target_hostname,"git --work-tree="+target_dir_path+" --git-dir="+target_dir_path+"/.git commit -mpw2handy -- "+pwname+".gpg" ]]
+
+
+Cmdrunner(cmds).run(dry_run=False)

@@ -1,0 +1,2 @@
+#!/bin/fish
+find $argv -printf '%Ts %p\n'|sort -k1n|tail -n1|cut -d' ' -f2

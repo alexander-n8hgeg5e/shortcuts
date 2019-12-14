@@ -1,0 +1,3 @@
+#!/bin/fish
+git config --unset-all core.worktree
+gisfor 'git config --unset-all core.worktree;true'

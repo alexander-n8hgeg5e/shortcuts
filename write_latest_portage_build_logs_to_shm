@@ -1,0 +1,3 @@
+#!/bin/fish
+while true ; for i in (sudo -u portage find /var/tmp/portage -mindepth 2 -maxdepth 2 -type d -printf "%p %Cs\n"|grep -Ev '^\/var\/tmp\/portage\/\.'|sort -k2|tail -n10|cut -d' ' -f1); cat $i/temp/build.log|tail -n20000 > /dev/shm/build.log;end
+;sleep 10;end

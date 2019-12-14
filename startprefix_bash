@@ -1,4 +1,4 @@
-#!/mnt/home/stud-uabir/gentoo/bin/bash
+#!/mnt/home/username/gentoo/bin/bash
 # Copyright 2006-2014 Gentoo Foundation; Distributed under the GPL v2
 # $Id: startprefix.in 61219 2012-09-04 19:05:55Z grobian $
 
@@ -13,10 +13,6 @@
 # hence this script starts the Prefix shell like this
 
 
-# What is our prefix?
-EPREFIX="/mnt/home/stud-uabir/gentoo"
-export HOME="/mnt/home/stud-uabir"
-
 if [[ ${SHELL#${EPREFIX}} != ${SHELL} ]] ; then
 	echo "You appear to be in prefix already (SHELL=$SHELL)" > /dev/stderr
 	exit -1
@@ -30,6 +26,7 @@ SHELL='bash'
 export SHELL=${EPREFIX}/bin/${SHELL}
 # check if the shell exists
 if [[ ! -x $SHELL ]] ; then
+    echo no shell at path: $SHELL
 	echo "Failed to find the Prefix shell, this is probably" > /dev/stderr
 	echo "because you didn't emerge the shell ${SHELL##*/}" > /dev/stderr
 	exit -1
@@ -39,7 +36,14 @@ fi
 echo "Entering Gentoo Prefix ${EPREFIX}"
 # start the login shell, clean the entire environment but what's needed
 USER=$(echo $USER|tr -d " ")
-RETAIN="HOME=$HOME TERM=$TERM USER=$USER SHELL=$SHELL"
+
+###################
+### retain vars ###
+###################
+RETAIN="HOME=$HOME TERM=$TERM USER=$USER SHELL=$SHELL PHOME=$PHOME NHOME=$NHOME"
+RETAIN="${RETAIN} EROOT=$EROOT"
+RETAIN="${RETAIN} LANG=$LANG LC_COLLATE=$LC_COLLATE LC_CTYPE=$LC_CTYPE LANGUAGE=$LANGUAGE"
+##################
 # PROFILEREAD is necessary on SUSE not to wipe the env on shell start
 [[ -n ${PROFILEREAD} ]] && RETAIN+=" PROFILEREAD=$PROFILEREAD"
 # ssh-agent is handy to keep, of if set, inherit it
@@ -47,8 +51,28 @@ RETAIN="HOME=$HOME TERM=$TERM USER=$USER SHELL=$SHELL"
 # if we're on some X terminal, makes sense to inherit that too
 [[ -n ${DISPLAY} ]] && RETAIN+=" DISPLAY=$DISPLAY"
 # do it!
-echo $RETAIN
-env -i $RETAIN $SHELL -l
+echo Retain vars: $RETAIN
+# -l  : behave as login shell
+if [[ ${new_nvim} -eq 1 ]]&& [[ ${tmux_i} -eq 1 ]] ;then
+    echo i
+    env -i $RETAIN $SHELL -l -c 'fish -c "tmux -S /tmp/tmux-10054/ti new-session -s '${tmux_session_name}' n"'
+
+elif [[ ${new_nvim} -eq 1 ]]&& [[ ${tmux_ii} -eq 1 ]] ;then
+    echo ii
+    env -i $RETAIN $SHELL -l -c 'fish -c "tmux -S /tmp/tmux-10054/tii new-session -s '${tmux_session_name}' n"'
+
+elif [[ ${tmux_i} -eq 1 ]];then
+    echo i new_nvim
+    env -i $RETAIN $SHELL -l -c 'fish -c "tmux -S /tmp/tmux-10054/ti new-session -A -s '${tmux_session_name}'"'
+
+elif [[ ${tmux_ii} -eq 1 ]];then
+    echo ii new nvim
+    env -i $RETAIN $SHELL -l -c 'fish -c "tmux -S /tmp/tmux-10054/tii new-session -A -s '${tmux_session_name}'"'
+
+else
+    env -i $RETAIN $SHELL -l
+fi
+
 # and leave a message when we exit... the shell might return non-zero
 # without having real problems, so don't send alarming messages about
 # that

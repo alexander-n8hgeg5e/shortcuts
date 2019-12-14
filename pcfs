@@ -1,2 +1,2 @@
 #!/bin/fish
-sshfs pc:/ /mnt/pc
+sshfs "pc"$argv[1]":/" "/mnt/pc"

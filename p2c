@@ -1,0 +1,33 @@
+#!/usr/bin/python3
+from sys import stdin as si
+from sys import argv
+from os.path import exists,dirname
+from os import linesep as lsep,environ
+from subprocess import Popen,PIPE,check_output
+
+def write_clip_file(data,mode='V'):
+    mode=mode.encode()
+    file_p=environ['CLIPBOARD_FILE']
+    modef_p=environ['CLIPBOARD_META_FILE']
+    file_p=file_p.strip()
+    modef_p=modef_p.strip()
+    if exists(dirname(modef_p)):
+        with open(modef_p,'wb') as f:
+            f.write(mode)
+    if exists(dirname(file_p)):
+        with open(file_p,'wb') as f:
+            f.write(data+b"\n")
+    
+outp=check_output(['pass',argv[1]]).split(lsep.encode())
+
+if len(argv) > 2:
+    outp=outp[int(argv[2])]
+if len(argv) == 4:
+    outp=outp[int(argv[3]):]
+elif len(argv) == 5:
+    outp=outp[int(argv[3]):int(argv[4])]
+
+p=Popen(['clipster','-c'],stdin=PIPE)
+p.communicate(input=outp,timeout=5)
+p.wait()
+write_clip_file(outp)

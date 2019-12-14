@@ -1,0 +1,204 @@
+#!/bin/fish
+
+set    -- args -nm@no_messages
+set -a -- args -nma@no_manual
+set -a -- args -oc@only_need_check_ones
+set -a -- args -nh@no_headers
+set -a -- args -na@no_abbr_full_cont_msg
+set -a -- args -noom@only_output_if_msg
+set -a -- args -l@list_cmds
+set -a -- args -am@include_all_manual
+set -a -- args -h@help
+set -a -- args --help@help
+
+for a in $args
+    set -- aa (string split -- @ $a)
+    set -q -- $aa[2];and set -e -- $aa[2] # if env var
+end
+
+for a in $args
+    set -- aa (string split -- @ $a)
+    if contains -- $aa[1] $argv
+        set $aa[2]
+    end
+end
+if set -q help
+    echo " "usage: progname [args]
+    echo "  "args:
+    for a in $args
+        set -- aa (string split -- "@" $a)
+        echo "    "$aa[1]  (string repeat -n (math 10 - (string length -- $aa[1])) " ") $aa[2]
+    end
+    exit
+end
+set manual gsc gscb gsbrd gidb gcmb gl
+set exclude_noarg gidb gcmb
+set cmds_modified gsu gsuf guc gprh gbrod gbro gbrd gb g.c
+set manual_check_full_abbr_pass gu gsd gpc gh gds gdcs g g. gbr gcb gdc
+set manual_check_abbr_pass gic gd gco gbs ga
+set manual_check_no_pass_do_abbr_full_content gu gsd gpc gbr gcb gds gdcs gh gdc ga. g g.
+set manual_check_no_pass_need_manual_fix
+
+set git_subcmds add apply archive bisect blame branch checkout cherry-pick clean clone commit config diff difftool fetch filter-branch format-patch grep init log merge mergetool mv prune pull push rebase remote reset revert rm shortlog show show-branch stash status submodule tag unpack-refs whatchanged
+set git_subcmds_pat "add|apply|archive|bisect|blame|branch|checkout|cherry-pick|clean|clone|commit|config|diff|difftool|fetch|filter-branch|format-patch|grep|init|log|merge|mergetool|mv|prune|pull|push|rebase|remote|reset|revert|rm|shortlog|show|show-branch|stash|status|submodule|tag|unpack-refs|whatchanged"
+set git_submodule_subcmds add status init deinit update summary foreach sync absorbgitdirs
+set git_submodule_subcmd_pat "add|status|init|deinit|update|summary|foreach|sync|absorbgitdirs"
+
+
+
+
+set cmds (for i in g*; echo $i;end|grep -E '^g[^_-]{0,4}$'|grep -vE 'gg|goo|gsu!|grt')
+if set -q list_cmds
+    for i in $cmds
+        echo $i
+    end
+    exit
+end
+
+function gen_abbr -a cmd -a subcmd
+        echo abbr -a -g $cmd $cmd $subcmd
+end
+if not set -q no_headers
+    set indent "    "
+else
+    set indent ""
+end
+for j in $cmds
+    #####################
+    ###  setup bools  ###
+    #####################
+    set -e has_msg
+    set -e contains 
+    set -e contains2
+    set -e noarg
+    set -e short
+    set -e need_check
+    set -e marked_as_manual
+    set box "###   $j   ###"
+    set -ap box "############"(string repeat -n(string length $j) "#")
+    set one_line_cmd (cat $j|grep -vE '(^|[;])[ ]*[#]|^[ ]*$'|tr \n \;)
+    set properties_string
+    if test (string length (string replace --all --regex '[^;]' "" $one_line_cmd)) -le 1
+        set -a properties_string short
+        set short
+    end
+    if contains $j $exclude_noarg ; or not string match --quiet --regex '[$]argv' $one_line_cmd
+        set -a properties_string noarg
+        set noarg
+    end
+    set -e subcmd2
+    set subcmd (echo $one_line_cmd|sed -r 's/.*git([ ]+[-][-][^ ]+)*[ ]+('"$git_subcmds_pat"').*$/\2/'|cut -c1-500)
+    if contains "$subcmd" $git_subcmds
+        set contains
+        set -a properties_string subcmd
+    end
+    if set -q contains;and test $subcmd = submodule
+        set subcmd2 (echo $one_line_cmd|sed -r 's/.*git([ ]+[-][-][^ ]+)*[ ]+'"$subcmd"'[ ]+('"$git_submodule_subcmd_pat"').*$/\2/'|cut -c1-500)
+        if contains "$subcmd2" $git_submodule_subcmds
+            set contains2
+            set -a properties_string subcmd2
+        end
+    end
+    if contains $j $manual
+        set marked_as_manual
+    end
+
+    # for not to have to modify many cmds
+    # make the distinction between the cases
+
+    set -e txt
+    if not set -q noarg; and not begin set -q marked_as_manual; and not set -q include_all_manual; end
+        if set -q short ;and not set -q contains;and not set -q only_need_check_ones
+            # like git --git-dir=... $argv
+            # complete it like git
+            set -a txt "$indent""complete -c ""$j"" -w git"
+        else if set -q short; and set -q contains
+            # like git log $argv
+            # probably the cmd is no more than an alias
+            # expand it via abbr to full git cmd
+            # echo the cmd's content for inspection to prove the assumtion
+            if     not contains $j $manual_check_no_pass_do_abbr_full_content
+               and not contains $j $manual_check_no_pass_need_manual_fix
+                    set -a txt "$indent""abbr -a -g ""$j"" git ""$subcmd"
+                    set need_check
+                    if not set -q no_messages; and not contains $j $manual_check_abbr_pass
+                        set has_msg
+                        set -a txt " "
+                        set -a txt "$indent""# user need to CHECK the cmd for only being an alias"
+                        set -a txt "$indent""# cmds content:"
+                        set -a txt "$indent""# ""$one_line_cmd"
+                    end
+            else if contains $j $manual_check_no_pass_do_abbr_full_content
+                    set -a txt "$indent""abbr -a -g ""$j"" "(string replace -r -a -- '[$]argv([[][0-9][]])?' '' (string trim -c " "\; -- $one_line_cmd))
+                    if not contains $j $manual_check_full_abbr_pass
+                        set need_check
+                    end
+                    if not set -q no_messages; and not set -q no_abbr_full_cont_msg ;and not contains $j $manual_check_full_abbr_pass
+                        set has_msg
+                        set -a txt " "
+                        set -a txt "$indent""# abbreviating full content, user need to CHECK"
+                        set -a txt "$indent""# cmds content:"
+                        set -a txt "$indent""# ""$one_line_cmd"
+                    end
+            else if contains $j $manual_check_no_pass_need_manual_fix
+                    if not set -q no_messages
+                        set has_msg
+                        set -a txt "$indent""# This cmd NEED MANUAL FIX: ""$j"
+                        set -a txt "$indent""# cmds content:"
+                        set -a txt "$indent""# ""$one_line_cmd"
+                    end
+            end
+        else if not set -q short; and set -q contains; and not set -q no_manual; and not set -q only_need_check_ones; and not set -q marked_as_manual
+            # like gl with python code doing many things
+            # to be able to inherit git completion via the
+            # --wraps feature of fish's "complete"
+            # need to expand it to a git like cmd
+            # need to modify the cmd to discard the extra argument
+            if not set -q contains2
+                set -a txt "$indent""abbr -a -g ""$j"" ""$j"" ""$subcmd"
+            else
+                set -a txt "$indent""abbr -a -g ""$j"" ""$j"" ""$subcmd"" ""$subcmd2"
+            end
+            set -a txt "$indent""complete -c ""$j"" -w git"
+            if not set -q no_messages ;and not contains $j $cmds_modified
+                set has_msg
+                set -a txt " "
+                set -a txt "$indent""# NEED MANUAL MODIFICATION of the command"
+                set -a txt "$indent""# CMD: ""$j"
+                set -a txt "$indent""# modify it to work if called with ""$subcmd as first arg"
+                set -a txt "$indent""# make it callable like so: ""$j ""$subcmd"" [arguments]"
+            end
+        else if not set -q no_manual; and not set -q only_need_check_ones
+            if not set -q no_messages
+                set has_msg
+                set -a txt " "
+                set -a txt "$indent""# NEED FULL MANUAL setup, EXCLUDED by list"
+            end
+        end
+    end
+
+    ################
+    ###  output  ###
+    ################
+    if test (count $txt) -gt 0; and not begin set -q only_output_if_msg; and not set -q has_msg;end; and not begin set -q only_need_check_ones;and not set -q need_check;end
+        if not set -q no_headers
+            for line in $box
+                echo $line
+            end
+        end
+        if not set -q no_messages
+            echo "$indent""# properties: "(string join "-" $properties_string)
+            echo "$indent""# cmd: ""$j"
+            echo
+        end
+        for line in $txt
+            echo $line
+        end
+        if not set -q no_headers
+            echo
+        else if not set -q no_messages; and set -q no_headers
+            echo "-----------------------------------------------"
+        end
+    end
+    
+end

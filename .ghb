@@ -1,0 +1,2 @@
+#!/bin/fish
+string trim -c '* ' (git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME branch|grep '^* ')

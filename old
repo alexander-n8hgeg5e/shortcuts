@@ -1,0 +1,2 @@
+#!/bin/fish
+echo (echo (math (math (date "+%s")" - "(stat -c %Y $argv[1]))" / 60")|sed -r 's/([.][0-9]{1,2})[0-9]*$/\1/') min

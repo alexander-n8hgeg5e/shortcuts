@@ -1,0 +1,40 @@
+#!/bin/bash
+
+bn=$(basename $0)
+
+codep=${HOME}/code
+
+for p in $(cat ~/.prefix_shebang_fixdirs);do
+	p1=${codep}/${p}/${bn}
+	[[ -e $p1 ]] && t=$p1 && break
+done
+
+# echo 2fix: $t
+
+[[ -e $t ]] && shebang=$(head -n1 $t)
+
+# correct eprefix
+[[ -n $PHOME ]] && EPREFIX=${PHOME}/$(basename $EPREFIX)\
+    || EPREFIX=${HOME}/$(basename $EPREFIX)\
+
+#echo $shebang
+eprefix_subs=$(echo $EPREFIX| sed -r 's/\//\\\//g')
+#echo $eprefix_subs
+sub_pattern='s/([#][!])[/](.+[/])?(bin|usr[/]bin|sbin|usr[/]sbin)([/][^/ ]+)/\1'$eprefix_subs'\/\2\3\4/'
+
+#echo $sub_pattern
+
+new_shebang=$( echo $shebang | sed -r  "$sub_pattern")
+
+#echo old shebang: \"$shebang\"
+#echo new shebang: \"$new_shebang\"
+outd=/dev/shm/temp_bin
+outf=${outd}/${bn}
+#echo ${outf}
+#echo ${outf}
+
+mkdir -p /dev/shm/temp_bin
+echo "${new_shebang}" > "${outf}"
+tail -n+2 ${t} >> "${outf}" &&
+chmod +x ${outf}
+"${outf}" "$@"

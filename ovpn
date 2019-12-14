@@ -1,0 +1,9 @@
+#!/bin/fish
+#sudo rc-service pdnsd stop
+set f "/dev/shm/osfgiuos"(random)
+umask 0077
+echo $argv[2]>$f
+pass $argv[3]|head -n1>>$f
+sudo openvpn --config $argv[1] --up /etc/openvpn/up.sh --down /etc/openvpn/down.sh --auth-user-pass $f  & 
+sleep 10
+rm $f

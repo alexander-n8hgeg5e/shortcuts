@@ -1,6 +1,14 @@
 #!/bin/fish
-killall synergy-core
-rind synergy-core --server --address 127.0.0.1:24801 -f &
+killall synergy-core ^ /dev/null
+killall synergys      ^ /dev/null
+killall synergyc      ^ /dev/null
+sleep 1
+killall -s9 synergy-core ^ /dev/null
+killall -s9 synergys      ^ /dev/null
+killall -s9 synergyc      ^ /dev/null
+set cmd rind synergys -a 127.0.0.1:24801 --display "$DISPLAY" -f "2>/dev/null" "1>/dev/null"
+eval $cmd
 if test (hostname) = esadc
-     ssh -N synergy_tunnel_tmrl_esadc
+     ssh -O exit -o ControlMaster=no synergy_tunnel_tmrl_esadc
+     ssh -N synergy_tunnel_tmrl_esadc ^ /dev/null > /dev/null
 end

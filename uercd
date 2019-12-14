@@ -1,0 +1,11 @@
+#!/bin/fish
+
+set default_minus_mmin_time 1440
+
+test (count $argv) -gt 0
+and set minus_mmin_time (math $argv[1] \* 1440)
+or set minus_mmin_time $default_minus_mmin_time
+
+set a (erc $minus_mmin_time)
+eval elpau $a
+	

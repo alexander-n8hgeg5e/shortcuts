@@ -1,0 +1,29 @@
+#!/bin/fish
+
+# $argv[1] : xkbmap
+function setup_font -a p
+	test -e $p
+	and xset +fp $p
+end
+
+set -q DISPLAY
+if test $status -ne 0
+    echo no display var set >&2
+    exit 1
+end
+
+if test -n "$argv[1]"
+    set xkbmap_file "$HOME"/.xkbmap_$argv[1]
+else
+    set xkbmap_file "$HOME"/.xkbmap_(hostname)
+end
+
+if not test -e $xkbmap_file
+    echo no xkbmap file at path: \""$xkbmap_file"\" >&2
+    exit 2
+end
+echo $xkbmap_file
+xkbcomp $xkbmap_file $DISPLAY ^ /dev/null
+xset r rate 130 125
+xset dpms 600 1200 3600
+xrdb -override ~/.Xresources

@@ -1,0 +1,85 @@
+#!/bin/fish
+#
+#
+function countdown
+     echo
+     for i in (seq $argv[1] -1 1)
+         echo -n " t = -"$i" "
+         for j in (seq 10)
+             sleep 0.05
+             echo -n .
+         end
+         for j in (seq 10)
+             sleep 0.05
+             tput dch 2
+         end
+         tput el1;tput cr
+     end
+     echo " >> zero << "
+end
+function vent_break -a t
+    if test $t -lt 8
+        set a 8
+    end
+    rf 120 12>&1 >&1 2>&1 > /dev/null
+    sleep $t
+    rf 121  2>&1 >  /dev/null
+end
+
+tmux -S /tmp/tmux.minicom.socket kill-session -t rfcc_minicom ^ /dev/null 
+tmux -S /tmp/tmux.minicom.socket new-session -s rfcc_minicom -d minicom -D /dev/ttyACM0
+sleep 1
+
+rm /tmp/klima_shutdown ^ /dev/null
+
+fish -c 'read -P "" -s;and touch /tmp/klima_shutdown'&
+
+rf 121  2>&1 > /dev/null
+
+echo 
+echo Hello, i\'m the klima shutdown prog.
+echo I try to stop the freezer gently to prevent fire.
+echo
+
+for i in (seq 7)
+    echo 'sending code "mode cycle" twice...'
+    rfcc b 2>&1 > /dev/null
+    rfcc b 2>&1 > /dev/null
+    echo 
+    echo The thing stopped humming \?
+    echo Do you think compressor is off \?
+    echo
+    echo Press enter to stop me from fiddeling around with this thing.
+    echo
+    vent_break 10
+    test -f /tmp/klima_shutdown
+    and echo
+    and echo Got it bro.
+    and echo
+    and echo ...cooling down the thing...
+    and echo
+    and break
+end
+
+rf 121  2>&1 > /dev/null
+
+countdown 30
+
+rfcc a  2>&1 > /dev/null
+rm /tmp/klima_prob_running
+
+for i in (seq 5)
+    sleep 1
+    rf 240  2>&1 > /dev/null
+end
+
+rm /tmp/klima_shutdown
+countdown 30
+rf 120  2>&1 > /dev/null
+
+tmux -S /tmp/tmux.minicom.socket kill-session -t rfcc_minicom ^ /dev/null 
+
+echo 
+echo Ok done for now,I hope the beast is safely stopped.
+echo
+echo Call me if you need my help again.

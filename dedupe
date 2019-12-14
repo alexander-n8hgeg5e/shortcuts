@@ -1,0 +1,15 @@
+#!/bin/fish
+
+test (count $argv) -gt 0
+and set dir $argv[1]
+or set dir "."
+
+test (count $argv) -gt 1
+and set hashfile $argv[2]
+or set hashfile "/tmp/hashfile"
+
+sudo duperemove \
+-rhd -b 4096 \
+--dedupe-options=same,nofiemap,noblock \
+--hashfile $hashfile \
+$dir

@@ -1,0 +1,4 @@
+#!/bin/fish
+
+set s (cat /dev/shm/sodufosu)
+echo -n (string trim -r -c'\n' $s)

@@ -1,0 +1,9 @@
+#!/bin/fish
+set n 1.02
+set c1 50 
+set f  (math -s0 $n  '*' $COLUMNS+84)
+
+
+git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME branch --color=always --format '%(align:'$c1',left)%(color:blue)%(refname:short)%(color:#000000)%(end)|%(align:14,left)%(color:green)%(committerdate:format:%y_%m_%d|%H:%M)%(color:black)%(end)|%(align:7,left)%(color:#a09900)%(objectname:short)%(color:#000000)%(end)|%(align:20,left)%(color:yellow)%(contents:subject)%(end)' --sort committerdate  --all $argv |cut -c-$f
+
+

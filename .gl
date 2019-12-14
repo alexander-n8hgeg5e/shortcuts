@@ -1,0 +1,58 @@
+#!/bin/fish
+set n 1.02
+set f  (math -s0 $n  '*' $COLUMNS)
+
+function compact_log
+    set r '%C(red)'
+    set g '%C(green)'
+    set b '%C(blue)'
+    set y '%C(yellow)'
+    set o '%C(#ffee00)'
+    set c '%C(cyan)'
+    set cr '%Creset'
+    set ca '%C(auto)'
+    set w '%C(white)'
+    set hash $b'%h'$cr
+    set date $g'%ad'$cr
+    set refnames $ca' %D'$cr'|'
+    set subject $w'%s'
+    set body '%b'
+    set nl '%n'
+    set S $cr'|'$cr
+    set cmd  git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME log --reverse
+    set cmd $cmd --color=always
+    set cmd $cmd '--decorate-refs-exclude="refs/heads/old_*"'
+    set cmd $cmd '--decorate-refs-exclude="refs/remotes/*/old_*"'
+    set cmd $cmd '--decorate-refs-exclude="refs/tags/old_*"'
+    set cmd $cmd   --date=format:"'%y_%m_%d|%H:%M'"
+    set prettystart --pretty=format:\'
+    set prettyend "'"
+    set pretty $prettystart$hash$S$date$S$refnames' '$subject$prettyend
+    set cmd $cmd $pretty
+    set cmd $cmd \'$argv\'
+    set cmd $cmd | cut -c-$f
+    eval $cmd
+end
+set sed_escape_seq_pattern '(\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K])'
+set sed_subst_pattern 's/ '$sed_escape_seq_pattern'{1,4}(\w+\/)?_*old_(\w|[-/_]|[0-9])*'$sed_escape_seq_pattern'{1,4}(,|\|)/\8/g'
+begin
+   if test (count $argv) -gt 1 
+        if test $argv[1] = s
+            compact_log --simplify-by-decoration $argv[2..-1] |sed -r $sed_subst_pattern
+        else if test $argv[1] = a
+            compact_log $argv[2..-1]
+        else
+            compact_log -n10 $argv
+        end
+    else if test (count $argv) = 1
+        if test $argv[1] = a
+            compact_log
+        else if test $argv[1] = s
+            compact_log --simplify-by-decoration |sed -r $sed_subst_pattern 
+        else
+            compact_log -n10 $argv
+        end
+    else
+        compact_log -n10
+    end
+end

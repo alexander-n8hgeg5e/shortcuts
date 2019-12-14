@@ -1,4 +1,4 @@
 #!/bin/fish
 for i in (find /sys/devices/system/cpu/cpufreq -name 'scaling_max_freq')
-        echo $argv[1]'00000'|sudo dd of=$i
+        echo $argv[1]'0000'|sudo dd of=$i
 end

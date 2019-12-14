@@ -5,23 +5,95 @@ import argparse
 
 cmd_base = ['ionice', '-c3', 'nice', '-n19', 'sudo']
 
-def gen_cmd_emerge_update( full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], backtrack=3 ):
+
+def gen_cmd_emerge_preserved_rebuild(*z,**zz):
+    return gen_cmd_emerge( *z,**zz,pkg_set='@preserved-rebuild')
+
+def gen_cmd_emerge_world_update(*z,**zz):
+    return gen_cmd_emerge( *z,**zz, pkg_set='@world')
+
+class Include(int):
+    def __init__(self,*z):
+        if len(z)==0:
+            self=True
+    def __bool__(self):
+        return self==True
+    def __repr__(self):
+        return "include("+repr(self==True)+")"
+    def __str__(self):
+        return "include("+str(self==True)+")"
+
+def argdict_tuple2arglist(k,v):
+    if type(v) is str:
+        arg = [k,v]
+    elif type(v) is Include:
+        if v:
+            arg = [k]
+        else:
+            arg = []
+    else:
+        arg = [k,str(v)]
+    return arg
+
+def argdict2args(d):
+    l=[]
+    for k,v in d.items():
+        l+=argdict_tuple2arglist(k,v)
+    return l
+        
+def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], bdeps=True, backtrack=10 ,pkg_set='@world', light=True ,insane=False,**zz):
+    include=Include(True)
+    not_include=Include(False)
+
+
     cmd_emerge     = ['emerge']
-    args_all       = ['-v', '-u', '--keep-going=y', '--backtrack='+str(backtrack) ]
-    pgk_set        = ['@world']
-    args_full      = ['--deep', '--newuse','--with-bdeps=y']
-    args_emptytree = ['--emptytree', '--newuse', '--ask']
+    args_common       = {
+                            '--verbose':include ,
+                            '--update':include,
+                            '--keep-going':include,
+                            '--backtrack':backtrack
+                        }
+    pgk_set        = [ pkg_set ]
+    args_default   = {'--deep':include , '--newuse':include}
+    args_full      =    {
+                            '--deep':include,
+                            '--newuse':include,
+                            '--with-bdeps':'y',
+                            '--complete-graph':include,
+                            "--rebuild-if-new-ver":"y",
+                            "--rebuild-if-unbuilt":"y",
+                            "--rebuild-if-new-rev":"y",
+                            "--rebuild-if-new-slot":"y",
+                            '--changed-deps':'y',
+                            '--changed-slot':'y',
+                        }
+    args_insane = args_full.copy()
+    args_insane.update( {'--selective':'n'})
+    args_insane['--backtrack']=backtrack*(10**6)
+                        
+    args_emptytree = {'--emptytree':include, '--newuse':include}
+    args_bdeps = {'--with-bdeps':'y'}
+
     if pump:
         cmd_emerge = ["pump"]+ cmd_emerge
-    l = cmd_base + cmd_emerge + args_all
-    if full and not emptytree:
-        l.extend(args_full)
-    elif emptytree and not full:
-            l.extend(args_emptytree)
-    elif not full and not emptytree:
+
+    l =  cmd_base + cmd_emerge + argdict2args(args_common)
+
+    if full or insane:
+        if insane:
+            l+=argdict2args(args_insane)
+        elif full:
+            l+=argdict2args(args_full)
+
+    elif emptytree:
+            l+=argdict2args(args_emptytree)
+            if bdeps:
+                l+=argdict2args(args_bdeps)
+    elif light:
         pass
     else:
-        raise Exception('ERROR: Invalid args')
+        l+=argdict2args(args_default)
+
     if ask:
         l.append('--ask')
     if len(some_args) > 0:
@@ -33,8 +105,8 @@ def gen_cmd_emerge_update( full=False , emptytree=False , ask=False , additional
     l.extend( pgk_set )
     return l
 
-def gen_cmd_sync(additional_args=None):
-    _cmd_sync       = ['emerge-webrsync']
+def gen_cmd_sync(*z,additional_args=None,**zz):
+    _cmd_sync       = ['emerge','--sync']
     args_additonal = ['$1']
     l = cmd_base + _cmd_sync
     if not additional_args is None:
@@ -46,23 +118,43 @@ def gen_cmd_sync(additional_args=None):
 
 def parse_args():
     """Parse command-line arguments."""
-
+    class StoreTrueAction(argparse._StoreConstAction):
+        def __init__(self,
+                     dest,
+                     option_strings,
+                     default=Include(False),
+                     required=False,
+                     help=None):
+            super().__init__(
+                option_strings=option_strings,
+                dest=dest,
+                const=Include(True),
+                default=default,
+                required=required,
+                help=help)
+    
     parser = argparse.ArgumentParser(description='update tool')
     parser.add_argument('-f', '--full', action="store_true",
-            help=str(gen_cmd_emerge_update(full=True)))
+            help=str(gen_cmd_emerge_world_update(full=True)))
+    parser.add_argument('-i', '--insane', action="store_true",
+            help=str(gen_cmd_emerge_world_update(insane=True)))
     parser.add_argument('-l', '--light', action="store_true",
-            help=str(gen_cmd_emerge_update()))
+            help=str(gen_cmd_emerge_world_update()))
     parser.add_argument('-s', '--sync', action="store_true",
             help=str(gen_cmd_sync()))
     parser.add_argument('-e', '--emptytree', action="store_true",
-            help=str(gen_cmd_emerge_update(emptytree=True)))
+            help=str(gen_cmd_emerge_world_update(emptytree=True)))
+    parser.add_argument('-pr', '--preserved-rebuild', action="store_true",default=True,
+            help=str(gen_cmd_emerge_preserved_rebuild()))
     parser.add_argument('-p', '--pump', action="store_true",
             help=str("enable distcc pump mode"))
     parser.add_argument('-a', '--ask', action="store_true",
-                        help='add ask to arglist')
-    parser.add_argument('-j', '--jobs', type=int, action="store" ,default=3,
+                        help='add ask to arglist',default=False)
+    parser.add_argument('-na', '--noask', action="store_true",
+                        help='add ask to arglist',default=False)
+    parser.add_argument('-j', '--jobs', type=int, action="store" ,default=None,
                         help='jobs to run simultaniously')
-    parser.add_argument('-b', '--backtrack', type=int , action="store", default=3,
+    parser.add_argument('-b', '--backtrack', type=int , action="store", default=30,
             help="how far to go back to find dependency solution" )
     parser.add_argument('additional_args',nargs='*',
                         help='additional args will be forwarded and "--" prepended, so specify without minus ("--"). And because of this Only "--"-long-type-args are supported')
@@ -73,23 +165,23 @@ def c(cmdlist):
     print(cmdlist)
     call(cmdlist,shell=False)
 
- 
-args=parse_args()
-some_args=["--jobs="+str(args.jobs)]
+if __name__=='__main__':
+    args=parse_args()
+    zz=args.__dict__
 
-
-if args.sync:
-  cmd_sync      = gen_cmd_sync(additional_args=args.additional_args)
-  c(cmd_sync)
-
-if args.light:
-  cmd_light     = gen_cmd_emerge_update(additional_args=args.additional_args,ask=args.ask,some_args=some_args,pump=args.pump,backtrack=args.backtrack)
-  c(cmd_light)
-
-if args.full:
-  cmd_full      = gen_cmd_emerge_update(full=True,additional_args=args.additional_args,ask=args.ask,some_args=some_args,pump=args.pump,backtrack=args.backtrack)
-  c(cmd_full)
-
-if args.emptytree:
-  cmd_emptytree = gen_cmd_emerge_update(emptytree=True,additional_args=args.additional_args,ask=args.ask,some_args=some_args,pump=args.pump,backtrack=args.backtrack)
-  c(cmd_emptytree)
+    if not args.jobs == None:
+        some_args=["--jobs="+str(args.jobs)]
+    else:
+        some_args=[]
+    
+    
+    if args.sync:
+        cmd_sync      = gen_cmd_sync(**zz)
+        c(cmd_sync)
+       
+    cmd = gen_cmd_emerge_world_update(**zz)
+    c(cmd)
+    if args.full or args.insane or args.preserved_rebuild:
+          cmd_pr = gen_cmd_emerge_preserved_rebuild(**zz)
+          c(cmd_pr)
+# vim: set syntax=python

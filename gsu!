@@ -87,16 +87,19 @@ end
  
 function fix_1 -a path
         # fix func that does the impossible checkout of a non existing reference
-        set cmd $HOME'/code/shortcuts/checkout_failed'
+        set cmd checkout_failed
         $cmd $path
 end
 function fix_2 -a path
      # fix func that backups files, so checkout can proceed
      set start_dir $PWD
      cd $path
+     set gitdir $GIT_DIR
+     set -e GIT_DIR
      and gcb do_backup_for_checkout_(date +%y_%m_%d_%H_%M_%S)
      and g.c -m backup_for_checkout
      cd $start_dir
+     set -x GIT_DIR $gitdir
 end
 
 function done

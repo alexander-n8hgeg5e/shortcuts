@@ -1,0 +1,29 @@
+#!/usr/bin/python3
+from subprocess import check_call,call
+from psutil import process_iter
+from re import match
+from os import environ
+
+
+def is_i3_running():
+    found=False
+    for p in process_iter():
+        for i in  p.cmdline():
+            if match(".*i3$",i):
+                found=True
+    return found 
+
+
+print('restoring config...') 
+cmd=[ 'wm_conf_adj', 'off' ]
+call(cmd)
+     
+
+try:
+    check_call ( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper' ] )
+except:
+   print('failed, restoring config...')
+   cmd=[ 'wm_conf_adj', 'off']
+   call(cmd)
+
+

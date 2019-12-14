@@ -1,2 +1,2 @@
 #!/bin/fish
-git --git-dir=/mnt/home/stud-uabir/prefix.git --work-tree=/mnt/home/stud-uabir $argv
+git --git-dir="$HOME"/.prefix.git --work-tree="$HOME" $argv

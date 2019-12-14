@@ -8,4 +8,4 @@ and begin
 end
 and git submodule init
 and git submodule sync --recursive
-and git submodule foreach --recursive fish -c "git branch --format '%(refname:short)'|grep '^"$argv[1]"$';and begin;git branch -m $n1 $n2;or git branch -m $n1 $n22;end"
+and git submodule foreach --recursive fish -c "git branch --format '%(refname:short)'|grep '^"$argv[1]"\$';and begin;git branch -m $n1 $n2;or git branch -m $n1 $n22;end"

@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+from sys import argv
+import pexpect
+from shlex import split as splitcmd
+from os.path import basename
+from os import getcwd
+cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')
+cmd2=splitcmd('--ask n --nodeps -v')
+cmd3=[basename(getcwd())]
+cmd4=argv[1:]
+
+
+print(cmd1)
+print(cmd2)
+print(cmd3)
+print(cmd4)
+
+cmd=cmd1+cmd2+cmd3+cmd4
+print(cmd)
+p=pexpect.spawn(cmd[0],cmd[1:])
+p.interact()

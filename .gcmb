@@ -1,0 +1,9 @@
+#!/bin/fish
+set histbranches    (string split , (git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME log --decorate=full --color=never --pretty='%D'|sort -u|tr '\n' ','|tr -d ' '))
+set recent_branches (string split , (git --git-dir=$HOME/.dotfiles.git --work-tree=$HOME log --decorate=full --since=$argv[1]  --all --color=never --pretty='%D'|sort -u|tr '\n' ','|tr -d ' '))
+
+for i in $recent_branches
+        if  not contains $i $histbranches
+              echo $i
+	end
+end

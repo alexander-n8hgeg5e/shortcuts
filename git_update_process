@@ -1,0 +1,213 @@
+#!/bin/fish
+set skip $argv[2]
+test (string length $skip) -gt 0
+or set skip 0
+set counter 0
+set clone_target "/tmp/clone"$argv[1]
+set merge_ref "h"
+set onto_branch "pc"
+set onto_head_tag "oh"
+set gitpack_name pc-dotcode
+set gitpackdir '$HOME'"/.gitpacks"
+set gitpack_path "$gitpackdir""/""$gitpack_name"
+set gsp_cmd_base gsp -f "$gitpack_path"
+echo experimental script!
+echo make sure to read the code
+echo need \"head\" tag named \"$merge_ref\"
+echo need \"onto-head-tag\" named \"$onto_head_tag\"
+
+function step_header -a msg
+    set -g counter (math $counter + 1)
+    echo
+    echo --------------------------------------
+    echo step $counter : $msg
+    echo --------------------------------------
+end
+
+step_header "enter input"
+read -P"git_remote ? :" git_remote
+
+step_header "enter input"
+read -P"ssh_remote ? :" ssh_remote
+
+################################################################################################
+#step_header "check gitpack..."
+################################################################################################
+#
+## prepare vars
+#set fn "/dev/shm/git_update_"(random 0 100)"_"(date '+%s')
+#set fn_local "$fn"_l
+#set remote_home (ssh -q $ssh_remote 'cd $HOME;pwd -P')
+#set dir (pwd)
+#set local_home (cd "$HOME" ; pwd -P ;cd "$dir")
+#
+#set len_remote_home (string length $remote_home)
+#set len_local_home (string length $HOME)
+#echo
+#echo $len_remote_home
+#echo $len_local_home
+#echo
+#echo $remote_home
+#echo $local_home
+#echo
+#set  shell_cmd_0 'rm $fn 2>/dev/null'
+#
+#set  git_cmd_1   "pwd -P | cut -c(string length ""$len_remote_home"")- >> ""$fn"
+#set  shell_cmd_1 "$gsp_cmd_base"" -C "\'"$git_cmd_1"\'
+#
+#
+## run remote
+#echo
+#echo  shell_cmd_0: $shell_cmd_0
+#echo $shell_cmd_0 | ssh "$ssh_remote" '~/bin/i'
+#echo
+#
+#echo
+#echo  shell_cmd_1: $shell_cmd_1
+#echo $shell_cmd_1 | ssh "$ssh_remote" '~/bin/i'
+#echo
+#
+#echo
+#echo scp "$ssh_remote"":""$fn" $fn
+#scp "$ssh_remote"":""$fn" $fn
+#
+#
+## prepare local
+#set  git_cmd_l_1   "pwd -P | cut -c(string length ""$len_local_home"")- >> ""$fn_local"
+#echo
+#echo git_cmd_l_1: $git_cmd_l_1
+#echo
+#
+#set  shell_cmd_l_0 "rm $fn_local 2>/dev/null"
+#set  shell_cmd_l_1 "$gsp_cmd_base"" -C "\'"$git_cmd_l_1"\'
+#
+## run local
+#echo
+#echo shell_cmd_l_0: $shell_cmd_l_0
+#echo
+#eval $shell_cmd_l_0
+#
+#echo
+#echo shell_cmd_l_1: $shell_cmd_l_1
+#echo
+#eval $shell_cmd_l_1
+#
+#echo ### diff ####
+#diff $fn_local $fn
+#echo ### end diff ####
+#
+#exit
+
+step_header "delete onto head tag on remote"
+echo "'fish -c '\''gsp -f ~/.gitpacks/pc -v -C\"git tag -d $onto_head_tag\"'\'|ssh \$ssh_remote '~/bin/i'"
+echo 'fish -c '\''gsp -f ~/.gitpacks/pc -v -C"git tag -d '$onto_head_tag'"'\'|ssh $ssh_remote '~/bin/i'
+
+step_header "make fresh onto head tag on remote"
+echo "'fish -c '\''gsp -f ~/.gitpacks/pc -v -C\"git tag $onto_head_tag\"'\'|ssh $ssh_remote '~/bin/i'"
+test $skip -ge $counter;or read enter to proceed
+echo 'fish -c '\''gsp -f ~/.gitpacks/pc -v -C"git tag '$onto_head_tag'"'\'|ssh $ssh_remote '~/bin/i'
+
+step_header "delete local merge ref tag \"$merge_ref\""
+echo gsp -f ~/.gitpacks/pc -v    -C\"git tag -d $merge_ref\"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"git tag -d $merge_ref"
+
+step_header "make fresh merge ref tag locally"
+echo gsp -f ~/.gitpacks/pc -v    -C\"git tag $merge_ref\"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"git tag $merge_ref"
+
+step_header "delete local onto head tag \"$onto_head_tag\""
+echo gsp -f ~/.gitpacks/pc -v    -C\"git tag -d $onto_head_tag\"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"git tag -d $onto_head_tag"
+
+step_header "git fetch \"$onto_head_tag\""
+echo gsp -f ~/.gitpacks/pc -v    -C\""git fetch "$git_remote" "$onto_head_tag\"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"git fetch "$git_remote" "$onto_head_tag
+
+step_header "git fetch tags"
+echo gsp -f ~/.gitpacks/pc -v    -C"git fetch "$git_remote" --tags"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"git fetch "$git_remote" --tags"
+
+step_header "git clone onto_head_tag \"$onto_head_tag\""
+echo gsp -f ~/.gitpacks/pc -o -u "$clone_target"/  -c3  -b"$onto_head_tag" -D
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -o -u "$clone_target"/  -c3  -b"$onto_head_tag" -D
+
+step_header "git clone again , no specific tag"
+echo gsp -f ~/.gitpacks/pc -o -u "$clone_target"/  -c3   -D
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -o -u "$clone_target"/  -c3   -D
+
+step_header "git fetch \"$merge_ref\" to the temp clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git fetch origin '$merge_ref
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git fetch origin '$merge_ref
+
+step_header "git fetch tags to the temp clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git fetch origin --tags'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git fetch origin --tags'
+
+step_header "git checkout onto head tag \"$onto_head_tag\" or checkout orphan branch \"$onto_branch\"" on clone
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git checkout '$onto_head_tag';or git checkout --orphan '$onto_branch
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git checkout '$onto_head_tag';or git checkout --orphan '$onto_branch
+
+step_header "git checkout -b onto branch \"$onto_branch\" on clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'gcb '$onto_branch
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'gcb '$onto_branch
+
+step_header "show new head branch of clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'ghb'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'ghb'
+
+step_header "git merge squash merge ref \"$merge_ref\" at clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git merge --allow-unrelated-histories --squash '$merge_ref
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git merge --allow-unrelated-histories --squash '$merge_ref
+
+step_header "git checkout files of ref \"$merge_ref\" at clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git checkout '$merge_ref' -- .'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git checkout '$merge_ref' -- .'
+
+step_header "git commit at clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git commit -m"* update"'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git commit -m"* update"'
+
+step_header "git show log -n2 at clone"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'gl -n2;echo;echo'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'gl -n2;echo;echo'
+
+step_header "rename branch \"$onto_branch\" to old_date_branch on local repo"
+echo gsp -f ~/.gitpacks/pc -v    -C"gbrod "$onto_branch
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v    -C"gbrod "$onto_branch
+
+step_header "git push branch \"$onto_branch\" from clone to local"
+echo gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git push origin '$onto_branch';echo'
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -u "$clone_target"/  -c3   -C'git push origin '$onto_branch';echo'
+
+step_header "git show log -n2 of onto branch \"$onto_branch\" at local repo"
+echo "gsp -f ~/.gitpacks/pc -v -C'gl -n2 $onto_branch -- ;echo;echo'"
+test $skip -ge $counter;or read enter to proceed
+gsp -f ~/.gitpacks/pc -v -C'gl -n2 '$onto_branch' -- ;echo;echo'
+
+step_header "git rename onto branch with update postfix to old_date_branch  on remote"
+echo "echo 'fish -c '\''gsp -f ~/.gitpacks/pc -v -C\"gbrod '$onto_branch'_update\"'\'|ssh $ssh_remote '~/bin/i'"
+test $skip -ge $counter;or read enter to proceed
+echo 'fish -c '\''gsp -f ~/.gitpacks/pc -v -C"gbrod '$onto_branch'_update"'\'|ssh $ssh_remote '~/bin/i'
+
+step_header "final: git push onto branch \"$onto_branch\" to remote branch ""$onto_branch""_update"
+echo gsp -f ~/.gitpacks/pc -v -C"git push $git_remote $onto_branch"':'$onto_branch'_update'
+read enter to proceed
+gsp -f ~/.gitpacks/pc -v -C"git push --no-recurse-submodules $git_remote $onto_branch"':'$onto_branch'_update'

@@ -1,42 +1,107 @@
-#!/bin/fish
-cat > /dev/shm/menu_search_in
-xdotool search --class menuwin windowunmap --sync |logger -p user.debug
-xdotool search --class menuwin windowkill |logger -p user.debug
-set winid (xdotool getactivewindow)
-set pl (xdotool getmouselocation|cut -d' ' -f1|cut -d: -f2|string trim)
-set leftx ( xdotool getwindowgeometry $winid | grep Position:|cut -d: -f2|string trim|cut -d, -f1 )
-set width ( xdotool getwindowgeometry $winid | grep Geometry:|cut -d: -f2|string trim|cut -dx -f1 )
-echo w: $width|logger -p user.debug
-set pos  (math ( math (echo $width) / 2 ) + $leftx )
-echo pos: $pos |logger -p user.debug 
-echo id: $winid|logger -p user.debug
+#!/usr/bin/python3
+#{{{
+from sys import stdin,argv,stdout,stderr
+from math import ceil,floor
+from subprocess import call,Popen,PIPE
+from time import sleep
+from pylib import screen_utils
+from pylib.screen_utils import env_screen_layout_2_region_layout,layout2xpos
+#from pylib.du import dd,d1,d0
+from pylib.xutils import xdotool_utils,xrandr_utils
+from signal import SIGINT
+from os import environ
+from argparse import ArgumentParser
+#}}}
 
-if test $pl -gt 1366
-    set menucmd 'r_menuwin' ;echo r|logger -p user.debug
-else if test $pl -le 1366
-    set menucmd 'l_menuwin' ;echo l|logger -p user.debug
-else 
-    if test $pos -gt 1366
-         set menucmd 'r_menuwin' ;echo r|logger -p user.debug
-    else
-          set menucmd 'l_menuwin' ;echo l|logger -p user.debug
-    end
-end
+##################
+###   config   ###
+##################
+#{{{
+font= 'Monospace:size=18'
+line_height=27 # aprox. fontsize*1.5
+fill_screen_height_factor = 0.75
+def default_lines_count(h):
+    return str(floor(int(h)/line_height))
 
-echo $menucmd|logger -p user.debug
-eval "$menucmd &"
-set c 0
-while not test $c -gt 5000
-      set c (math $c + 1)
-      set menuwinid ( xdotool search --class menuwin; set s $status )
-      echo $menuwinid|logger -p user.debug
-      if test $status -eq 0
-          cat /dev/shm/menu_search_in|dmenu -fn Monospace:size=12 -f -i -l 66 $argv -w (xdotool search --class menuwin) > /dev/shm/menu_search_out|logger -p user.debug
-	  break
-      end
-      sleep 0.01|logger -p user.debug
-end
-xdotool search --class menuwin windowunmap --sync |logger -p user.debug
-xdotool search --class menuwin windowkill |logger -p user.debug
-xdotool windowactivate --sync $winid|logger -p user.debug
-cat /dev/shm/menu_search_out
+#}}}
+
+
+
+def parse_args():
+    parser=ArgumentParser()
+    parser.add_argument("-ri","--region-index",default=None,type=int,help="this is the region like spectrwm regions, on current x-server")
+    parser.add_argument("-l","--lines-count",default=None,type=int,help="num lines of menu")
+    parser.add_argument(dest="dmenu_args",nargs="*",help="args to pass to dmenu")
+    global args
+    args=parser.parse_args()
+
+parse_args()
+
+# remember active the win
+active_win_id=xdotool_utils.get_active_win_id()
+
+
+if args.region_index is None:
+    if active_win_id:
+        outp_of_active_win = screen_utils.get_output_of_active_win(active_win_id) 
+        
+        # spawn the menu at the current output
+        x,y = outp_of_active_win['pos']
+        w,h = outp_of_active_win['size']
+    else:
+        x,y=0,0
+        layout=screen_utils.parse_screen_layout_env_var()
+        # middle screen or left of middle pair
+        screen = floor((len(layout)-1)/2)
+        x_server=screen_utils.parse_display_var()
+        x=0
+        layout_index=0
+        for i in range(screen-1): # not add the actual one, want to get pos
+            if layout[i]['x_server'] == x_server:
+                layout_index=i
+                x+=int(layout[i]['size'][0])
+        y=0
+        w,h= layout[layout_index]['size']
+else:
+    region_layout=env_screen_layout_2_region_layout()
+    x=layout2xpos(region_layout,args.region_index-1)
+    y=0
+    w,h=region_layout[args.region_index-1]["size"]
+    
+
+
+h=str(ceil(int(h)*fill_screen_height_factor))
+
+if args.lines_count is None:
+    args.lines_count=default_lines_count(h)
+
+
+menuwin_cmd=['menuwin',str(w),str(h),str(x),str(y)]
+menuwin=Popen(menuwin_cmd)
+
+add_args=args.dmenu_args
+
+dmenucmd=['dmenu', '-fn', font , '-f', '-i','-p', '>', '-l', args.lines_count ] + add_args  + [ '-w' ]
+#dd(dmenucmd)
+
+
+c=0
+while not c > 5000:
+    c+=1
+    p = Popen(['xdotool', 'search', '--class', 'menuwin'],stdout=PIPE)
+    retcode=p.wait()
+    if retcode==0:
+        menuwin_id = p.stdout.read().decode().strip()
+        p.terminate()
+        dmenucmd.append(menuwin_id)
+        dmenu=Popen(dmenucmd,stdout=stdout, stdin=stdin.buffer.raw)
+        dmenu.wait()
+        menuwin.terminate()
+        break
+    sleep(0.01)
+
+if active_win_id:
+    return_to_window_cmd=[ 'xdotool', 'windowactivate', '--sync', active_win_id ]
+    call(return_to_window_cmd)
+
+# vim: set foldmethod=marker foldlevel=0:

@@ -1,0 +1,2 @@
+#!/bin/fish
+pip3 download --no-binary=:all: --no-deps --src=./mpl-src  $argv

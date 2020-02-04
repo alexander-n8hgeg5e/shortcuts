@@ -2,5 +2,10 @@
 set args $argv
 test $args[1] = branch
     and set args $args[2..-1]
-git branch -m $args[1] old_$args[1]_(date '+%F')
-or git branch -m $args[1] old_$args[1]_(date '+%F-%H-%M')
+if not test -z (git branch --list old)
+    git branch -m old old/old
+    or git branch -m old old_(date '+%F')
+    or git branch -m old old_(date '+%F-%H-%M')
+end
+git branch -m $args[1] old/$args[1]_(date '+%F')
+or git branch -m $args[1] old/$args[1]_(date '+%F-%H-%M')

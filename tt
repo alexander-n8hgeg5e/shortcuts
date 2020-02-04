@@ -19,6 +19,9 @@ fi
 echo $display
 
 xpos="$(xdotool getactivewindow getwindowgeometry | grep Position: |cut -d: -f2 | sed -r 's/\s*(\w*)\s*/\1/'| cut -d, -f1)"
+
+xpos=$(( ${xpos}  -  ( ${xpos} % 10 ) ))
+
 session_name="${display}_${xpos}"
 
 socket_name="${host}"

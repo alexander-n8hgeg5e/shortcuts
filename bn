@@ -1,0 +1,12 @@
+#!/usr/bin/python3
+from sys import argv
+from subprocess import Popen,DEVNULL,PIPE
+from signal import SIGSTOP,SIGCONT
+p0 = Popen(argv[1:])
+p0.send_signal(SIGSTOP)
+p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/unified/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
+p1.communicate(input=str(p0.pid).encode())
+p1.wait()
+if p1.poll() == 0:
+    p0.send_signal(SIGCONT)
+    p0.wait()

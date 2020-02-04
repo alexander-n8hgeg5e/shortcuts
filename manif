@@ -1,25 +1,37 @@
-#!/bin/fish
+#!/usr/bin/env python3
+from subprocess import check_output,check_call
+from sys import argv
+from argparse import ArgumentParser
+a=ArgumentParser()
+a.add_argument("-L","--follow-symlinks",action="store_true",default=False)
+a.add_argument(dest='pathes', nargs="*", action="store",type=str,default=["."])
+args=a.parse_args()
+find_arg=( ['-L'] if args.follow_symlinks else [] )
 
-function ff --description 'gimme ebuild'
-    find . -name '*.ebuild' -type f
-	end
-
-
-function fff --description 'gimme manifs'
-    find . -name '*.ebuild' -type f
-	end
-
-for i in (ff)
-	echo $i
-	ebuild $i manifest
-
-    sudo chown :portage $i
-    sudo chmod  g+r $i
-end
+def get_ebuilds():
+    cmd=[ 'find'] + find_arg + args.pathes + [ '-name', '*.ebuild', '-type', 'f' ]
+    return check_output(cmd).decode().split("\n")
 
 
-for i in (fff)
-    sudo chown :portage $i
-    sudo chmod  g+r $i
-end
+def get_manifs():
+    cmd=[ 'find' ]+ find_arg + args.pathes + [ '-name', '*.ebuild', '-type', 'f' ]
+    return check_output(cmd).decode().split("\n")
+
+
+
+if __name__=="__main__":
+    for i in get_ebuilds():
+        if i.strip() == "":
+            continue
+        cmd = ['sudo' , 'ebuild' ] + [ i ] + [ 'manifest' ]
+        check_call(cmd)
+        cmd = [ 'group_access', '-g' , 'portage','-p', i ]
+        check_call(cmd)
     
+    
+    for i in get_manifs():
+        if i.strip() == "":
+            continue
+        cmd = [ 'group_access', '-g' , 'portage','-p', i ]
+        check_call(cmd)
+        

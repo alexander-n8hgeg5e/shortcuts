@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+
+from sys import argv
+from subprocess import check_output,check_call
+from os.path import realpath
+
+cmd=argv[1]
+prefix='/'
+
+cmdpath = check_output(['which', cmd ]).decode().strip()
+cmdpath=realpath(cmdpath)
+
+
+check_call(['portageq','owners', prefix, cmdpath ])

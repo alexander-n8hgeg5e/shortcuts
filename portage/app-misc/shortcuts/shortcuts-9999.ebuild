@@ -18,7 +18,7 @@ RDEPEND="${DEPEND} dev-python/pexpect
                    >=dev-python/columnize-0.3.9
 				   x11-misc/wmctrl
                    rind? ( app-misc/rind )
-                   neovim? ( app-editors/neovim[python,tui,clipboard]
+                   neovim? ( app-editors/neovim
 				             app-misc/tmux
 						   )
                    github? ( dev-python/github3 )
@@ -190,11 +190,13 @@ dobin sed_inplace_insert_dobin_into_ebuild
 dobin rallnodes
 dobin check_synergy_ssh_connection
 dobin _check_synergy_ssh_connection
-dobin menu/r_menuwin
-dobin menu/l_menuwin
-dobin menu/menuwin
-dobin menu/menu_run
-dobin menu/menu_search
+if use X ; then
+	dobin menu/r_menuwin
+	dobin menu/l_menuwin
+	dobin menu/menuwin
+	dobin menu/menu_run
+	dobin menu/menu_search
+fi
 dobin qb
 dobin ginf
 dobin pcfs
@@ -362,4 +364,20 @@ dobin pw2handy
 dobin G
 dobin group_access
 dobin check_git
+dobin pip3_source_download
+dobin wl
+dobin dms
+dobin stripcolors
+dobin gl1
+dobin cmdowner
+dobin iptables_log_rejected
+dobin w3mimgdisplay
+dobin ssnd
+dobin stnd
+dobin srnd
+dobin bn
+dobin sw_msky
+dobin skyscraper_activate_monitor_onoff_button
+dobin monitor_samsung_control
+dobin sw_mec
 }

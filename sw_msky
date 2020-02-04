@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+
+from socket import gethostname
+from pylib.syslog_utils import check_call
+
+if gethostname() == "skyscraper":
+    check_call(['skyscraper_activate_monitor_onoff_button'])
+else:
+    check_call(['ssh','root@skyscraper','skyscraper_activate_monitor_onoff_button'])

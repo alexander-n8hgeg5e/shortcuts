@@ -1,3 +1,5 @@
 .sconsign.dblite
 .git.backup_by_unabsorb_git_dirs_prog
 __pycache__
+/skyscraper_activate_monitor_onoff_button
+/skyscraper_activate_monitor_onoff_button.o

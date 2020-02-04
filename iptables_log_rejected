@@ -1,0 +1,12 @@
+#!/bin/fish
+sudo iptables -A INPUT \
+    -m limit --limit 15/min -j LOG \
+    --log-prefix "NOTICE: rejected:" \
+    --log-level notice \
+    --log-tcp-sequence --log-ip-options
+
+sudo ip6tables -A INPUT \
+    -m limit --limit 15/min -j LOG \
+    --log-prefix "NOTICE: rejected:" \
+    --log-level notice \
+    --log-tcp-sequence --log-ip-options

@@ -21,9 +21,9 @@ if args.group_id and not args.group:
 
 group=(args.group if args.group else (str(args.group_id)))
 
-cmds = [[ 'find', path, '-type', 'd', '-exec', 'chmod' , 'g+s' ,'{}' , ';' ]]
-cmds+= [[ 'chown', '-R', ':'+group , path ]]
-cmds+= [[ 'chmod', '-R', 'g+rX', path ]]
+cmds = [[ 'sudo'  , 'find', path, '-type', 'd', '-exec', 'chmod' , 'g+s' ,'{}' , ';' ]]
+cmds+= [[ 'chown' , '-R', ':'+group , path ]]
+cmds+= [[ 'chmod' , '-R', 'g+rX', path ]]
 
 for cmd in cmds:
     print(cmd)

@@ -1,29 +1,20 @@
 #!/usr/bin/python3
-from subprocess import check_call,call
-from psutil import process_iter
-from re import match
+from subprocess import call
 from os import environ
 
-
-def is_i3_running():
-    found=False
-    for p in process_iter():
-        for i in  p.cmdline():
-            if match(".*i3$",i):
-                found=True
-    return found 
+#from psutil import process_iter
+#from re import match
 
 
-print('restoring config...') 
-cmd=[ 'wm_conf_adj', 'off' ]
-call(cmd)
-     
+#def is_i3_running():
+#    found=False
+#    for p in process_iter():
+#        for i in  p.cmdline():
+#            if match(".*i3$",i):
+#                found=True
+#    return found 
+#
 
-try:
-    check_call ( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper' ] )
-except:
-   print('failed, restoring config...')
-   cmd=[ 'wm_conf_adj', 'off']
-   call(cmd)
+call( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper' ])
 
-
+# vim: set foldlevel=0 foldnestmax=2 foldmethod=indent :

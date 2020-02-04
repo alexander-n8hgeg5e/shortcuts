@@ -1,18 +1,126 @@
-#!/bin/fish
-set args $argv
-test $args[1] = branch
-    and set args $args[2..-1]
-set n 1.02
-set c1 50 
-set f  (math -s0 $n  '*' $COLUMNS+84)
+#!/usr/bin/env python3
+#from sys import path
+#path.insert(1,'/tmp/python_debug/pylib/')
+from os import get_terminal_size,isatty
+from subprocess import Popen,call,PIPE
+from pylib.ioutils import AsyncLineReader 
+from re import match,sub
+from sys import stdout,exit,argv
+from pylib.regex_utils.bytes import R,Ex,C
+from math import floor,inf
+from pylib.du import ptb
+#from pylib.du import dd
+from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass
 
-set sed_escape_seq_pattern '(\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K])'
+py_escape_seq_pattern  =  R('((\x1B\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK]){1,4})') # 4 x "("
 
-set sed_rm_lines_starting_with_old_ '/^'$sed_escape_seq_pattern'{1,4}(([^/]*[/])?old_|old[/]).*'$sed_escape_seq_pattern'{1,4}$/d'
+def parse_args():
+    output_conversions = {
+                    'color': (lambda d,v: "--"+d + "=" + v ),
+                }
 
+    # low overhead test if no debug
+    if "--debug" in argv:
+        debug=True
+        argv.remove("--debug")
+    else:
+        debug=False
 
-git branch --color=always --format '%(align:'$c1',left)%(color:blue)%(refname:short)%(color:#000000)%(end)|%(align:14,left)%(color:green)%(committerdate:format:%y_%m_%d|%H:%M)%(color:black)%(end)|%(align:7,left)%(color:#a09900)%(objectname:short)%(color:#000000)%(end)|%(align:20,left)%(color:yellow)%(contents:subject)%(end)' --sort committerdate  --all $args |cut -c-$f|sed -r $sed_rm_lines_starting_with_old_
+    parser = PassThroughArgumentParser  (   
+                                            prog="gb",
+                                            wrapped_cmd=['git','branch'],
+                                            dest_no_pass_through=['branch'],
+                                            output_conversions=output_conversions,
+                                            debug=debug
+                                        )
+        
+    parser.add_argument( "--sort",action='store',default='committerdate' )
+    parser.add_argument( "--color",action='store', default='always' )
+    parser.add_argument( "-a", "--all",action='store_true', default=True )
+    parser.add_argument( "-o","--not-filter-old-branches",action=Action_store_true_no_pass,default=False )
+    parser.add_argument( "-r"  ,  "--remotes", action='store_true',default=False)
+    #parser.add_argument( "-R" ,  "--no-remotes", action=Action_disable("remotes") )
+    parser.add_argument( "-A" ,   "--no-all", dest="all", action=Action_disable('all') )
+    parser.add_argument('-c','--contains', action='store')
+    parser.add_argument('--quick', action=Action_store_true_no_pass,default=True)
+    parser.add_argument('-ch',"--contains-head",nargs=0,action=Action_set("contains","HEAD"))
+    parser.add_argument('--no-quick',action=Action_disable("quick"),default=True)
+    global args
+    global prepared_args
+    args = parser.parse_args()
+    prepared_args = parser.get_prepared_args()
 
+def prepare_line(line,max_len_0,maxlen):
+    parts=line.split(b"|")
+    p0=parts[0]
+    lp0=len(p0)
+    if lp0 > max_len_0:
+        p0=p0[:max_len_0]
+    elif lp0 < max_len_0:
+        p0=p0+b" "*(max_len_0-len(p0))
+    # restore
+    line=b"|".join([p0]+parts[1:])
+    while not len(sub(py_escape_seq_pattern,b'',line)) <= maxlen:
+        line=line[:-4] if args.quick else line[:-1]
+    return line
 
+def main():
+    parse_args()
+    if isatty(stdout.fileno()):
+        maxlen = get_terminal_size().columns
+        c1=floor(maxlen/2)
+    else:
+        maxlen=inf
+        c1=50
+    # part := stuff in between "/"
+    part_pat = Ex("/").n('+')
+    old_part_0 = R('old')+(R('_')+part_pat).n('?')
+    old_part_1 = (Ex("/").n('*')+R('_old_')+Ex("/").n("*"))
+    old_part   = old_part_0 | old_part_1
+    sep=C('/')
+    a = (part_pat+sep).n('*')
+    b = (sep+part_pat).n('*')
+    old_branch = a + old_part + b
+    old_branch=py_escape_seq_pattern.n('?')+old_branch+py_escape_seq_pattern.n('?')
+    space=R('\s*')
+    old_branch=R('^')+space+old_branch+space+R('$')
+    formatstring = \
+    '%(color:blue)%(refname:short)%(color:white)|'\
+    +'%(color:green)%(committerdate:format:%y_%m_%d|'\
+    +'%H:%M)%(color:white)|%(color:cyan)%(objectname:short)%(color:white)|'\
+    +'%(color:yellow)%(contents:subject)%(color:white)'
 
+    git_branch_cmd = [ 'git', 'branch','--format' , formatstring ]
+    git_branch_cmd += prepared_args
+    try:
+        p=Popen(git_branch_cmd,stdout=PIPE)
+        alr=AsyncLineReader(p.stdout)
+        done=False
+        while not done:
+            if p.poll() is None:
+                lines=alr.read()
+            else:
+                lines=alr.read_all()
+                done=True
+            if len(lines) > 0:
+                for line in lines:
+                    if args.not_filter_old_branches \
+                        or not match(old_branch,line):
+                            line=prepare_line(line,c1,maxlen)
+                            stdout.buffer.raw.write(line+b"\n")
 
+    except Exception as e:
+        #ptb(e)
+        from pprint import pprint
+        pprint(git_branch_cmd)
+        print(args.pass_through_args)
+        raise
+    #if args.debug:
+    #    if len(args.pass_through_args) > 0:
+    #        print(args.pass_through_args)
+    #    print(git_branch_cmd)
+    #    #print('"'+" ".join(git_branch_cmd)+'"')
+        
+if __name__=='__main__':
+    main()
+# vim: set foldmethod=indent foldlevel=0 foldnestmax=2 :

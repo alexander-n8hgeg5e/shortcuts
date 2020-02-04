@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+#from sys import path
+#path.insert(1,'/tmp/python_debug/pylib/')
 from os import environ
 from sys import argv
 from sys import stdout
@@ -8,6 +10,7 @@ from re import sub,match
 import argparse
 from pprint import pprint
 from math import ceil
+from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass,Action_enable
 
 n = 1.02
 columns,rows=get_terminal_size()
@@ -15,11 +18,48 @@ f = round( n  * columns )
 
 default_min_number_logentries = 10
 
-py_escape_seq_pattern  =  b'(\x1B\[([0-9]{1,2}([;][0-9]{1,2})?)?[m|K])' # 3 x "("
+py_escape_seq_pattern  =  b'(\x1B\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK])' # 3 x "("
 
 py_subst_args  = [ b'[ ]' + py_escape_seq_pattern +           b'{1,4}(\w+[/])?([_]*old_|(\w|[-/_]|[0-9])*[_]+old_)(\w|[-/_]|[0-9])*' + py_escape_seq_pattern +b'{1,4}([,]|[|])'  , b"" ]
 
-def compact_log(*z,**zz):
+def parse_args():
+    output_conversions = {
+                    'color': (lambda d,v: "--"+d + "=" + v ),
+                    'max_count': (lambda d,v: "--max-count=" + v ),
+                }
+    # low overhead test if no debug
+    if "--debug" in argv:
+        debug=True
+        argv.remove("--debug")
+    else:
+        debug=False
+    parser = PassThroughArgumentParser  (   
+                                            description="git log helper tool, extends git branch cmd functionality",
+                                            wrapped_cmd=['git','log'],
+                                            dest_no_pass_through=['branch'],
+                                            output_conversions=output_conversions,
+                                            debug=debug,
+                                        )
+        
+    parser.add_argument( "--color",action='store', default='always' )
+    parser.add_argument( "-a", "--all",action="store_true", default=False )
+    # because default is False and more likely, use the Action_enable
+    # for the unlikely case to save cpu
+    parser.add_argument( "-o","--not-filter-old-branches",action=Action_store_true_no_pass,default=False )
+    parser.add_argument( "-O","--filter-old-branches",action=Action_enable("not_filter_old_branches") )
+    parser.add_argument( "-dr"  ,  "--decoration-remotes", action=Action_store_true_no_pass,default=True)
+    parser.add_argument( "-s"  ,  "--simplify-by-decoration", action='store_true',default=False)
+    parser.add_argument( "-dR"  ,  "--decoration-no-remotes", action=Action_disable("decoration_remotes"))
+    parser.add_argument( "-n"  ,  "--max-count", action='store',default=str(max(1,rows-3)))
+    parser.add_argument( "-A" ,   "--no-all", action=Action_disable('all') )
+    parser.add_argument( "-c" ,   "--compact", default=True,action=Action_store_true_no_pass)
+    parser.add_argument( "-C" ,   "--no-compact", action=Action_disable("compact"))
+    global args
+    global prepared_args
+    args = parser.parse_args()
+    prepared_args = parser.get_prepared_args()
+
+def gen_log_cmd():
     r = '%C(red)'
     g = '%C(green)'
     b = '%C(blue)'
@@ -38,16 +78,38 @@ def compact_log(*z,**zz):
     S = cr + '|' + cr
     cmd = ['git', 'log', '--reverse']
     cmd = cmd + ['--color=always']
-    cmd = cmd + ['--decorate-refs-exclude=refs/heads/old_*']
-    cmd = cmd + ['--decorate-refs-exclude=refs/remotes/*/old_*']
-    cmd = cmd + ['--decorate-refs-exclude=refs/tags/old_*']
     cmd = cmd +  ['--date=format:' + "%y_%m_%d|%H:%M"]
     prettystart = "--pretty=format:"
     pretty = prettystart + hash + S + date + S + refnames + subject
+
     cmd = cmd + [pretty]
-    cmd = cmd + [*z]
-    outp=check_output(cmd)
-    return outp
+    cmd = cmd + prepared_args
+
+    if not args.filter_old_branches:
+        # man FNMATCH.3 with FNM_PATHNAME=False p(* matches /)
+        # git allowed branch chars, found by git check-ref-format
+        # test was 3 char branch name "a[::char::]z"
+        # excluding "/"
+        git_branch_chars_pat='[]"!#$%&\'()+,.0123456789;<=>@ABCDEFGHIJKLMNOPQRSTUVWXYZ_`abcdefghijklmnopqrstuvwxyz{|}-]'
+        gbcp=git_branch_chars_pat
+        gbcp_x='*('+gbcp+')'
+        gbcp_p='+('+gbcp+')'
+        old_patterns  = ["old_"+gbcp_x  ] # at start
+        old_patterns += [gbcp_x+"_old_"+gbcp_x] # middle
+        old_pathes_begin  = ["refs/heads/"]
+        if args.decoration_remotes:
+            old_pathes_begin += ["refs/remotes/"+gbcp_p+"/"]
+            old_pathes_begin += ["refs/remotes/"+gbcp_p+"/"]
+        dec_ref_exclude_patterns=[]
+        for i in old_pathes_begin:
+            for j in old_patterns:
+                dec_ref_exclude_patterns += [i+j+"*"]
+        for pat in dec_ref_exclude_patterns:
+            cmd+=["--decorate-refs-exclude="+pat]
+    if not args.decoration_remotes:
+        cmd+=["--decorate-refs-exclude=refs/remotes/*"]
+
+    return cmd
 
 def filter(bytes):
     lines=bytes.split(b'\n')
@@ -57,59 +119,61 @@ def filter(bytes):
         ret.append(sub(*py_subst_args,line))
     return b"\n".join(ret)
 
-def parse_args():
-    class Argument_imply_store_true_action(argparse.Action):
-        def __init__(self,*z,**zz):
-            super().__init__(*z,**zz)
-        def __call__(self, parser, namespace, values, option_string):
-            setattr(namespace, self.dest, True )
-            if namespace.short:
-                setattr(namespace,'simplify_by_decoration', True )
-                setattr(namespace,'not_filter_old_branches', False )
-            if namespace.simplify_by_decoration:
-                namespace.git_log_args.append("--simplify-by-decoration")
-    class Argument_git_log_add_action(argparse.Action):
-        def __init__(self,*z,**zz):
-            super().__init__(*z,**zz)
-        def __call__(self, parser, namespace, values, option_string):
-            if self.dest == "max_count":
-                setattr(namespace, self.dest, values)
-                namespace.git_log_args.append("-n"+str(values))
-                return
-            if self.dest == "git_log_args":
-                for v in values:
-                    if match("[-]\d",str(v)):
-                        setattr(namespace,'max_count', v[1:] )
-                    if not v in namespace.git_log_args and not v == "log":
-                        namespace.git_log_args.append(v)
-    class Argument_parser_double_help(argparse.ArgumentParser):
-        def print_help(self,*z):
-            super().print_help(*z)
-            print()
-            print("git log help:")
-            print("-------------")
-            print()
-            call(['git' , 'log', '-h'])
-    global args
-    parser=Argument_parser_double_help()
-    #parser.add_argument("log",action='store_true', default=False)
-    parser.add_argument("-a",'--all',action='store_true',default=False)
-    parser.add_argument('-n','--max-count', action=Argument_git_log_add_action, default=None)
-    parser.add_argument("--simplify-by-decoration",action='store_true',default=False)
-    parser.add_argument("-nf","--not-filter-old-branches",action='store_true',default=False)
-    parser.add_argument("--debug",action='store_true',default=False)
-    parser.add_argument("-s","--short",action=Argument_imply_store_true_action ,nargs=0, default=False, help="excludes --not-filter-old-branches and includes --simplify-by-decoration")
-    parser.add_argument(dest='git_log_args', nargs="*", action=Argument_git_log_add_action , default=[] )
-    args = parser.parse_args()
-    if not args.all and args.max_count is None:
-        args.git_log_args.append("-n"+str(max(default_min_number_logentries,ceil(rows*0.75))))
+class fold_unsused():
+    pass
+    #def parse_args():
+    #    class Argument_imply_store_true_action(argparse.Action):
+    #        def __init__(self,*z,**zz):
+    #            super().__init__(*z,**zz)
+    #        def __call__(self, parser, namespace, values, option_string):
+    #            setattr(namespace, self.dest, True )
+    #            if namespace.short:
+    #                setattr(namespace,'simplify_by_decoration', True )
+    #                setattr(namespace,'not_filter_old_branches', False )
+    #            if namespace.simplify_by_decoration:
+    #                namespace.git_log_args.append("--simplify-by-decoration")
+    #    class Action_add_git_log_arg(argparse.Action):
+    #        def __init__(self,*z,**zz):
+    #            super().__init__(*z,**zz)
+    #        def __call__(self, parser, namespace, values, option_string):
+    #            if self.dest == "max_count":
+    #                setattr(namespace, self.dest, values)
+    #                namespace.git_log_args.append("-n"+str(values))
+    #                return
+    #            if self.dest == "git_log_args":
+    #                for v in values:
+    #                    if match("[-]\d",str(v)):
+    #                        setattr(namespace,'max_count', v[1:] )
+    #                    if not v in namespace.git_log_args and not v == "log":
+    #                        namespace.git_log_args.append(v)
+    #    class Argument_parser_double_help(argparse.ArgumentParser):
+    #        def print_help(self,*z):
+    #            super().print_help(*z)
+    #            print()
+    #            print("git log help:")
+    #            print("-------------")
+    #            print()
+    #            call(['git' , 'log', '-h'])
+    #    global args
+    #    parser=Argument_parser_double_help("git log helper tool, extends git log functionality")
+    #    parser.add_argument("-a",'--all',action='store_true',default=False)
+    #    parser.add_argument('-n','--max-count', action=Action_add_git_log_arg, default=None)
+    #    parser.add_argument("--simplify-by-decoration",action='store_true',default=False)
+    #    parser.add_argument("-nf","--not-filter-old-branches",action='store_true',default=False)
+    #    parser.add_argument("--debug",action='store_true',default=False)
+    #    parser.add_argument("-s","--short",action=Argument_imply_store_true_action ,nargs=0, default=False, help="excludes --not-filter-old-branches and includes --simplify-by-decoration")
+    #    parser.add_argument(dest='git_log_args', nargs="*", action=Action_add_git_log_arg , default=[] )
+    #    args = parser.parse_args()
+    #    if not args.all and args.max_count is None:
+    #        args.git_log_args.append("-n"+str(max(default_min_number_logentries,ceil(rows*0.75))))
+    pass
 
 parse_args()
 
 if args.not_filter_old_branches:
-    stdout.buffer.write(compact_log( *args.git_log_args ))
+    stdout.buffer.write(check_output(gen_log_cmd()))
 else:
-    stdout.buffer.write(filter(compact_log( *args.git_log_args )))
+    stdout.buffer.write(filter(check_output(gen_log_cmd())))
 
-if args.debug:
-    print("\n",args)
+
+# vim: set foldmethod=indent foldlevel=0 foldnestmax=2 :

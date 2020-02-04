@@ -1,54 +1,146 @@
-#!/bin/fish
+#!/usr/bin/env python3
+from pylib.syslog_utils import warn,err,info,debug,log,WARN,ERR,INFO,warn_exp
+from subprocess import check_output,check_call,DEVNULL,call,CalledProcessError,Popen
+from time import sleep
+from re import sub,findall
+from os import kill,environ
+from pylib.du import ptb
 
-function synergy_server_start
-    wm_conf_adj on
+from pylib.decorators import Subprocess_Popen_init_VerbosityDecorator
+from pylib.decorators import Subprocess_check_call_VerbosityDecorator
+from pylib.decorators import Subprocess_call_VerbosityDecorator
+from pylib.decorators import Subprocess_check_output_VerbosityDecorator
+
+for thing in [ 'call','check_call','Popen', 'check_output' ]:
+    exec( "from subprocess import " + thing + " as subprocess_" + thing )
+
+@Subprocess_check_call_VerbosityDecorator
+def check_call(*z,**zz):
+        return subprocess_check_call(*z,**zz)
+
+@Subprocess_check_output_VerbosityDecorator
+def check_output(*z,**zz):
+    return subprocess_check_output(*z,**zz)
+
+@Subprocess_call_VerbosityDecorator
+def call(*z,**zz):
+    return subprocess_call(*z,**zz)
+
+class Popen(subprocess_Popen):
+    def __init__(self,*z,**zz):
+        dec = Subprocess_Popen_init_VerbosityDecorator(super().__init__)
+        dec.__call__(*z,**zz)
+
+def parse_args():
+    from argparse import ArgumentParser
+    a=ArgumentParser()
+    a.add_argument(dest="actions",nargs='*',choices=['starts','stop','startc','r'])
+    a.add_argument('-D','--debug',action='store_true')
+    a.add_argument('-v','--verbose',action='store_true')
+    a.add_argument('-r','--restart',action='store_true')
+    global args
+    args=a.parse_args()
+    if args.restart or 'r' in args.actions:
+        args.actions=['starts','stop','startc']
+    if args.debug:
+        args.verbose=True
+
+if __name__=='__main__':
+    parse_args()
+
+def findpids_from_port(port):
+    try:
+        pids = check_output( [ 'lsof', '-i:'+str(port), '-t' ],stderr=DEVNULL).decode().split('\n')
+    except CalledProcessError as e:
+        warn_exp(e)
+        return []
+    _pids=pids
+    pids=[]
+    for pid in _pids:
+        if len(pid.strip()) > 0:
+            pids.append(int(pid))
+    return pids
+
+def synergy_server_start():
+    check_call(['wm_conf_adj', 'on'])
     # make the synergy port free in case ssh listens on it
-    sudo kill (lsof -i:24800 -t)
-    sleep 1
-    sudo kill -s9 (lsof -i:24800 -t)
-    #set cmd_synergys sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergys -f --display "$DISPLAY" -c "$HOME""/.synergy.conf" -a 127.0.0.1 -d DEBUG1 \&
-    set cmd_synergys sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergys -f --display "$DISPLAY" -c "$HOME""/.synergy.conf" -a 127.0.0.1 \&
-    eval $cmd_synergys
-end
+    pids=findpids_from_port(24800)
+    if len(pids) > 0:
+        pids=[str(i) for i in pids]
+        check_call([ 'sudo', 'kill', ' '.join(pids)],stderr=DEVNULL,stdout=DEVNULL)
+    sleep(1)
+    pids=findpids_from_port(24800)
+    if len(pids) > 0:
+        pids=[str(i) for i in pids]
+        check_call([ 'sudo', 'kill','-s9', ' '.join(pids)],stderr=DEVNULL,stdout=DEVNULL)
+    cmd_synergys =  [
+                        'sudo', 'nice', '-n-20',
+                        'ionice', '-c1', '-n3', 'chrt', '-rr', '30',
+                        'sudo', '-u', environ['USER'] ,
+                        'synergys', '-f', '--display', environ['DISPLAY'],
+                        '-c', environ['HOME']+'/.synergy.conf',
+                        '-a', '127.0.0.1'
+                    ]
+    #cmd_synergyc+=[ '-d', 'DEBUG1' ]
+    return Popen(cmd_synergys) 
 
-function synergy_client_start
-    ssh xsky killall synergys ^ /dev/null
-    ssh xsky killall synergyc ^ /dev/null
-    ssh xsky killall synergy-core ^ /dev/null
-    set cmd_synergyc sudo nice -n-20 ionice -c1 -n3 chrt -rr 30 sudo -u "$USER" synergyc -f --display "skyscraper:0" -n skyscraper 127.0.0.1 \&
-    eval $cmd_synergyc
-end
+def synergy_client_start():
+    call([ 'ssh', 'xsky', 'killall', 'synergys'    ], stdout=DEVNULL,stderr=DEVNULL )
+    call([ 'ssh', 'xsky', 'killall', 'synergyc'    ], stdout=DEVNULL,stderr=DEVNULL )
+    call([ 'ssh', 'xsky', 'killall', 'synergy-core'], stdout=DEVNULL,stderr=DEVNULL )
+    cmd_synergyc =  [   
+                        'sudo', 'nice', '-n-20', 'ionice', '-c1',
+                        '-n3', 'chrt', '-rr', '30', 'sudo', '-u', environ['USER'],
+                        'synergyc', '-f', '--display', "skyscraper:0",
+                        '-n', 'skyscraper', '127.0.0.1'
+                    ]
+    return Popen( cmd_synergyc )
 
-function synergy_stop
+def findpids_from_cmd(cmd):
+    try:
+        out = check_output([ 'ps', '-C', cmd , '-o', 'pid,cmd', '--no-headers'],stderr=DEVNULL).decode().split('\n')
+    except CalledProcessError as e:
+        warn_exp(e)
+        return []
+    pids = []
+    for line in out:
+        f=findall("^[ ]*[0-9]\+",line)
+        if len(f) > 0:
+            pids.append(f[0])
+    return pids
+
+def synergy_stop():
+
     # unconditionally kill synergy-core, because is wrong version
-    killall -s HUP synergy-core 2>/dev/null
+    call([ 'killall', '-s', 'HUP', 'synergy-core' ],verbose=True,msg="stopping synergy-core")
 
     # ps -o cmd -> full cmdline
     # ps -o comm -> only cmds bin name without path
 
-    # get state of running servers
-    set  out (ps -C synergys -o pid,cmd --no-headers)
-    set server_pids (for i in $out ; echo $i | grep -Eo "^[ ]*[0-9]+" ; end)
-
-    # get state of running clients
-    set  out ( ps -C synergyc -o pid,cmd --no-headers )
-    set client_pids (for i in $out ; echo $i | grep -Eo "^[0-9]+" ; end)
+    # get state of running servers,clients
+    server_pids = findpids_from_cmd('synergys')
+    client_pids = findpids_from_cmd('synergyc')
     
     #stop em 
-    set pids_to_stop $server_pids $client_pids
-    for pid in $pids_to_stop
-        kill $pid 2> /dev/null
-    end
-    wm_conf_adj off
-end
+    pids_to_stop = client_pids + server_pids
+    for pid in pids_to_stop:
+        kill(pid)
+    check_call(['wm_conf_adj', 'off'],verbose=args.verbose)
 
-if contains $argv "stop"
-    synergy_stop
-end
-if contains $argv "starts"
-    synergy_server_start
-end
 
-if contains $argv "startc"
-    synergy_client_start
-end
+if __name__=='__main__':
+    try:
+        if "stop" in args.actions:
+            synergy_stop()
+        
+        if "starts" in args.actions:
+            server_popen=synergy_server_start()
+        
+        if "startc" in args.actions:
+            client_popen=synergy_client_start()
+    except Exception as e:
+        if args.debug:
+            raise
+        warn_exp(e)
+
+# vim: set foldlevel=1 foldnestmax=2 foldmethod=indent :

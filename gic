@@ -1,2 +1,6 @@
 #!/bin/fish
-git commit $argv
+if test "$argv[1]" = "commit"
+	git commit $argv[2..]
+else 
+	git commit $argv
+end

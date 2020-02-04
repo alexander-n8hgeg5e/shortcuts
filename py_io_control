@@ -1,0 +1,12 @@
+#!/usr/bin/env python3
+import sys
+from os.path import expanduser
+sys.path.append(expanduser("~/code/pylib/pylib"))
+print(sys.path)
+from psutil import pids
+from pylib import stat_utils
+
+ioc=stat_utils.IO_wait_controller()
+ioc.run()
+
+

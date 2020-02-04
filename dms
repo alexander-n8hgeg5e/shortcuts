@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+testing=True
+if testing:
+    import sys
+    from os.path import expanduser
+    sys.path.append(expanduser("~/code/pylib/pylib"))
+    from ioutils import AsyncLineReader
+    from pylib.du import dd,d0,d1
+else:
+    from pylib.ioutils import AsyncLineReader
+
+from subprocess import Popen,PIPE,check_output
+from time import sleep,time
+from sys import stdout,exit
+from sys import stderr
+from warnings import warn
+from pprint import pformat,pprint
+from shutil import get_terminal_size
+from argparse import ArgumentParser
+
+
+def parse_args():
+    global args
+    a=ArgumentParser()
+    a.add_argument('-rs','--repeat_speed',default=6,type=float,action='store')
+    a.add_argument('-s', '--max_scroll_speed',default=20,type=float,action='store')
+    a.add_argument("-t", "--tailn",action="store",type=int,default=get_terminal_size().lines)
+    a.add_argument("-l", "--levels",action="store",type=str,default='all')
+    a.add_argument("-p", "--repeat-pages",action="store",type=float,default=3)
+    a.add_argument("-ms","--min-speed",action="store",type=float,default=1)
+    a.add_argument("-D" ,"--debug",action="store_true",default=False)
+    args=a.parse_args()
+
+class ScrollspeedCalculator():
+    _state_dict_default_attributes_= {'t0':None,'l0':None,'lines':0}
+    def __init__(self,initavg=3,maxspeed=20,minspeed=1,state={}):
+        """
+        """
+        # apply the state
+        for k,v in self._state_dict_default_attributes_.items():
+            if k in state:
+                setattr(self,k,state[k])
+            else:
+                setattr(self,k,v)
+
+        # warn if wrong entries
+        for k in state.keys():
+            if not k in self._state_dict_default_attributes_.keys():
+                warn("this keyword is not supported for state dict\n   keyword="+k)
+
+        self.avg=initavg
+        self.avg_no_min=initavg
+        self.maxspeed=maxspeed
+        self.minspeed=minspeed
+        self.t0=time()
+        self.l0=self.lines
+
+    def get_speed(self,ignore_min_speed):
+        if ignore_min_speed:
+            speed=self.avg_no_min
+        else:
+            speed=self.avg
+        if args.debug:
+            print('speed='+str(speed))
+        return speed
+
+    def get_line_time(self):
+        if args.debug:
+            print('speed='+str(self.avg))
+        return 1/self.avg
+
+    def update(self):
+        t0=self.t0
+        l0=self.l0
+        self.t0=time()
+        self.l0=self.lines
+        t1=self.t0
+        l1=self.l0
+        l=l1-l0
+        t=t1-t0
+        speed=l/t
+        self.avg_no_min = min(self.avg_no_min * 0.9 + speed * 0.1, self.maxspeed)
+        self.avg = max(self.avg_no_min,self.minspeed)
+
+    def calc(self):
+        """
+        deprecated
+        """
+        self.update()
+        if args.debug:
+            print('speed update, speed='+str(self.avg))
+        return 1/self.avg
+
+    def count_lines(self,num_lines):
+        self.lines+=num_lines
+
+    def count_line(self):
+        self.lines+=1
+
+    def __repr__(self):
+        statedict={}
+        for k in self._state_dict_default_attributes_.keys():
+            statedict.update({k:getattr(self,k)})
+        return "ScrollspeedCalculator(initavg="+str(self.avg)+", maxspeed="+str(self.maxspeed)+", minspeed="+str(self.minspeed)+", state="+repr(statedict)+")"
+
+    
+
+def init():
+    global p
+    global ar_out
+    global ar_err
+    global ssc
+    parse_args()
+
+    global dmesg_add_args
+    if not args.levels is 'all':
+        dmesg_add_args=['--level',args.levels]
+    else:
+        dmesg_add_args=[]
+
+    p=Popen(['dmesg','-w','-HT','-Lalways']+dmesg_add_args,stdout=PIPE,stderr=PIPE)
+
+    ar_out=AsyncLineReader(p.stdout)
+    ar_err=AsyncLineReader(p.stderr)
+    ssc=ScrollspeedCalculator(maxspeed=args.max_scroll_speed,minspeed=args.min_speed,initavg=args.repeat_speed)
+    print(ssc)
+    
+
+def main():
+    init()
+
+    # skip lines
+    skiplines_dmesg_cmd=['dmesg']+dmesg_add_args
+    skiplines=max(len(check_output(skiplines_dmesg_cmd).split(b"\n"))-args.tailn,0)
+    outl=[]
+    while skiplines > 0:
+        outladd=ar_out.read()
+        outl+=outladd
+        skiplines-=len(outladd)
+    stdout.buffer.raw.write(b'\n'.join(outl[-args.tailn:])+b"\n")
+    
+    # prepare repeat buffer
+    repeat_buffer_out=[]
+    repeat_buffer_err=[]
+
+    while True:
+        for line in ar_out.read():
+            repeat_buffer_out+=[line]
+            ssc.count_line()
+            sleep(ssc.calc()/args.repeat_pages)
+            stdout.buffer.raw.write(line+b'\n')
+
+        for line in ar_err.read():
+            repeat_buffer_err+=[line]
+            ssc.count_line()
+            sleep(ssc.calc()/args.repeat_pages)
+            stderr.buffer.raw.write(line+b'\n')
+
+        # update repeat buffer
+        repeat_buf_len=args.tailn*args.repeat_pages
+        if len(repeat_buffer_out) > repeat_buf_len:
+            repeat_buffer_out=repeat_buffer_out[- repeat_buf_len :]
+        if len(repeat_buffer_err) > repeat_buf_len:
+            repeat_buffer_err=repeat_buffer_err[- repeat_buf_len :]
+        
+        # check if stuff is comming in slow enough to allow repeating
+        # without exceeding repeat speed.
+        # 
+        # check if speed is lower than repeat speed, otherwise not possible
+        ssc.update()
+        if args.repeat_speed > ssc.get_speed(ignore_min_speed=True):
+            # speed factor >> 1
+            k_speed = args.repeat_speed / ssc.get_speed(ignore_min_speed=True)
+            if k_speed >= 5 :
+                tsize=get_terminal_size()
+                cols,tlines=tsize.columns,tsize.lines
+                msg="Repeat BEGIN, repeating last "+str(repeat_buf_len)+" lines...   "
+                lmsg=len(msg)
+
+                print("#"*cols)
+                if tlines > 30:
+                    print("###"+" "*(cols-6)+"###")
+                print("###   "+msg+"v"*(cols-lmsg-12)+"   ###")
+                if tlines > 30:
+                    print("###"+" "*(cols-6)+"###")
+                print("#"*cols)
+                for line in repeat_buffer_out:
+                    sleep(1/args.repeat_speed)
+                    stdout.buffer.raw.write(line+b'\n')
+                for line in repeat_buffer_err:
+                    sleep(1/args.repeat_speed)
+                    stderr.buffer.raw.write(line+b'\n')
+                cols=get_terminal_size().columns
+                print("#"*cols)
+                msg="###   Repeat END   "
+                lmsg=len(msg)
+                if tlines > 30:
+                    print("###"+" " * (cols-6)+"###")
+                print(msg+"^"*(cols-lmsg-6)+"   ###")
+                if tlines > 30:
+                    print("###"+" " * (cols-6)+"###")
+                print("#"*get_terminal_size().columns)
+
+
+
+if __name__=='__main__':
+    main()

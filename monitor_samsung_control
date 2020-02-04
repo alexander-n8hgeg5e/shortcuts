@@ -1,0 +1,192 @@
+#!/usr/bin/env python3
+
+from smbus import SMBus
+from time import sleep
+from argparse import ArgumentParser
+from os import stat,major,minor
+from os.path import exists
+from stat import S_ISCHR
+ap=ArgumentParser()
+ap.add_argument("-b","--brightness",type=int,default=None)
+ap.add_argument("-s","--sharpness",type=int,default=None)
+ap.add_argument("-c","--contrast",type=int,default=None)
+ap.add_argument("--blue",type=int,default=None)
+ap.add_argument("--red",type=int,default=None)
+ap.add_argument("--green",type=int,default=None)
+ap.add_argument("--colortone",type=int,default=None)
+ap.add_argument("-g","--gamma",type=int,default=None)
+ap.add_argument("-R","--reset",action="store_true")
+ap.add_argument("--transp-menu",action="store_true")
+ap.add_argument("--auto-off",action="store_true")
+ap.add_argument("--switch-on-off",action="store_true")
+ap.add_argument("--auto-off-time",type=int,default=None)
+ap.add_argument("--menu-hpos",type=int,default=None)
+ap.add_argument("--menu-vpos",type=int,default=None)
+ap.add_argument("--magicb",type=int,default=None)
+args=ap.parse_args()
+b=SMBus(0)
+sleeptime=0.4
+did_reset=False
+
+def menu():
+    sleep(sleeptime)
+    b.write_byte(0x8,0x02)
+
+def left():
+    return back()
+
+def right():
+    sleep(sleeptime)
+    b.write_byte(0x8,0x07)
+
+def back(): 
+    return menu()
+
+def down():
+    sleep(sleeptime)
+    b.write_byte(0x8,0x05)
+
+def up():
+    sleep(sleeptime)
+    b.write_byte(0x8,0x06)
+
+def plus():
+    return up()
+
+def minus():
+    return down()
+
+def adj_brightness(inc):
+    go_menu_adj(0,0,inc)
+
+def adj_contrast(inc):
+    go_menu_adj(0,1,inc)
+
+def adj_sharpness(inc):
+    go_menu_adj(0,2,inc)
+
+def adj_magic_bright(inc):
+    go_menu_adj(0,3,inc)
+
+def go_menu_adj(a,b,inc):
+    menu()
+    for i in range(a):
+        down()
+    right()
+    for i in range(b):
+        down()
+    right()
+    func=plus if (inc > 0) else minus
+    for i in range(abs(inc)):
+        func()
+    back()
+    for i in range(b):
+        up()
+    back()
+    for i in range(a):
+        up()
+    back()
+
+def adj_blue(inc):
+    go_menu_adj(1,3,inc)
+
+def adj_green(inc):
+    go_menu_adj(1,2,inc)
+
+def adj_red(inc):
+    go_menu_adj(1,1,inc)
+
+def adj_colortone(inc):
+    go_menu_adj(1,4,inc)
+
+def adj_coloreffect(inc):
+    go_menu_adj(1,5,inc)
+
+def adj_gamma(inc):
+    go_menu_adj(1,6,inc)
+
+def reset():
+    global did_reset
+    if not did_reset:
+        right()
+        sleep(2)
+        right()
+        sleep(2)
+        did_reset=True
+    go_menu_adj(3,0,1)
+
+def transp_menu():
+    go_menu_adj(3,1,1)
+
+def auto_off():
+    go_menu_adj(3,3,1)
+
+def adj_auto_off_time(inc):
+    reset()
+    auto_off()
+    go_menu_adj(3,4,inc)
+
+def adj_menu_hpos(inc):
+    go_menu_adj(2,1,inc)
+
+def adj_menu_vpos(inc):
+    go_menu_adj(2,2,inc)
+
+def check_i2p_dev():
+    i2c_sysdev_path='/sys/class/graphics/fb0/device/i2c-0/i2c-dev/i2c-0'
+    with open(i2c_sysdev_path+'/dev') as f:
+        dev_major_minor=f.read().strip()
+    with open(i2c_sysdev_path+'/name') as f:
+        i2p_dev_name=f.read().strip()
+    if not i2p_dev_name=="nvkm-0000:01:00.0-bus-0000":
+        return False
+    i2c_dev_path = '/dev/i2c-0'
+    st=stat(i2c_dev_path)
+    if not exists(i2c_dev_path) or not S_ISCHR(stat(i2c_dev_path).st_mode):
+        return False
+    nums=str(major(st.st_rdev))+":"+str(minor(st.st_rdev))
+    if not nums==dev_major_minor:
+        return False
+    return True
+
+
+def main():
+    if not check_i2p_dev():
+        raise Exception("ERROR: could not find i2p device")
+    if args.switch_on_off:
+        b.write_byte(0x8,0x03)
+    if args.reset:
+        reset()
+    if not args.brightness is None:
+        adj_brightness(args.brightness)
+    if not args.contrast is None:
+        adj_contrast(args.contrast)
+    if not args.sharpness is None:
+        adj_sharpness(args.sharpness)
+    if not args.blue is None:
+        adj_blue(args.blue)
+    if not args.red is None:
+        adj_red(args.red)
+    if not args.green is None:
+        adj_green(args.green)
+    if not args.colortone is None:
+        adj_colortone(args.colortone)
+    if not args.gamma is None:
+        adj_gamma(args.gamma)
+    if not args.auto_off_time is None:
+        adj_auto_off_time(args.auto_off_time)
+    if args.auto_off is True:
+        auto_off()
+    if args.transp_menu is True:
+        transp_menu()
+    if not args.menu_vpos is None:
+        adj_menu_vpos(args.menu_vpos)
+    if not args.menu_hpos is None:
+        adj_menu_hpos(args.menu_hpos)
+    if not args.magicb is None:
+        adj_magic_bright(args.magicb)
+
+if __name__=="__main__":
+    main()
+
+# vim: set foldmethod=indent foldlevel=0 :

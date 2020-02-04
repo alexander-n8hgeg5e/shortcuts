@@ -1,0 +1,3 @@
+#!/bin/fish
+
+git log -n1 $argv

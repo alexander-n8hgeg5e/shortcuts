@@ -1,0 +1,791 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	//
+AUTHOR	mutt-notmuch.1	/^.SH "AUTHOR"$/;"	s	title:MUTT-NOTMUCH
+Action_add_git_log_arg	gl	/^    class Action_add_git_log_arg(argparse.Action):$/;"	c	function:parse_args	file:
+AmbiguousError	pp	/^class AmbiguousError(Exception):$/;"	c
+Argument_imply_store_true_action	gl	/^    class Argument_imply_store_true_action(argparse.Action):$/;"	c	function:parse_args	file:
+Argument_parser_double_help	gl	/^    class Argument_parser_double_help(argparse.ArgumentParser):$/;"	c	function:parse_args	file:
+DESCRIPTION	mutt-notmuch.1	/^.SH "DESCRIPTION"$/;"	s	title:MUTT-NOTMUCH
+EWMH_SUPPORT	e	/^EWMH_SUPPORT=True$/;"	v
+INTEGRATION WITH MUTT	mutt-notmuch.1	/^.SH "INTEGRATION WITH MUTT"$/;"	s	title:MUTT-NOTMUCH
+Include	u	/^class Include(int):$/;"	c
+LOGLEVEL	e	/^LOGLEVEL=WARNING$/;"	v
+LogFormatter	e	/^    from logging import Formatter as LogFormatter$/;"	x
+Logger	wm_conf_adj	/^class Logger():$/;"	c
+MUTT-NOTMUCH	mutt-notmuch.1	/^.TH MUTT-NOTMUCH 1 "2011-01-25" "perl v5.10.1" "User Contributed Perl Documentation"$/;"	t
+NAME	mutt-notmuch.1	/^.SH "NAME"$/;"	s	title:MUTT-NOTMUCH
+NotFoundError	pp	/^class NotFoundError(Exception):$/;"	c
+OPTIONS	mutt-notmuch.1	/^.SH "OPTIONS"$/;"	s	title:MUTT-NOTMUCH
+Popen	synergy_skyscraper	/^class Popen(subprocess_Popen):$/;"	c
+SEE ALSO	mutt-notmuch.1	/^.SH "SEE ALSO"$/;"	s	title:MUTT-NOTMUCH
+SYNOPSIS	mutt-notmuch.1	/^.SH "SYNOPSIS"$/;"	s	title:MUTT-NOTMUCH
+ScrollspeedCalculator	dms	/^class ScrollspeedCalculator():$/;"	c
+StoreTrueAction	u	/^    class StoreTrueAction(argparse._StoreConstAction):$/;"	c	function:parse_args	file:
+__anon4d2a775d0108	menu/menuwin.c	/^struct {$/;"	s	file:
+__anond36518480108	menu/l_menuwin.c	/^struct {$/;"	s	file:
+__anonf39157ce0108	menu/r_menuwin.c	/^struct {$/;"	s	file:
+__bool__	u	/^    def __bool__(self):$/;"	m	class:Include
+__call__	gl	/^        def __call__(self, parser, namespace, values, option_string):$/;"	m	class:parse_args.Action_add_git_log_arg
+__call__	gl	/^        def __call__(self, parser, namespace, values, option_string):$/;"	m	class:parse_args.Argument_imply_store_true_action
+__del__	wm_conf_adj	/^    def __del__(self):$/;"	m	class:Logger
+__get_active_win_pos_str	e	/^def __get_active_win_pos_str(count_most, isleft = None):$/;"	f
+__init__	dms	/^    def __init__(self,initavg=3,maxspeed=20,minspeed=1,state={}):$/;"	m	class:ScrollspeedCalculator
+__init__	gl	/^        def __init__(self,*z,**zz):$/;"	m	class:parse_args.Action_add_git_log_arg
+__init__	gl	/^        def __init__(self,*z,**zz):$/;"	m	class:parse_args.Argument_imply_store_true_action
+__init__	pp	/^    def __init__(self, message, errors):$/;"	m	class:AmbiguousError
+__init__	pp	/^    def __init__(self, message, errors):$/;"	m	class:NotFoundError
+__init__	synergy_skyscraper	/^    def __init__(self,*z,**zz):$/;"	m	class:Popen
+__init__	u	/^        def __init__(self,$/;"	m	class:parse_args.StoreTrueAction
+__init__	u	/^    def __init__(self,*z):$/;"	m	class:Include
+__init__	wm_conf_adj	/^    def __init__(self,facility,level):$/;"	m	class:Logger
+__parse_screen_lines_stage1	sc	/^def __parse_screen_lines_stage1(lines):$/;"	f
+__parse_screen_lines_stage1	setup_conky	/^def __parse_screen_lines_stage1(lines):$/;"	f
+__parse_screen_lines_stage2	sc	/^def __parse_screen_lines_stage2(screen_lines):$/;"	f
+__parse_screen_lines_stage2	setup_conky	/^def __parse_screen_lines_stage2(screen_lines):$/;"	f
+__prepare_layout_list	sc	/^def __prepare_layout_list(screen_lines):$/;"	f
+__prepare_layout_list	setup_conky	/^def __prepare_layout_list(screen_lines):$/;"	f
+__prepare_lines	sc	/^def __prepare_lines(outp):$/;"	f
+__prepare_lines	setup_conky	/^def __prepare_lines(outp):$/;"	f
+__repr__	dms	/^    def __repr__(self):$/;"	m	class:ScrollspeedCalculator
+__repr__	u	/^    def __repr__(self):$/;"	m	class:Include
+__str__	u	/^    def __str__(self):$/;"	m	class:Include
+_check_loadavg_ok	check_nodes	/^def _check_loadavg_ok(value):$/;"	f
+_filepath	pf	/^            _filepath=get_file_path()$/;"	v
+_get_active_win_pos_str	e	/^def _get_active_win_pos_str( x_pos, right_border , max_count_x_distance_from_boarder, widths ):$/;"	f
+_get_win_id_and_x_display_of_nvim_by_socket_index	e	/^def _get_win_id_and_x_display_of_nvim_by_socket_index(socketindex):$/;"	f
+_get_win_id_of_nvim_by_socket_index	e	/^def _get_win_id_of_nvim_by_socket_index(socketindex):$/;"	f
+_signal	sc	/^from signal import signal as _signal$/;"	x
+_signal_handler	sc	/^def _signal_handler(sig,frame):$/;"	f
+_state_dict_default_attributes_	dms	/^    _state_dict_default_attributes_= {'t0':None,'l0':None,'lines':0}$/;"	v	class:ScrollspeedCalculator
+a	group_access	/^a=ArgumentParser()$/;"	v
+a	manif	/^a=ArgumentParser()$/;"	v
+a	wl	/^a=ArgumentParser()$/;"	v
+active_win_id	menu/menu_search	/^active_win_id=xdotool_utils.get_active_win_id()$/;"	v
+add	sc	/^def add(a):$/;"	f
+add	setup_conky	/^def add(a):$/;"	f
+add0	add_modelines	/^    add0 = [['xrandr','--newmode' ]+  modeline ]$/;"	v
+add1	add_modelines	/^    add1 = [['xrandr','--newmode']+  modelinedupe ]$/;"	v
+add_args	menu/menu_search	/^add_args=args.dmenu_args$/;"	v
+adj_auto_off_time	monitor_samsung_control	/^def adj_auto_off_time(inc):$/;"	f
+adj_blue	monitor_samsung_control	/^def adj_blue(inc):$/;"	f
+adj_brightness	monitor_samsung_control	/^def adj_brightness(inc):$/;"	f
+adj_coloreffect	monitor_samsung_control	/^def adj_coloreffect(inc):$/;"	f
+adj_colortone	monitor_samsung_control	/^def adj_colortone(inc):$/;"	f
+adj_contrast	monitor_samsung_control	/^def adj_contrast(inc):$/;"	f
+adj_gamma	monitor_samsung_control	/^def adj_gamma(inc):$/;"	f
+adj_green	monitor_samsung_control	/^def adj_green(inc):$/;"	f
+adj_magic_bright	monitor_samsung_control	/^def adj_magic_bright(inc):$/;"	f
+adj_menu_hpos	monitor_samsung_control	/^def adj_menu_hpos(inc):$/;"	f
+adj_menu_vpos	monitor_samsung_control	/^def adj_menu_vpos(inc):$/;"	f
+adj_red	monitor_samsung_control	/^def adj_red(inc):$/;"	f
+adj_sharpness	monitor_samsung_control	/^def adj_sharpness(inc):$/;"	f
+ap	monitor_samsung_control	/^ap=ArgumentParser()$/;"	v
+argdict2args	u	/^def argdict2args(d):$/;"	f
+argdict_tuple2arglist	u	/^def argdict_tuple2arglist(k,v):$/;"	f
+argparse	prefix_lib.bash	/^argparse(){$/;"	f
+args	check_nodes	/^args=parser.parse_args()$/;"	v
+args	e	/^args=parser.parse_args()$/;"	v
+args	em	/^args=parser.parse_args()$/;"	v
+args	group_access	/^args=a.parse_args()$/;"	v
+args	manif	/^args=a.parse_args()$/;"	v
+args	monitor_samsung_control	/^args=ap.parse_args()$/;"	v
+args	ne	/^args=parser.parse_args()$/;"	v
+args	pf	/^args=parse_args()$/;"	v
+args	print_foldable	/^args=parse_args()$/;"	v
+args	pw	/^args=parse_args()$/;"	v
+args	pyprep	/^args=parser.parse_args()$/;"	v
+args	u	/^    args=parse_args()$/;"	v
+args	wl	/^args=a.parse_args()$/;"	v
+ask_ready	go_mirror	/^ask_ready(){$/;"	f
+asksync	go_mirror	/^asksync(){$/;"	f
+attach_nvims	e	/^def attach_nvims(mode=0):$/;"	f
+auto_off	monitor_samsung_control	/^def auto_off():$/;"	f
+autowait	e	/^def autowait(first_file_arg):$/;"	f
+b	monitor_samsung_control	/^b=SMBus(0)$/;"	v
+b	wl	/^b=a.add_mutually_exclusive_group()$/;"	v
+back	e	/^back=False$/;"	v
+back	monitor_samsung_control	/^def back(): $/;"	f
+base	pyprep	/^        base=name$/;"	v
+base	pyprep	/^        base=sub('(^.*)[.][^.]*$','\\\\1', name )$/;"	v
+base	skyscraper_activate_monitor_onoff_button.c	/^#define base /;"	d	file:
+black_pixel	menu/l_menuwin.c	/^    unsigned long black_pixel;    $/;"	m	struct:__anond36518480108	typeref:typename:unsigned long	file:
+black_pixel	menu/menuwin.c	/^    unsigned long black_pixel;    $/;"	m	struct:__anon4d2a775d0108	typeref:typename:unsigned long	file:
+black_pixel	menu/r_menuwin.c	/^    unsigned long black_pixel;    $/;"	m	struct:__anonf39157ce0108	typeref:typename:unsigned long	file:
+blank	print_foldable	/^blank = '\/tmp\/blank_fsdfsdfs.pdf'$/;"	v
+buffer	pf	/^buffer=""$/;"	v
+c	menu/menu_search	/^c=0$/;"	v
+c	mm	/^    c = stdin.read(1)$/;"	v
+c	pp	/^targets,packs,c=parse_config()$/;"	v
+c	u	/^def c(cmdlist):$/;"	f
+calc	dms	/^    def calc(self):$/;"	m	class:ScrollspeedCalculator
+call	synergy_skyscraper	/^def call(*z,**zz):$/;"	f
+check_call	synergy_skyscraper	/^def check_call(*z,**zz):$/;"	f
+check_i2p_dev	monitor_samsung_control	/^def check_i2p_dev():$/;"	f
+check_loadavg_ok	check_nodes	/^def check_loadavg_ok(t):$/;"	f
+check_nodes	check_nodes	/^def check_nodes():$/;"	f
+check_output	synergy_skyscraper	/^def check_output(*z,**zz):$/;"	f
+check_perms	I	/^def check_perms():$/;"	f
+client_popen	synergy_skyscraper	/^            client_popen=synergy_client_start()$/;"	v
+cmd	G	/^cmd=xcalib_cmdbase+xcalib_output_args+['-gc']+[str(args.gamma_correction)]$/;"	v
+cmd	I	/^        cmd=xcalib_cmdbase+xcalib_output_args+xcalib_args_reset$/;"	v
+cmd	cmdowner	/^cmd=argv[1]$/;"	v
+cmd	elpau	/^cmd=cmd1+cmd2+cmd3$/;"	v
+cmd	elpau!	/^cmd=cmd1+cmd2+cmd3$/;"	v
+cmd	elpau!!	/^cmd=cmd1+cmd2+cmd3$/;"	v
+cmd	elpau!!!	/^cmd=cmd1+cmd2+cmd3$/;"	v
+cmd	elpauc	/^cmd=cmd1+cmd2+cmd3+cmd4$/;"	v
+cmd	elpauc!	/^cmd=cmd1+cmd2+cmd3+cmd4$/;"	v
+cmd	elpauc!!	/^cmd=cmd1+cmd2+cmd3+cmd4$/;"	v
+cmd	getcaltomorrow	/^cmd='cat '+environ.get("HOME")+'\/PIM\/diary\/'+year+'\/'+str(month)+'\/'+str(day)+'.md'$/;"	v
+cmd	manif	/^        cmd = [ 'group_access', '-g' , 'portage','-p', i ]$/;"	v
+cmd	manif	/^        cmd = ['sudo' , 'ebuild' ] + [ i ] + [ 'manifest' ]$/;"	v
+cmd	mm	/^cmd = ['xdotool','-']$/;"	v
+cmd	pav	/^    cmd=['pactl','set-sink-volume', str(i) ,str(volume)]$/;"	v
+cmd	pav	/^cmd=['pactl','list','sinks']$/;"	v
+cmd	timewatch	/^        cmd = ['killall' , '-u' , environ['USER'] ]$/;"	v
+cmd	u	/^    cmd = gen_cmd_emerge_world_update(**zz)$/;"	v
+cmd	wl	/^cmd=[args.cmd]+args.args$/;"	v
+cmd0	pw	/^cmd0=get_cmd0(ui,file_path_part,file_len=file_len)$/;"	v
+cmd1	elpau	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpau!	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpau!!	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpau!!!	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpauc	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpauc!	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	elpauc!!	/^cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')$/;"	v
+cmd1	pw	/^cmd1=['watch','-t','-x', '-n'+ui, 'cat', tmpfile]$/;"	v
+cmd2	elpau	/^cmd2=splitcmd('--ask -v')$/;"	v
+cmd2	elpau!	/^cmd2=splitcmd('--ask n -v')$/;"	v
+cmd2	elpau!!	/^cmd2=splitcmd('--ask n --nodeps -v')$/;"	v
+cmd2	elpau!!!	/^cmd2=splitcmd('--autounmask-write --autounmask-continue --keep-going --ask n --nodeps -v')$/;"	v
+cmd2	elpauc	/^cmd2=splitcmd('--ask -v')$/;"	v
+cmd2	elpauc!	/^cmd2=splitcmd('--ask n -v')$/;"	v
+cmd2	elpauc!!	/^cmd2=splitcmd('--ask n --nodeps -v')$/;"	v
+cmd3	elpau	/^cmd3=argv[1:]$/;"	v
+cmd3	elpau!	/^cmd3=argv[1:]$/;"	v
+cmd3	elpau!!	/^cmd3=argv[1:]$/;"	v
+cmd3	elpau!!!	/^cmd3=argv[1:]$/;"	v
+cmd3	elpauc	/^cmd3=[basename(getcwd())]$/;"	v
+cmd3	elpauc!	/^cmd3=[basename(getcwd())]$/;"	v
+cmd3	elpauc!!	/^cmd3=[basename(getcwd())]$/;"	v
+cmd4	elpauc	/^cmd4=argv[1:]$/;"	v
+cmd4	elpauc!	/^cmd4=argv[1:]$/;"	v
+cmd4	elpauc!!	/^cmd4=argv[1:]$/;"	v
+cmd_base	u	/^cmd_base = ['ionice', '-c3', 'nice', '-n19', 'sudo']$/;"	v
+cmd_e	em	/^cmd_e = ['emerge']$/;"	v
+cmd_lowp	em	/^cmd_lowp = ['ionice' ,  '-c3' , 'nice' , '-n19']$/;"	v
+cmd_pr	u	/^          cmd_pr = gen_cmd_emerge_preserved_rebuild(**zz)$/;"	v
+cmd_sudo	em	/^cmd_sudo = ['sudo']$/;"	v
+cmd_sync	u	/^        cmd_sync      = gen_cmd_sync(**zz)$/;"	v
+cmdl	elp	/^cmdl=cmdl_lowp+argv[1:]$/;"	v
+cmdl_lowp	elp	/^cmdl_lowp=pexpect.split_command_line('nice -n19 ionice -c3 sudo emerge')$/;"	v
+cmdpath	cmdowner	/^cmdpath = check_output(['which', cmd ]).decode().strip()$/;"	v
+cmdpath	cmdowner	/^cmdpath=realpath(cmdpath)$/;"	v
+cmds	group_access	/^cmds = [[ 'sudo'  , 'find', path, '-type', 'd', '-exec', 'chmod' , 'g+s' ,'{}' , ';' ]]$/;"	v
+cmds	pw2handy	/^cmds=[]$/;"	v
+code	sc	/^    code=pcf.read()$/;"	v
+col	e	/^    from columnize import columnize as col   #{{{$/;"	x	function:table	file:
+col	py	/^import collections as col$/;"	I
+colf0	wl	/^    colf0=str(maxw+2)+"."+str(maxw+2)$/;"	v
+colf1	wl	/^    colf1=str(min(cols-len(colf0),int(cols\/2)))$/;"	v
+cols	wl	/^    cols=get_terminal_size().columns$/;"	v
+columns	gl	/^columns,rows=get_terminal_size()$/;"	v
+compact_log	gl	/^def compact_log(*z,**zz):$/;"	f
+configpy	check_nodes	/^configpy="${HOME}\/.check_nodes_conf.py"$/;"	v
+configpy	check_nodes	/^configpy=expandvars(expanduser(configpy))$/;"	v
+conky_conf_dir	sc	/^conky_conf_dir=env['HOME'] + '\/.config\/conky'$/;"	v
+conky_conf_dir	setup_conky	/^conky_conf_dir=env['HOME'] + '\/.config\/conky'$/;"	v
+conky_layout	sc	/^    conky_layout = eval(code)$/;"	v
+conky_layout	setup_conky	/^conky_layout = {$/;"	v
+connect	bh	/^def connect(macaddr):$/;"	f
+connect	br	/^def connect(macaddr):$/;"	f
+convert	pav	/^def convert(v):$/;"	f
+count_line	dms	/^    def count_line(self):$/;"	m	class:ScrollspeedCalculator
+count_lines	dms	/^    def count_lines(self,num_lines):$/;"	m	class:ScrollspeedCalculator
+counter	pf	/^    counter=0$/;"	v
+counter	pw	/^    counter=0$/;"	v
+cr	wl	/^    cr=ConditionRunThrottler(   cmd,$/;"	v
+create_window	menu/l_menuwin.c	/^static void create_window ()$/;"	f	typeref:typename:void	file:
+create_window	menu/menuwin.c	/^static void create_window (int w,int h,int x, int y)$/;"	f	typeref:typename:void	file:
+create_window	menu/r_menuwin.c	/^static void create_window ()$/;"	f	typeref:typename:void	file:
+d	e	/^def d(msg):$/;"	f
+d	getcaltomorrow	/^d=str(datetime.datetime.fromordinal(datetime.date.today().toordinal()+1).date()).split('-')$/;"	v
+d	ne	/^def d():$/;"	f
+d	pyprep	/^d={}$/;"	v
+data	I	/^        data=eval(data)$/;"	v
+data	I	/^    data=f.read()$/;"	v
+data_key	G	/^data_key=str(args.screen_index)$/;"	v
+data_key	I	/^data_key=str(args['screen_index'])$/;"	v
+day	getcaltomorrow	/^day=int(d[2])$/;"	v
+decide_witch_nvim_sock_to_use_for_edit	e	/^def decide_witch_nvim_sock_to_use_for_edit():$/;"	f
+default_lines_count	menu/menu_search	/^def default_lines_count(h):$/;"	f
+default_min_number_logentries	gl	/^default_min_number_logentries = 10$/;"	v
+default_nodelist_file	check_nodes	/^default_nodelist_file=environ['HOME']+sep+'.nodelist'$/;"	v
+del_git_links	go_mirror	/^del_git_links(){$/;"	f
+description	em	/^description= 'This is the tool "e" that helps to use emerge.\\n'$/;"	v
+desktop2key	wm_conf_adj	/^def desktop2key(d):$/;"	f
+did_reset	monitor_samsung_control	/^did_reset=False$/;"	v
+die_usage	mutt-notmuch	/^sub die_usage() {$/;"	s
+display	add_modelines	/^    display = check_output(['hostname']).decode().strip() + ':'+environ['DISPLAY'].split(':')[-1/;"	v
+display	menu/l_menuwin.c	/^    Display * display;$/;"	m	struct:__anond36518480108	typeref:typename:Display *	file:
+display	menu/menuwin.c	/^    Display * display;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:Display *	file:
+display	menu/r_menuwin.c	/^    Display * display;$/;"	m	struct:__anonf39157ce0108	typeref:typename:Display *	file:
+dlist	sc	/^dlist=None$/;"	v
+dmenu	menu/menu_search	/^        dmenu=Popen(dmenucmd,stdout=stdout, stdin=stdin.buffer.raw)$/;"	v
+dmenucmd	menu/menu_search	/^dmenucmd=['dmenu', '-fn', font , '-f', '-i','-p', '>', '-l', args.lines_count ] + add_args  + [ /;"	v
+do_verbose_stuff	e	/^def do_verbose_stuff():$/;"	f
+done	mm	/^done = False$/;"	v
+done	pw	/^            done=True$/;"	v
+done	pw	/^    done=False$/;"	v
+done	wl	/^done=[]$/;"	v
+down	monitor_samsung_control	/^def down():$/;"	f
+empty_maildir	mutt-notmuch	/^sub empty_maildir($) {$/;"	s
+enable_debug	e	/^def enable_debug():$/;"	f
+endswith	sc	/^def endswith(string,endstring):$/;"	f
+endswith	setup_conky	/^def endswith(string,endstring):$/;"	f
+env	G	/^env=environ.copy()$/;"	v
+env	I	/^    env=environ.copy()$/;"	v
+env	k	/^env=dict(environ)$/;"	v
+env	pp	/^from os import environ as env$/;"	x
+env	sc	/^from os import environ as env$/;"	x
+env	setup_conky	/^from os import environ as env$/;"	x
+eroot	e	/^    eroot='\/'$/;"	v
+eval_display_server_cpu_times	check_nodes	/^def eval_display_server_cpu_times(times):$/;"	f
+event_loop	menu/l_menuwin.c	/^static void event_loop ()$/;"	f	typeref:typename:void	file:
+event_loop	menu/menuwin.c	/^static void event_loop ()$/;"	f	typeref:typename:void	file:
+event_loop	menu/r_menuwin.c	/^static void event_loop ()$/;"	f	typeref:typename:void	file:
+exit	mm	/^def exit(*args):$/;"	f
+exit_	mm	/^from sys import exit as exit_$/;"	x
+exit_if_failed	r	/^def exit_if_failed(r,funcname):$/;"	f
+exit_if_failed	rub	/^def exit_if_failed(r,funcname):$/;"	f
+exit_interpret_retcode	r	/^def exit_interpret_retcode(r):$/;"	f
+exit_interpret_retcode	rub	/^def exit_interpret_retcode(r):$/;"	f
+extension	pyprep	/^        extension=sub('.*([.][^.]+)$','\\\\1', name ) # inc "."$/;"	v
+f	gl	/^f = round( n  * columns )$/;"	v
+fd	mm	/^fd = stdin.fileno()$/;"	v
+file_len	pw	/^file_len=get_file_len(file_path_part)$/;"	v
+file_path_part	pw	/^    file_path_part= args.file_to_watch$/;"	v
+file_path_part	pw	/^    file_path_part="("+args.file_path_cmd+")"$/;"	v
+filename	print_foldable	/^    filename = argv[1]$/;"	v
+filenames	wm_conf_adj	/^filenames={}$/;"	v
+filepath	pf	/^                filepath=_filepath$/;"	v
+filepath	pf	/^filepath=get_file_path()$/;"	v
+files	pyprep	/^files=args.files$/;"	v
+fill_screen_height_factor	menu/menu_search	/^fill_screen_height_factor = 0.75$/;"	v
+filter	gl	/^def filter(bytes):$/;"	f
+find_arg	manif	/^find_arg=( ['-L'] if args.follow_symlinks else [] )$/;"	v
+findpids_from_cmd	synergy_skyscraper	/^def findpids_from_cmd(cmd):$/;"	f
+findpids_from_port	synergy_skyscraper	/^def findpids_from_port(port):$/;"	f
+focused_nvim_index	e	/^def focused_nvim_index():$/;"	f
+font	menu/menu_search	/^font= 'Monospace:size=18'$/;"	v
+fstr	wl	/^    fstr="{:"+colf0+"} {:"+colf1+"."+colf1+"}"$/;"	v
+gen_args_for_conky	sc	/^def gen_args_for_conky(pos_list_entry, primary_index, connected_outputs_list,magic_enabled=False/;"	f
+gen_args_for_conky	setup_conky	/^def gen_args_for_conky(pos_list_entry,primary_index,connected_outputs_list):$/;"	f
+gen_args_for_conky_v2	sc	/^def gen_args_for_conky_v2(p,o):$/;"	f
+gen_args_for_conky_v2	setup_conky	/^def gen_args_for_conky_v2(p,o):$/;"	f
+gen_blank	print_foldable	/^def gen_blank():$/;"	f
+gen_cmd_emerge	u	/^def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=Fal/;"	f
+gen_cmd_emerge_preserved_rebuild	u	/^def gen_cmd_emerge_preserved_rebuild(*z,**zz):$/;"	f
+gen_cmd_emerge_world_update	u	/^def gen_cmd_emerge_world_update(*z,**zz):$/;"	f
+gen_cmd_sync	u	/^def gen_cmd_sync(*z,additional_args=None,**zz):$/;"	f
+gen_conky_pos_list	sc	/^def gen_conky_pos_list(conky_layout,connected_ouputs_count,reset=False):$/;"	f
+gen_conky_pos_list	setup_conky	/^def gen_conky_pos_list(conky_layout,connected_ouputs_count):$/;"	f
+gen_display_servers_cpu_time_popens	check_nodes	/^def gen_display_servers_cpu_time_popens(xserver_pids):$/;"	f
+gen_focus_of_nvim_by_socketnum_list	e	/^def gen_focus_of_nvim_by_socketnum_list(mode=0):$/;"	f
+gen_get_stat_field_of_pid_script	check_nodes	/^def gen_get_stat_field_of_pid_script(pids, statfield_regex):$/;"	f
+gen_humans	check_nodes	/^def gen_humans():$/;"	f
+gen_incomplete_monitor_positions_list	e	/^def gen_incomplete_monitor_positions_list(mode=0):$/;"	f
+gen_monitor_widths	e	/^def gen_monitor_widths(mode=0):$/;"	f
+gen_nodes_list	check_nodes	/^def gen_nodes_list():$/;"	f
+gen_nvims_visible_state_by_socket	e	/^def gen_nvims_visible_state_by_socket(mode=0):$/;"	f
+gen_page_ranges	print_foldable	/^def gen_page_ranges():$/;"	f
+gen_pos_args_for_conky	sc	/^def gen_pos_args_for_conky(p,o):$/;"	f
+gen_pos_args_for_conky	setup_conky	/^def gen_pos_args_for_conky(p,o):$/;"	f
+gen_pos_of_nvim_by_sock	e	/^def gen_pos_of_nvim_by_sock(mode=0):$/;"	f
+gen_pos_of_nvim_by_sock_list	e	/^def gen_pos_of_nvim_by_sock_list(mode=0):$/;"	f
+gen_remote_running_popens	check_nodes	/^def gen_remote_running_popens(remote_cmd,nodes,connect_timeout=5,include_stderr=False):$/;"	f
+gen_score_display_server_cpu_times	check_nodes	/^def gen_score_display_server_cpu_times(t):$/;"	f
+gen_score_loadavg	check_nodes	/^def gen_score_loadavg(loadavg):$/;"	f
+gen_score_prog_users	check_nodes	/^def gen_score_prog_users(prog_users_per_node):$/;"	f
+gen_screens	e	/^def gen_screens():$/;"	f
+gen_sock_2_pos_list	e	/^def gen_sock_2_pos_list():$/;"	f
+gen_socketlist_of_nvims	e	/^def gen_socketlist_of_nvims(mode=0):$/;"	f
+gen_sync_info	go_mirror	/^gen_sync_info(){$/;"	f
+gen_tail_head_line_cutout_cmd	check_nodes	/^def gen_tail_head_line_cutout_cmd( line_nr ):$/;"	f
+gen_target_desktop	e	/^def gen_target_desktop():$/;"	f
+gen_target_window_id	e	/^def gen_target_window_id():$/;"	f
+gen_userlist_popens	check_nodes	/^def gen_userlist_popens():$/;"	f
+gen_visible_nvims_list	e	/^def gen_visible_nvims_list(mode=0):$/;"	f
+gen_visible_win_list	e	/^def gen_visible_win_list(mode=0):$/;"	f
+gen_win_id_list_by_socket_index	e	/^def gen_win_id_list_by_socket_index(mode=0):$/;"	f
+gen_win_id_to_geom_dict	e	/^def gen_win_id_to_geom_dict(mode=0):$/;"	f
+gen_world	sc	/^def gen_world():$/;"	f
+gen_world	setup_conky	/^def gen_world():$/;"	f
+gen_x_display_list	e	/^def gen_x_display_list(mode=0):$/;"	f
+gen_xservers_dict_and_sock2xserver_list	e	/^def gen_xservers_dict_and_sock2xserver_list(mode=0):$/;"	f
+generated_focus_of_nvim_by_socketnum_list	e	/^generated_focus_of_nvim_by_socketnum_list=False$/;"	v
+generated_incomplete_monitor_positions_list	e	/^generated_incomplete_monitor_positions_list=False$/;"	v
+generated_monitor_widths	e	/^generated_monitor_widths=False$/;"	v
+generated_nvims_visible_state_by_socket	e	/^generated_nvims_visible_state_by_socket=False$/;"	v
+generated_pos_of_nvim_by_sock	e	/^generated_pos_of_nvim_by_sock=False$/;"	v
+generated_pos_of_nvim_by_sock_list	e	/^generated_pos_of_nvim_by_sock_list=False$/;"	v
+generated_screens	e	/^generated_screens=False$/;"	v
+generated_visible_nvims_list	e	/^generated_visible_nvims_list=False$/;"	v
+generated_visible_win_list	e	/^generated_visible_win_list=False$/;"	v
+generated_win_id_list_by_socket_index	e	/^generated_win_id_list_by_socket_index=False$/;"	v
+generated_win_id_to_geom_dict	e	/^generated_win_id_to_geom_dict=False$/;"	v
+generated_win_id_xserver_dict_list_by_socket_index	e	/^generated_win_id_xserver_dict_list_by_socket_index=False$/;"	v
+generated_x_display_list	e	/^generated_x_display_list=False$/;"	v
+generated_xservers_dict_and_sock2xserver_list	e	/^generated_xservers_dict_and_sock2xserver_list=False$/;"	v
+get_active_win_pos	e	/^def get_active_win_pos():$/;"	f
+get_active_win_pos_str	e	/^def get_active_win_pos_str( x_pos, right_border , widths ):$/;"	f
+get_cmd0	pw	/^def get_cmd0(ui,file_path_part,term_lines=None,file_len=None):$/;"	f
+get_code_from_oneline	pyprep	/^def get_code_from_oneline(line):$/;"	f
+get_connected_outputs_of_screen	sc	/^def get_connected_outputs_of_screen(layout,screen_num):$/;"	f
+get_connected_outputs_of_screen	setup_conky	/^def get_connected_outputs_of_screen(layout,screen_num):$/;"	f
+get_connected_outputs_sorted_left_to_right	sc	/^def get_connected_outputs_sorted_left_to_right(layout,screen_num):$/;"	f
+get_connected_outputs_sorted_left_to_right	setup_conky	/^def get_connected_outputs_sorted_left_to_right(layout,screen_num):$/;"	f
+get_cpu_count	wl	/^from os import cpu_count as get_cpu_count,get_terminal_size$/;"	x
+get_data	check_nodes	/^def get_data():$/;"	f
+get_ebuilds	manif	/^def get_ebuilds():$/;"	f
+get_file_len	pw	/^def get_file_len(file_path): $/;"	f
+get_file_path	pf	/^def get_file_path():$/;"	f
+get_hostname	e	/^def get_hostname():$/;"	f
+get_line_time	dms	/^    def get_line_time(self):$/;"	m	class:ScrollspeedCalculator
+get_load	wl	/^def get_load(ltype):$/;"	f
+get_manifs	manif	/^def get_manifs():$/;"	f
+get_outputs_count	setup_conky	/^def get_outputs_count(layout,connected_ones=True):$/;"	f
+get_p0	pw	/^def get_p0(ui,file_path_part,p0=None,file_len=None,term_lines=None):$/;"	f
+get_p1	pw	/^def get_p1(cmd1,term_lines,p1=None):$/;"	f
+get_primary_index	sc	/^def get_primary_index(outputlist):$/;"	f
+get_primary_index	setup_conky	/^def get_primary_index(outputlist):$/;"	f
+get_remote_hostname	e	/^def get_remote_hostname():$/;"	f
+get_repos	pp	/^def get_repos(pack):$/;"	f
+get_socketfilename	e	/^def get_socketfilename():$/;"	f
+get_speed	dms	/^    def get_speed(self,ignore_min_speed):$/;"	m	class:ScrollspeedCalculator
+get_wait_avg	wl	/^def get_wait_avg():$/;"	f
+get_win_id_of_nvim_by_socket_index	e	/^def get_win_id_of_nvim_by_socket_index(socketindex):$/;"	f
+get_win_pos	e	/^def get_win_pos( x_pos ):$/;"	f
+get_win_x_pos	e	/^def get_win_x_pos( xserver, int_win_id ):$/;"	f
+gh	github_create_repo	/^gh=github.MainClass.Github(login_or_token=github_username, password=passwd)$/;"	v
+github_username	github_create_repo	/^    github_username=f.read().strip()$/;"	v
+gitpushdir	pp	/^gitpushdir = env["HOME"] + '\/' + '.gitpush'$/;"	v
+go_menu_adj	monitor_samsung_control	/^def go_menu_adj(a,b,inc):$/;"	f
+gpgsig	pw2handy	/^gpgsig='48C21BD6E4D988BD'$/;"	v
+group	group_access	/^group=(args.group if args.group else (str(args.group_id)))$/;"	v
+h	menu/menu_search	/^        w,h = outp_of_active_win['size']$/;"	v
+h	menu/menu_search	/^        w,h= layout[layout_index]['size']$/;"	v
+h	menu/menu_search	/^    w,h=region_layout[args.region_index-1]["size"]$/;"	v
+h	menu/menu_search	/^h=str(ceil(int(h)*fill_screen_height_factor))$/;"	v
+h	timewatch	/^    h = t.tm_hour$/;"	v
+handler	e	/^    handler = StreamHandler()$/;"	v
+have_sockets	e	/^have_sockets = False$/;"	v
+height	menu/l_menuwin.c	/^    int height;$/;"	m	struct:__anond36518480108	typeref:typename:int	file:
+height	menu/menuwin.c	/^    int height;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:int	file:
+height	menu/r_menuwin.c	/^    int height;$/;"	m	struct:__anonf39157ce0108	typeref:typename:int	file:
+here	setup.py	/^here = path.abspath(path.dirname(__file__))$/;"	v
+hostname	e	/^hostname=None$/;"	v
+i3_pat	wm_conf_adj	/^i3_pat='bindsym[ ]*Ctrl[ ]*[+][ ]*Mod1[ ]*[+][ ]*[qe][ ]*workspace[ ]*[0-9]+'$/;"	v
+il	py	/^import importlib as il$/;"	I
+infile	print_foldable	/^infile = filename$/;"	v
+infile	print_foldable	/^infile = outfile$/;"	v
+infile	pyprep	/^    infile  = base +args.infile_extension_prefix+extension$/;"	v
+init	check_nodes	/^def init():$/;"	f
+init	dms	/^def init():$/;"	f
+init_shutdown_signals	menu/menuwin.c	/^void init_shutdown_signals()$/;"	f	typeref:typename:void
+int_to_bool	sc	/^def int_to_bool(a):$/;"	f
+int_to_bool	setup_conky	/^def int_to_bool(a):$/;"	f
+inv	sc	/^def inv(a):$/;"	f
+inv	setup_conky	/^def inv(a):$/;"	f
+inverted	I	/^            inverted=data[data_key]['inverted']$/;"	v
+inverted	I	/^        inverted = False$/;"	v
+inverted	I	/^        inverted = True$/;"	v
+inverted	I	/^inverted=None$/;"	v
+ioc	py_io_control	/^ioc=stat_utils.IO_wait_controller()$/;"	v
+is_conky_running_on_pos	sc	/^def is_conky_running_on_pos(outp,align,x_off,y_off,display,reset=False,all_hostnames=None):$/;"	f
+is_conkys_with_same_config_near_position	sc	/^def is_conkys_with_same_config_near_position( conky_pos_list , conky_id, outp , align , hostname/;"	f
+is_human	check_nodes	/^def is_human(username):$/;"	f
+is_no_human	check_nodes	/^def is_no_human(username):$/;"	f
+is_prob_nvim_sock	e	/^def is_prob_nvim_sock(path):$/;"	f
+is_sock	e	/^def is_sock(path):$/;"	f
+keymap	mm	/^keymap = \\$/;"	v
+killall_conkys	sc	/^def killall_conkys():$/;"	f
+l	ne	/^import logging as l$/;"	I
+landscape	print_foldable	/^        landscape='--landscape'$/;"	v
+lavg	wl	/^    lavg=get_load(ltype)$/;"	v
+layout	menu/menu_search	/^        layout=screen_utils.parse_screen_layout_env_var()$/;"	v
+layout_index	menu/menu_search	/^                layout_index=i$/;"	v
+layout_index	menu/menu_search	/^        layout_index=0$/;"	v
+left	monitor_samsung_control	/^def left():$/;"	f
+line_height	menu/menu_search	/^line_height=27 # aprox. fontsize*1.5$/;"	v
+linebuffer	pf	/^linebuffer=[]$/;"	v
+link_git	go_mirror	/^link_git(){$/;"	f
+list2int	e	/^def list2int(l):$/;"	f
+list2str	em	/^def list2str(thing):$/;"	f
+list_to_elementLenList	e	/^def list_to_elementLenList(l):$/;"	f
+load	pyprep	/^def load(data_dict):$/;"	f
+load_or_scan_sockets	e	/^def load_or_scan_sockets():$/;"	f
+log	wm_conf_adj	/^    def log(self,msg):$/;"	m	class:Logger
+lpr_cmd	print_foldable	/^lpr_cmd = split(lpr_cmdstr)$/;"	v
+lpr_cmdstr	print_foldable	/^lpr_cmdstr = lpr_cmdstr0 + ' ' + infile$/;"	v
+lpr_cmdstr0	print_foldable	/^lpr_cmdstr0 = "lpr -PBrother_DCP-J725DW -o wrap=false -o page_ranges="+p_range+" -o position=top/;"	v
+lsep	p2c	/^from os import linesep as lsep,environ$/;"	x
+ltype	wl	/^    wait_load,ltype=get_wait_avg()$/;"	v
+mac	bh	/^mac="00:1D:43:A0:0F:CF" # headphone$/;"	v
+mac	br	/^mac="0C:A6:94:37:E4:AF"$/;"	v
+main	dms	/^def main():$/;"	f
+main	gb	/^def main():$/;"	f
+main	menu/l_menuwin.c	/^int main (int argc, char ** argv)$/;"	f	typeref:typename:int
+main	menu/menuwin.c	/^int main (int argc, char ** argv)$/;"	f	typeref:typename:int
+main	menu/r_menuwin.c	/^int main (int argc, char ** argv)$/;"	f	typeref:typename:int
+main	monitor_samsung_control	/^def main():$/;"	f
+main	mutt-notmuch	/^sub main() {$/;"	s
+main	sc	/^def main():$/;"	f
+main	setup_conky	/^def main():$/;"	f
+main	skyscraper_activate_monitor_onoff_button.c	/^void main(){$/;"	f	typeref:typename:void
+main	usbreset.c	/^int main(int argc, char **argv)$/;"	f	typeref:typename:int
+main	wm_conf_adj	/^def main():$/;"	f
+make_modeline	add_modelines	/^def make_modeline(m):$/;"	f
+makedir	e	/^def makedir(path):$/;"	f
+mark_conky_as_started	sc	/^def mark_conky_as_started(pos_list_entry):$/;"	f
+match_in_list	check_nodes	/^def match_in_list( regex , l ):$/;"	f
+max_signo	menu/menuwin.c	/^int max_signo = sizeof(uint)*sizeof(char) * 8 ; $/;"	v	typeref:typename:int
+maxw	wl	/^        maxw=max(maxw,len(tpl[0]))$/;"	v
+maxw	wl	/^    maxw=0$/;"	v
+memfilep	I	/^memfilep="\/dev\/shm\/xdisplay_modifications"$/;"	v
+menu	monitor_samsung_control	/^def menu():$/;"	f
+menu_box	menu/l_menuwin.c	/^menu_box;$/;"	v	typeref:struct:__anond36518480108
+menu_box	menu/menuwin.c	/^menu_box;$/;"	v	typeref:struct:__anon4d2a775d0108
+menu_box	menu/r_menuwin.c	/^menu_box;$/;"	v	typeref:struct:__anonf39157ce0108
+menuwin	menu/menu_search	/^menuwin=Popen(menuwin_cmd)$/;"	v
+menuwin_cmd	menu/menu_search	/^menuwin_cmd=['menuwin',str(w),str(h),str(x),str(y)]$/;"	v
+menuwin_id	menu/menu_search	/^        menuwin_id = p.stdout.read().decode().strip()$/;"	v
+message	prefix_lib.bash	/^message(){$/;"	f
+minus	monitor_samsung_control	/^def minus():$/;"	f
+mm	add_modelines	/^    mm=m.copy()$/;"	v
+modeline	add_modelines	/^    modeline = make_modeline( m )$/;"	v
+modelinedupe	add_modelines	/^    modelinedupe = make_modeline( mm )$/;"	v
+modelinefile	setup_xrandr	/^    modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]$/;"	v
+modelinefile	setup_xrandr	/^    modelinefile = environ['HOME']+psep+'.modelines_'+postfix$/;"	v
+modelinefilepath	add_modelines	/^modelinefilepath=argv[1]$/;"	v
+modelines	add_modelines	/^    modelines = eval(f.read())$/;"	v
+month	getcaltomorrow	/^month=int(d[1])$/;"	v
+mp	py	/^import multiprocessing as mp$/;"	I
+msgbox	pf	/^def msgbox(msg):$/;"	f
+n	gl	/^n = 1.02$/;"	v
+new_file_len	pw	/^            new_file_len   = get_file_len(file_path_part)$/;"	v
+new_term_lines	pw	/^            new_term_lines = get_terminal_size().lines$/;"	v
+new_term_lines	pw	/^            new_term_lines=get_terminal_size().lines$/;"	v
+newhome	go_mirror	/^newhome(){$/;"	f
+nothing_to_read_counter	pf	/^nothing_to_read_counter=0$/;"	v
+number_sinks	pav	/^number_sinks=0$/;"	v
+nvim	edit_nvim_tag_browser	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	edit_nvim_win_back	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	mail_attach_mutt_nvim	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	ne	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	nvim_open_browsertab	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	r	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim	rub	/^nvim = neovim.attach('socket',path=path)$/;"	v
+nvim_is_focused_win	e	/^def nvim_is_focused_win( socket ):$/;"	f
+nvim_newebuild_in_new_tab	ne	/^def nvim_newebuild_in_new_tab(filebase):$/;"	f
+nvim_open_file	e	/^def nvim_open_file(file):$/;"	f
+nvim_run_cmdline_in_new_tab	r	/^def nvim_run_cmdline_in_new_tab(liste):$/;"	f
+nvim_run_cmdline_in_new_tab	rub	/^def nvim_run_cmdline_in_new_tab(liste):$/;"	f
+nvim_run_command	e	/^def nvim_run_command(command):$/;"	f
+nvims	e	/^nvims=None$/;"	v
+old_settings	mm	/^old_settings = tcgetattr(fd)$/;"	v
+open_file	pf	/^def open_file( blocking=False ):$/;"	f
+options	em	/^options={$/;"	v
+options_common	em	/^options_common=options.copy()$/;"	v
+options_list	em	/^def options_list(thing):$/;"	f
+outfile	print_foldable	/^outfile = None$/;"	v
+outfile	print_foldable	/^outfile = tmpfn$/;"	v
+outfile	print_foldable	/^outfile = tmpfn_prefix+'-'+suffix+'.pdf'$/;"	v
+outfile	print_foldable	/^outfile = tmpfn_prefix+'_'+'stage_preprint_filter.pdf'$/;"	v
+outfile	pyprep	/^    outfile = base + args.outfile_extension_prefix+extension$/;"	v
+outp	p2c	/^    outp=outp[int(argv[2])]$/;"	v
+outp	p2c	/^    outp=outp[int(argv[3]):]$/;"	v
+outp	p2c	/^    outp=outp[int(argv[3]):int(argv[4])]$/;"	v
+outp	p2c	/^outp=check_output(['pass',argv[1]]).split(lsep.encode())$/;"	v
+outp_index	G	/^outp_index,x_display=get_connected_output_count_at_env_layout_index(args.screen_index,return_x_d/;"	v
+outp_index	I	/^outp_index,x_display=get_connected_output_count_at_env_layout_index(args['screen_index'],return_/;"	v
+outp_is_right_of_outp	setup_conky	/^def outp_is_right_of_outp(outp1,outp2):$/;"	f
+outp_of_active_win	menu/menu_search	/^        outp_of_active_win = screen_utils.get_output_of_active_win(active_win_id) $/;"	v
+outplines	pav	/^outplines=check_output(cmd).decode().splitlines()$/;"	v
+p	bh	/^p=pexpect.spawn("bluetoothctl")$/;"	v
+p	br	/^p=pexpect.spawn("bluetoothctl")$/;"	v
+p	elp	/^p=pexpect.spawn(cmdl[0],cmdl[1:])$/;"	v
+p	elpau	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpau!	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpau!!	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpau!!!	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpauc	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpauc!	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	elpauc!!	/^p=pexpect.spawn(cmd[0],cmd[1:])$/;"	v
+p	menu/menu_search	/^    p = Popen(['xdotool', 'search', '--class', 'menuwin'],stdout=PIPE)$/;"	v
+p	p2c	/^p=Popen(['clipster','-c'],stdin=PIPE)$/;"	v
+p	py	/^from sys import path as p$/;"	x
+p0	bn	/^p0 = Popen(argv[1:])$/;"	v
+p0	pw	/^                p0=get_p0(ui,file_path_part,p0=p0,term_lines=new_term_lines,file_len=file_len)$/;"	v
+p0	pw	/^                p0=get_p0(ui,file_path_part,p0=p0,term_lines=new_term_lines,file_len=new_file_le/;"	v
+p1	bn	/^p1 = Popen(['sudo','dd','of=\/sys\/fs\/cgroup\/unified\/cg_bg\/cgroup.procs','status=none'],stdi/;"	v
+p1	pw	/^                p1=get_p1(cmd1,new_term_lines,p1=p1)$/;"	v
+p1	pw	/^    p1=Popen(cmd1,term_lines)$/;"	v
+p_range	print_foldable	/^        p_range= args.filter$/;"	v
+pack	pp	/^def pack(pack_to_push,packs):$/;"	f
+pack	pp	/^pack  =  pack(pack_to_push,packs)$/;"	v
+pack_to_push	pp	/^pack_to_push = argv[2]$/;"	v
+packs	pp	/^targets,packs,c=parse_config()$/;"	v
+pagerfilepath	e	/^pagerfilepath='\/dev\/shm\/pagerfile'$/;"	v
+pair	bh	/^def pair(macaddr):$/;"	f
+pair	br	/^def pair(macaddr):$/;"	f
+parse_args	G	/^def parse_args():$/;"	f
+parse_args	I	/^def parse_args():$/;"	f
+parse_args	dms	/^def parse_args():$/;"	f
+parse_args	gb	/^def parse_args():$/;"	f
+parse_args	gl	/^def parse_args():$/;"	f
+parse_args	menu/menu_search	/^def parse_args():$/;"	f
+parse_args	pf	/^def parse_args():$/;"	f
+parse_args	print_foldable	/^def parse_args():$/;"	f
+parse_args	pw	/^def parse_args():$/;"	f
+parse_args	synergy_skyscraper	/^def parse_args():$/;"	f
+parse_args	u	/^def parse_args():$/;"	f
+parse_args	wm_conf_adj	/^def parse_args():$/;"	f
+parse_config	pp	/^def parse_config():$/;"	f
+parse_display_servers_cpu_times	check_nodes	/^def parse_display_servers_cpu_times(data):$/;"	f
+parse_home_dir_users_popens	check_nodes	/^def parse_home_dir_users_popens(data):$/;"	f
+parse_layout	sc	/^def parse_layout():$/;"	f
+parse_layout	setup_conky	/^def parse_layout():$/;"	f
+parse_loadavg	check_nodes	/^def parse_loadavg(loadavg):$/;"	f
+parse_popens	check_nodes	/^def parse_popens(popens_dict,parsefunc,checkfunc=None,sleeptime=0.01):$/;"	f
+parse_userlist_popens	check_nodes	/^def parse_userlist_popens(data):$/;"	f
+parse_xorg_users	check_nodes	/^def parse_xorg_users(data):$/;"	f
+parse_xserver_pids	check_nodes	/^def parse_xserver_pids(data):$/;"	f
+parser	check_nodes	/^parser=argparse.ArgumentParser( description="check node whether it is suitable for calculations"/;"	v
+parser	e	/^parser=argparse.ArgumentParser( description="opens file in new nvim tab")$/;"	v
+parser	em	/^parser=ArgumentParser(description=description)$/;"	v
+parser	ne	/^parser=argparse.ArgumentParser( description="opens newebuild prefilled with stuff in new nvim ta/;"	v
+parser	pyprep	/^parser=ArgumentParser( description="generates *.pyout\\"[.extension]\\" files from *.pyin\\"[.ex/;"	v
+passwd	github_create_repo	/^passwd=input('enter pass:')$/;"	v
+password_source_path	pw2handy	/^password_source_path=expanduser('~\/.password-store')$/;"	v
+path	edit_nvim_tag_browser	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	edit_nvim_win_back	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	group_access	/^path=abspath(args.path)$/;"	v
+path	mail_attach_mutt_nvim	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	ne	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	nvim_open_browsertab	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	r	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+path	rub	/^path=environ['NVIM_LISTEN_ADDRESS']$/;"	v
+pathjoin	e	/^from os.path import join as pathjoin$/;"	x
+patterns	pyprep	/^patterns={$/;"	v
+patterns	wm_conf_adj	/^patterns={}$/;"	v
+pdfjamcmd	print_foldable	/^pdfjamcmd = split(pdfjamcmdstr)$/;"	v
+pdfjamcmdstr	print_foldable	/^pdfjamcmdstr='\/usr\/bin\/pdfjam --nup "2x1" --suffix '+suffix+' '+landscape+' '+scale+' --outfi/;"	v
+pdftk2_cmd	print_foldable	/^pdftk2_cmd = split(pdftk2_cmdstr)$/;"	v
+pdftk2_cmdstr	print_foldable	/^pdftk2_cmdstr = 'pdftk A='+infile+' cat '+args.filter+' output ' + outfile$/;"	v
+pdftk_cmd	print_foldable	/^pdftk_cmd = split(pdftk_cmdstr)$/;"	v
+pdftk_cmdstr	print_foldable	/^pdftk_cmdstr = 'pdftk A='+infile+' B='+blank+' cat '+gen_page_ranges()+' output '+outfile$/;"	v
+pl	py	/^import pylib as pl$/;"	I
+plist	sc	/^def plist(l):$/;"	f
+plist	setup_conky	/^def plist(l):$/;"	f
+plus	monitor_samsung_control	/^def plus():$/;"	f
+popens	mm	/^popens = []$/;"	v
+popenterm	pf	/^def popenterm():$/;"	f
+popenterm	pw	/^def popenterm():$/;"	f
+positions_config_file	sc	/^positions_config_file = env['HOME'] + "\/.conky_positions"$/;"	v
+positionsdir	sc	/^positionsdir = env["HOME"]+"\/.conky_run"$/;"	v
+postfix	pw2handy	/^postfix='.gpg'$/;"	v
+postfix	setup_xrandr	/^        postfix=environ["DISPLAY"]$/;"	v
+postfix	setup_xrandr	/^        postfix=environ["hostnamE"]$/;"	v
+postfix	setup_xrandr	/^        postfix=environ["hostnamE"]+":"+display[0]$/;"	v
+power_on	br	/^def power_on(reset=False):$/;"	f
+pp	py	/^import pprint as pp$/;"	I
+prefix	cmdowner	/^prefix='\/'$/;"	v
+prepare_data	sc	/^def prepare_data(p,o):$/;"	f
+prepare_data	setup_conky	/^def prepare_data(p,o):$/;"	f
+prepfile	pyprep	/^def prepfile(in_file,out_file):$/;"	f
+print_buffer	pf	/^def print_buffer():$/;"	f
+print_help	gl	/^        def print_help(self,*z):$/;"	m	class:parse_args.Argument_parser_double_help
+prl	wl	/^    prl=[]$/;"	v
+proc_pid_stat_fieldnames	check_nodes	/^proc_pid_stat_fieldnames=['pid', 'comm', 'state', 'ppid', 'pgrp', 'session', 'tty_nr', 'tpgid', /;"	v
+psep	add_modelines	/^from os.path import sep as psep$/;"	x
+psep	pw2handy	/^from os.path import expanduser,sep as psep$/;"	x
+psep	setup_xrandr	/^from os.path import exists,sep as psep$/;"	x
+pushstring	pp	/^pushstring = 'push '+target+' '+ pack$/;"	v
+pw_tmp_subfolder	pw2handy	/^pw_tmp_subfolder='2handy'$/;"	v
+pwname	pw2handy	/^pwname=argv[1]$/;"	v
+py_escape_seq_pattern	gl	/^py_escape_seq_pattern  =  b'(\\x1B\\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK])' # 3 x "("$/;"	v
+py_subst_args	gl	/^py_subst_args  = [ b'[ ]' + py_escape_seq_pattern +           b'{1,4}(\\w+[\/])?([_]*old_|(\\w|[/;"	v
+pyprep_msg	pyprep	/^pyprep_msg =  ('   ||*\\\\\\\\\\\\   *\\\\       \/* ||*\\\\\\\\\\\\   ||*\\\\\\\\\\\\    ||====/;"	v
+quitsignals	sc	/^quitsignals=[SIGINT,SIGKILL,SIGHUP,SIGQUIT,SIGTERM]$/;"	v
+read_file	pf	/^def read_file():$/;"	f
+readmsg_time	pf	/^readmsg_time=1$/;"	v
+reload_wm	wm_conf_adj	/^def reload_wm():$/;"	f
+remember_home_and_to_go_back_there	e	/^def remember_home_and_to_go_back_there():$/;"	f
+remote	e	/^def remote():$/;"	f
+replace_link	go_mirror	/^replace_link(){$/;"	f
+reset	br	/^def reset():$/;"	f
+reset	monitor_samsung_control	/^def reset():$/;"	f
+reset_cmd	G	/^reset_cmd=xcalib_cmdbase+xcalib_output_args+xcalib_args_reset$/;"	v
+restore_link	go_mirror	/^restore_link(){$/;"	f
+retcode	menu/menu_search	/^    retcode=p.wait()$/;"	v
+retcode	rub	/^retcode=nvim_run_cmdline_in_new_tab(argsv[1:])$/;"	v
+return_to_window_cmd	menu/menu_search	/^    return_to_window_cmd=[ 'xdotool', 'windowactivate', '--sync', active_win_id ]$/;"	v
+returndesk	mm	/^            returndesk = str(int(check_output(['xdotool', 'get_desktop_for_window', returnwin ])/;"	v
+returnwin	mm	/^            returnwin  = check_output(['xdotool','getwindowfocus']).decode().strip()$/;"	v
+right	monitor_samsung_control	/^def right():$/;"	f
+rm0	add_modelines	/^    rm0 = [['xrandr','--delmode', m['displays'][display]['outputname'], m['mode_name'] ]]$/;"	v
+rm1	add_modelines	/^    rm1 = [['xrandr','--delmode', mm['displays'][display]['outputname'], mm['mode_name'] ]]$/;"	v
+root	menu/l_menuwin.c	/^    Window root;$/;"	m	struct:__anond36518480108	typeref:typename:Window	file:
+root	menu/menuwin.c	/^    Window root;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:Window	file:
+root	menu/r_menuwin.c	/^    Window root;$/;"	m	struct:__anonf39157ce0108	typeref:typename:Window	file:
+rows	gl	/^columns,rows=get_terminal_size()$/;"	v
+run_cmd	wl	/^    def run_cmd():$/;"	f
+scale	print_foldable	/^        scale='--scale '+args.scale$/;"	v
+scan_available_conky_confs	sc	/^def scan_available_conky_confs():$/;"	f
+scan_available_conky_confs	setup_conky	/^def scan_available_conky_confs():$/;"	f
+scan_for_sockets	e	/^def scan_for_sockets():$/;"	f
+score_nodes	check_nodes	/^def score_nodes(return_dict=False):$/;"	f
+screen	menu/l_menuwin.c	/^    int screen;$/;"	m	struct:__anond36518480108	typeref:typename:int	file:
+screen	menu/menu_search	/^        screen = floor((len(layout)-1)\/2)$/;"	v
+screen	menu/menuwin.c	/^    int screen;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:int	file:
+screen	menu/r_menuwin.c	/^    int screen;$/;"	m	struct:__anonf39157ce0108	typeref:typename:int	file:
+screennum	sc	/^def screennum( line ):$/;"	f
+screennum	setup_conky	/^def screennum( line ):$/;"	f
+se	py	/^from sys import stderr as se$/;"	x
+search	mutt-notmuch	/^sub search($$) {$/;"	s
+search_action	mutt-notmuch	/^sub search_action($$@) {$/;"	s
+send_scan_off	br	/^def send_scan_off():$/;"	f
+send_scan_on	br	/^def send_scan_on():$/;"	f
+sendcmd	mm	/^def sendcmd(cmd_): $/;"	f
+sep	print_foldable	/^sep=' '$/;"	v
+server_popen	synergy_skyscraper	/^            server_popen=synergy_server_start()$/;"	v
+setup_way_back	e	/^def setup_way_back():$/;"	f
+shsplit	add_modelines	/^from shlex import split as shsplit$/;"	x
+shutdown	menu/menuwin.c	/^void shutdown(int signo)$/;"	f	typeref:typename:void
+shutdown_signals	menu/menuwin.c	/^uint shutdown_signals [] = {1,2,3,4,6,10,11,12,14,15};$/;"	v	typeref:typename:uint[]
+shutdown_signals_ored	menu/menuwin.c	/^uint shutdown_signals_ored;$/;"	v	typeref:typename:uint
+si	p2c	/^from sys import stdin as si$/;"	x
+si	py	/^from sys import stdin as si$/;"	x
+signals	menu/menuwin.c	/^uint signals=0;$/;"	v	typeref:typename:uint
+sleep_time	wl	/^    sleep_time=int(args.sleep_time*randint(1,1000)\/1000)$/;"	v
+sleeptime	monitor_samsung_control	/^sleeptime=0.4$/;"	v
+so	py	/^from sys import stdout as so$/;"	x
+socketfile	e	/^socketfile=None$/;"	v
+socketfilebase	e	/^socketfilebase='\/tmp\/ioufoiusufiosur'$/;"	v
+sockets	e	/^sockets=None$/;"	v
+some_args	u	/^        some_args=["--jobs="+str(args.jobs)]$/;"	v
+sortkey	sc	/^    def sortkey(d):$/;"	f	function:get_connected_outputs_sorted_left_to_right	file:
+sortkey	setup_conky	/^    def sortkey(d):$/;"	f	function:get_connected_outputs_sorted_left_to_right	file:
+source_file_path	pw2handy	/^source_file_path=password_source_path+psep+pwname+postfix$/;"	v
+sp	em	/^import subprocess as sp$/;"	I
+sp	py	/^import subprocess as sp$/;"	I
+spectrwm_pat	wm_conf_adj	/^spectrwm_pat='bind[^=]+[=][ ]*Mod1[ ]*[+][ ]*Control[ ]*[+][ ]*[qwert]'$/;"	v
+splitcmd	elpau	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpau!	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpau!!	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpau!!!	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpauc	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpauc!	/^from shlex import split as splitcmd$/;"	x
+splitcmd	elpauc!!	/^from shlex import split as splitcmd$/;"	x
+startswith	sc	/^def startswith(string,startstring):$/;"	f
+startswith	setup_conky	/^def startswith(string,startstring):$/;"	f
+stat_file	e	/^from os import stat as stat_file$/;"	x
+stderr	wl	/^    stderr=open(args.stderr,'wb')$/;"	v
+stderr	wl	/^stdout,stderr=None,None$/;"	v
+stdout	wl	/^    stdout=open(args.stdout,'wb')$/;"	v
+stdout	wl	/^stdout,stderr=None,None$/;"	v
+stop_cmd	wl	/^    def stop_cmd():$/;"	f
+store	pyprep	/^def store(data_dict):$/;"	f
+suffix	print_foldable	/^suffix='2up'$/;"	v
+sum_of_list	e	/^def sum_of_list(l):$/;"	f
+switch0	add_modelines	/^    switch0 = [ 'xrandr', '--output' ,m['displays'][display]['outputname'],'--mode', m['mode_nam/;"	v
+switch1	add_modelines	/^    switch1 = [ 'xrandr', '--output' ,m['displays'][display]['outputname'],'--mode', m['mode_nam/;"	v
+synergy_client_start	synergy_skyscraper	/^def synergy_client_start():$/;"	f
+synergy_server_start	synergy_skyscraper	/^def synergy_server_start():$/;"	f
+synergy_stop	synergy_skyscraper	/^def synergy_stop():$/;"	f
+t	timewatch	/^    t = localtime()$/;"	v
+table	e	/^def table(header,columns):$/;"	f
+target	pp	/^def target(target_to_push,targets):$/;"	f
+target	pp	/^target=target(target_to_push,targets)$/;"	v
+target_dir_path	pw2handy	/^target_dir_path='\/sdcard\/.password-store'$/;"	v
+target_hostname	pw2handy	/^target_hostname='handy'$/;"	v
+target_to_push	pp	/^target_to_push = argv[1]$/;"	v
+targets	pp	/^targets,packs,c=parse_config()$/;"	v
+task1	em	/^def task1():$/;"	f
+task2	em	/^def task2():$/;"	f
+term_lines	pw	/^term_lines=get_terminal_size().lines$/;"	v
+testing	dms	/^testing=True$/;"	v
+thread_action	mutt-notmuch	/^sub thread_action(@) {$/;"	s
+ti	py	/^import time as ti$/;"	I
+time_rate_loadavg	check_nodes	/^def time_rate_loadavg(t):$/;"	f
+tmp_dir_path	pw2handy	/^tmp_dir_path=expanduser(password_source_path+psep+pw_tmp_subfolder)$/;"	v
+tmpfile	pw	/^tmpfile= "\/dev\/shm\/.pywatch_"+str(time())+"_"+str(randint(1000,9999))+".tmp"$/;"	v
+tmpfn	print_foldable	/^tmpfn= tmpfn_prefix + '.pdf'$/;"	v
+tmpfn_prefix	print_foldable	/^tmpfn_prefix = '\/tmp\/print_slifjsoil546645'$/;"	v
+tpl	wl	/^        tpl=(" ".join(line[0]), str(line[1]))$/;"	v
+transp_menu	monitor_samsung_control	/^def transp_menu():$/;"	f
+tried_to_terminate_n_times	bh	/^        tried_to_terminate_n_times=0$/;"	v
+tried_to_terminate_n_times	bh	/^    tried_to_terminate_n_times=tried_to_terminate_n_times+1$/;"	v
+tried_to_terminate_n_times	br	/^        tried_to_terminate_n_times=0$/;"	v
+tried_to_terminate_n_times	br	/^    tried_to_terminate_n_times=tried_to_terminate_n_times+1$/;"	v
+ui	pw	/^ui=str(args.update_interval)$/;"	v
+unlink_entrys	sc	/^def unlink_entrys():$/;"	f
+up	monitor_samsung_control	/^def up():$/;"	f
+update	dms	/^    def update(self):$/;"	m	class:ScrollspeedCalculator
+user	github_create_repo	/^user=gh.get_user()$/;"	v
+v	e	/^def v(msg, **kwargs):$/;"	f
+versionfile	setup.py	/^versionfile=open('0.0.1')$/;"	v
+volume	pav	/^    volume=convert(argv[1])$/;"	v
+w	menu/menu_search	/^        w,h = outp_of_active_win['size']$/;"	v
+w	menu/menu_search	/^        w,h= layout[layout_index]['size']$/;"	v
+w	menu/menu_search	/^    w,h=region_layout[args.region_index-1]["size"]$/;"	v
+wait	e	/^def wait():$/;"	f
+wait_load	wl	/^    wait_load,ltype=get_wait_avg()$/;"	v
+waitmsg	e	/^waitmsg='>> waiting for ANYKEY <<'$/;"	v
+white_pixel	menu/l_menuwin.c	/^    unsigned long white_pixel;$/;"	m	struct:__anond36518480108	typeref:typename:unsigned long	file:
+white_pixel	menu/menuwin.c	/^    unsigned long white_pixel;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:unsigned long	file:
+white_pixel	menu/r_menuwin.c	/^    unsigned long white_pixel;$/;"	m	struct:__anonf39157ce0108	typeref:typename:unsigned long	file:
+width	menu/l_menuwin.c	/^    int width;$/;"	m	struct:__anond36518480108	typeref:typename:int	file:
+width	menu/menuwin.c	/^    int width;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:int	file:
+width	menu/r_menuwin.c	/^    int width;$/;"	m	struct:__anonf39157ce0108	typeref:typename:int	file:
+win_id	edit_nvim_tag_browser	/^win_id=nvim.call('win_getid')$/;"	v
+win_id	edit_nvim_win_back	/^win_id=nvim.call('win_getid')$/;"	v
+win_id	ne	/^    win_id=nvim.call('win_getid')$/;"	v
+win_id	rub	/^win_id=nvim.call('win_getid')$/;"	v
+window	menu/l_menuwin.c	/^    Window window;$/;"	m	struct:__anond36518480108	typeref:typename:Window	file:
+window	menu/menuwin.c	/^    Window window;$/;"	m	struct:__anon4d2a775d0108	typeref:typename:Window	file:
+window	menu/r_menuwin.c	/^    Window window;$/;"	m	struct:__anonf39157ce0108	typeref:typename:Window	file:
+write_clip_file	p2c	/^def write_clip_file(data,mode='V'):$/;"	f
+x	menu/menu_search	/^        x,y = outp_of_active_win['pos']$/;"	v
+x	menu/menu_search	/^        x=0$/;"	v
+x	menu/menu_search	/^    x=layout2xpos(region_layout,args.region_index-1)$/;"	v
+x_class_hints	menu/l_menuwin.c	/^XClassHint * x_class_hints; $/;"	v	typeref:typename:XClassHint *
+x_class_hints	menu/menuwin.c	/^XClassHint * x_class_hints; $/;"	v	typeref:typename:XClassHint *
+x_class_hints	menu/r_menuwin.c	/^XClassHint * x_class_hints; $/;"	v	typeref:typename:XClassHint *
+x_connect	menu/l_menuwin.c	/^static void x_connect ()$/;"	f	typeref:typename:void	file:
+x_connect	menu/menuwin.c	/^static void x_connect ()$/;"	f	typeref:typename:void	file:
+x_connect	menu/r_menuwin.c	/^static void x_connect ()$/;"	f	typeref:typename:void	file:
+x_display	G	/^outp_index,x_display=get_connected_output_count_at_env_layout_index(args.screen_index,return_x_d/;"	v
+x_display	I	/^outp_index,x_display=get_connected_output_count_at_env_layout_index(args['screen_index'],return_/;"	v
+x_server	menu/menu_search	/^        x_server=screen_utils.parse_display_var()$/;"	v
+xcalib_args_invert	I	/^xcalib_args_invert = ['-i','-a']$/;"	v
+xcalib_args_reset	G	/^xcalib_args_reset  = ['-c','-a']$/;"	v
+xcalib_args_reset	I	/^xcalib_args_reset  = ['-c','-a']$/;"	v
+xcalib_cmdbase	G	/^xcalib_cmdbase=['xcalib']$/;"	v
+xcalib_cmdbase	I	/^xcalib_cmdbase=['xcalib']$/;"	v
+xcalib_output_args	G	/^xcalib_output_args=['-o',str(outp_index)]$/;"	v
+xcalib_output_args	I	/^xcalib_output_args=['-o',str(outp_index)]$/;"	v
+xrandr_conf_file_path	setup_xrandr	/^    xrandr_conf_file_path = environ["HOME"] + "\/.xrandr.conf_"+argv[1]$/;"	v
+xrandr_conf_file_path	setup_xrandr	/^    xrandr_conf_file_path=environ["HOME"] + "\/.xrandr.conf_" + postfix$/;"	v
+xrandr_it	setup_xrandr	/^def xrandr_it(filename):$/;"	f
+y	menu/menu_search	/^        x,y = outp_of_active_win['pos']$/;"	v
+y	menu/menu_search	/^        y=0$/;"	v
+y	menu/menu_search	/^    y=0$/;"	v
+year	getcaltomorrow	/^year=d[0]$/;"	v
+zz	u	/^    zz=args.__dict__$/;"	v

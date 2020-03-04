@@ -1,0 +1,11 @@
+#!/bin/fish
+#
+# step 1 '2f '-> 'u'
+# step 2 '5c '-> '2f '
+# step 3 'u'  -> '5c '
+
+git log --oneline --graph --color=always $argv\
+|sed -r 's/^(((\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]){1,4}|[/\\ |*])*)/\1@/;'\
+|tac |xxd -g1 |cut -d' ' -f 2-17|tr  \n ' '\
+|sed -r 's/0a /n/g;s/40 /x/g;:l;s/(n[^x]*)(2f )/\1u/g;tl;:l;s/(n[^x]*)(5c )/\12f /g;tl;s/u/5c /g;s/n/0a /g;s/x//g;'|xxd -r -p
+

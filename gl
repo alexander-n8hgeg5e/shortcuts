@@ -11,6 +11,7 @@ import argparse
 from pprint import pprint
 from math import ceil
 from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass,Action_enable
+debug=False
 
 n = 1.02
 columns,rows=get_terminal_size()
@@ -29,6 +30,7 @@ def parse_args():
                 }
     # low overhead test if no debug
     if "--debug" in argv:
+        global debug
         debug=True
         argv.remove("--debug")
     else:
@@ -46,14 +48,17 @@ def parse_args():
     # because default is False and more likely, use the Action_enable
     # for the unlikely case to save cpu
     parser.add_argument( "-o","--not-filter-old-branches",action=Action_store_true_no_pass,default=False )
-    parser.add_argument( "-O","--filter-old-branches",action=Action_enable("not_filter_old_branches") )
+    parser.add_argument( "-O","--filter-old-branches",action=Action_disable("not_filter_old_branches") )
     parser.add_argument( "-dr"  ,  "--decoration-remotes", action=Action_store_true_no_pass,default=True)
-    parser.add_argument( "-s"  ,  "--simplify-by-decoration", action='store_true',default=False)
     parser.add_argument( "-dR"  ,  "--decoration-no-remotes", action=Action_disable("decoration_remotes"))
     parser.add_argument( "-n"  ,  "--max-count", action='store',default=str(max(1,rows-3)))
     parser.add_argument( "-A" ,   "--no-all", action=Action_disable('all') )
     parser.add_argument( "-c" ,   "--compact", default=True,action=Action_store_true_no_pass)
     parser.add_argument( "-C" ,   "--no-compact", action=Action_disable("compact"))
+    parser.add_argument( "-g" ,   "--reverse-graph", action=Action_store_true_no_pass)
+    parser.add_argument( "-s" ,   "--simplify-by-decoration", action='store_true',default=False)
+    parser.add_argument( "-d" ,   "--decorate", action='store_true',default=True)
+    parser.add_argument( "-D" ,   "--no-decorate", action=Action_disable("decorate"))
     global args
     global prepared_args
     args = parser.parse_args()
@@ -76,16 +81,20 @@ def gen_log_cmd():
     body = '%b'
     nl = '%n'
     S = cr + '|' + cr
-    cmd = ['git', 'log', '--reverse']
-    cmd = cmd + ['--color=always']
+
+    if not args.reverse_graph:
+        cmd = ['git', 'log', '--reverse']
+        prettystart = "--pretty=format:"
+        pretty = prettystart + hash + S + date + S + refnames + subject
+        cmd = cmd + [pretty]
+    else:
+        cmd = ['git_reverse_graph_color',]
+
     cmd = cmd +  ['--date=format:' + "%y_%m_%d|%H:%M"]
-    prettystart = "--pretty=format:"
-    pretty = prettystart + hash + S + date + S + refnames + subject
-
-    cmd = cmd + [pretty]
     cmd = cmd + prepared_args
-
-    if not args.filter_old_branches:
+    
+    if not args.not_filter_old_branches:
+        # filter old
         # man FNMATCH.3 with FNM_PATHNAME=False p(* matches /)
         # git allowed branch chars, found by git check-ref-format
         # test was 3 char branch name "a[::char::]z"
@@ -94,21 +103,28 @@ def gen_log_cmd():
         gbcp=git_branch_chars_pat
         gbcp_x='*('+gbcp+')'
         gbcp_p='+('+gbcp+')'
-        old_patterns  = ["old_"+gbcp_x  ] # at start
-        old_patterns += [gbcp_x+"_old_"+gbcp_x] # middle
+
+        #old_patterns  = ["old_"+gbcp_x  ] # at start
+        #old_patterns += ["old"+gbcp_x  ] # at start
+        #old_patterns += [gbcp_x+"_old_"+gbcp_x] # middle
+        old_patterns = ["old/"]
+        old_patterns += ["old_"]
         old_pathes_begin  = ["refs/heads/"]
         if args.decoration_remotes:
-            old_pathes_begin += ["refs/remotes/"+gbcp_p+"/"]
-            old_pathes_begin += ["refs/remotes/"+gbcp_p+"/"]
+            old_pathes_begin += ["refs/remotes/*/"]
+            old_pathes_begin += ["refs/remotes/"]
         dec_ref_exclude_patterns=[]
         for i in old_pathes_begin:
             for j in old_patterns:
                 dec_ref_exclude_patterns += [i+j+"*"]
         for pat in dec_ref_exclude_patterns:
             cmd+=["--decorate-refs-exclude="+pat]
+
     if not args.decoration_remotes:
         cmd+=["--decorate-refs-exclude=refs/remotes/*"]
-
+    if debug:
+        for thing in cmd:
+            print(thing)
     return cmd
 
 def filter(bytes):
@@ -170,10 +186,10 @@ class fold_unsused():
 
 parse_args()
 
-if args.not_filter_old_branches:
-    stdout.buffer.write(check_output(gen_log_cmd()))
-else:
-    stdout.buffer.write(filter(check_output(gen_log_cmd())))
+#if args.not_filter_old_branches:
+stdout.buffer.write(check_output(gen_log_cmd()))
+#else:
+#    stdout.buffer.write(filter(check_output(gen_log_cmd())))
 
 
 # vim: set foldmethod=indent foldlevel=0 foldnestmax=2 :

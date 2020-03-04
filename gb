@@ -17,6 +17,7 @@ py_escape_seq_pattern  =  R('((\x1B\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK]){1,4})') 
 def parse_args():
     output_conversions = {
                     'color': (lambda d,v: "--"+d + "=" + v ),
+                    'only_remotes': (lambda d,v: "--remotes" ),
                 }
 
     # low overhead test if no debug
@@ -38,9 +39,9 @@ def parse_args():
     parser.add_argument( "--color",action='store', default='always' )
     parser.add_argument( "-a", "--all",action='store_true', default=True )
     parser.add_argument( "-o","--not-filter-old-branches",action=Action_store_true_no_pass,default=False )
-    parser.add_argument( "-r"  ,  "--remotes", action='store_true',default=False)
-    #parser.add_argument( "-R" ,  "--no-remotes", action=Action_disable("remotes") )
-    parser.add_argument( "-A" ,   "--no-all", dest="all", action=Action_disable('all') )
+    parser.add_argument( "-r"  ,  "--only-remotes", action="store_true",default=False)
+    parser.add_argument( "-R" ,  "--no-remotes", action=Action_disable("all","only_remotes") )
+    parser.add_argument( "-A" ,   "--no-all", action=Action_disable('all') )
     parser.add_argument('-c','--contains', action='store')
     parser.add_argument('--quick', action=Action_store_true_no_pass,default=True)
     parser.add_argument('-ch',"--contains-head",nargs=0,action=Action_set("contains","HEAD"))

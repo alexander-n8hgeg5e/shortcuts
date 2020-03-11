@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+
+from subprocess import Popen,PIPE
+from sys import argv
+from re import search,IGNORECASE
+from pylib.file_utils.split import file2list
+
+kwds=file2list("~/.filterkwds")
+
+p=Popen(["git","diff",argv[1]],stdout=PIPE)
+
+data=p.stdout.read().decode(errors="replace")
+
+lines=data.split("\n")
+
+for line in lines:
+    for kwd in kwds:
+        if search(kwd,line,flags=IGNORECASE):
+            print("###   \""+kwd+"\"   ###")
+            print(line)

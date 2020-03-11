@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+from pylib.file_utils.split import file2list
+from subprocess import Popen,PIPE
+from os.path import isfile
+from sys import stdin
+
+data=stdin.read()
+data=data.strip("\n")
+files=data.split("\n")
+_files=files
+files=[]
+for f in _files:
+    if isfile(f):
+        files.append(f)
+
+kwds=file2list("~/.filterkwds")
+
+popens=[]
+
+for kwd in kwds:
+    popens.append(Popen(["grep","-inH","--color=always",kwd]+files))
+
+for p in popens:
+    p.wait()
+
+    
+     

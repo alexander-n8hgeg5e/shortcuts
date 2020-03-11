@@ -381,4 +381,6 @@ dobin skyscraper_activate_monitor_onoff_button
 dobin monitor_samsung_control
 dobin sw_mec
 dobin git_reverse_graph_color
+dobin fgd
+dobin ff
 }

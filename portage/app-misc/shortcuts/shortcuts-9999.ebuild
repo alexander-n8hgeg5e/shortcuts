@@ -383,4 +383,5 @@ dobin sw_mec
 dobin git_reverse_graph_color
 dobin fgd
 dobin ff
+dobin datesort
 }

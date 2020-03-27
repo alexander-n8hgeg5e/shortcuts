@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+
+from sys import stdin
+from argparse import ArgumentParser
+from os import set_blocking
+from subprocess import Popen,DEVNULL,PIPE
+from operator import itemgetter
+
+def parse_args():
+    ap=ArgumentParser()
+    ap.add_argument("-s","--datesep",help="how to seperate the parts of the date in the input lines",default=" ")
+    ap.add_argument("-p","--datepos",help="the position of the date in format: \"startnum-endnum\"",default="1-3")
+    global args
+    args=ap.parse_args()
+    #print(args)
+
+def eval_popens(popens,count_left):
+    data=[]
+    while not len(popens) <= count_left:
+        for i in range(len(popens)):
+            if popens[i][0].poll() is not None:
+                unixdate=int(popens[i][0].stdout.read().decode().strip())
+                data.append((unixdate,popens[i][1]))
+                popens.pop(i)
+                break
+    return popens,data
+
+if __name__ == "__main__":
+    parse_args()
+    # input will get sorted 
+    # so need to read the whole input
+    indata=stdin.read()
+    
+    # befor splitting
+    # clean it from spaces and newlines at the end and beginning
+    lines=indata.strip().split("\n")
+    lines1=[]
+    popens=[]
+    max_popens=4
+    for line in lines:
+        line=line.strip()
+        datepos=args.datepos.split("-")
+        datepos=[int(i) for i in datepos]
+        sepline=line.split(args.datesep)
+        date=sepline[datepos[0]-1:datepos[1]]
+        restofline=sepline[:datepos[0]-1]+sepline[datepos[1]:]
+        date=args.datesep.join(date)
+        restofline=args.datesep.join(restofline)
+        popens,data=eval_popens(popens,max_popens-1)
+        lines1+=data
+
+        # TODO: ensure buffer of stdout is enough to hold the date
+        #       the process need to terminate befor the buffer is read
+        popens.append((Popen(['date','--date',date,'+%s'],stdin=PIPE,stdout=PIPE),line)) 
+
+    popens,data=eval_popens(popens,0)
+    lines1+=data
+    lines1.sort(key=itemgetter(0))
+    for line in lines1:
+        print(line[1])

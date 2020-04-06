@@ -1,3 +1,22 @@
-#!/bin/fish
-for i in (seq 0 $argv[1]);set back (string repeat -n$i "^") ;echo -e '\n\n######################################################\n' git diff $argv[2..-1]between HEAD^"$back" HEAD"$back" '\n#################################' ; git diff $argv[2..-1] HEAD^"$back" HEAD"$back";echo '############
-#####################';end
+#!/usr/bin/env python3
+
+from sys import argv,stdout
+from subprocess import call
+
+colorcode=b'\x1b[1m\x1b[30m\x1b[43m'
+color_off=b'\x1b[0m'
+
+def wrap_print(*z,end='\n',a=colorcode,b=color_off,**zz):
+	stdout.buffer.write(colorcode)
+	stdout.buffer.write(" ".join(z).encode())
+	stdout.buffer.write(color_off)
+	stdout.buffer.write(end.encode())
+	stdout.buffer.flush()
+
+for i in range(int(argv[1])):
+	back="^"*i
+	wrap_print('######################################################')
+	wrap_print("git diff "+" ".join(argv[2:])+"between HEAD^" + back+" HEAD"+back)
+	wrap_print('######################################################')
+	cmd=["git", "diff"] + argv[2:] + ["HEAD^"+back,"HEAD"+back]
+	call(cmd)

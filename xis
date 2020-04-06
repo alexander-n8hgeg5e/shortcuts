@@ -15,6 +15,10 @@ from os import environ
 #    return found 
 #
 
-call( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper' ])
+# remove NVIM_LISTEN_ADDRESS because xservers cannot be nested inside nvim
+env=environ.copy()
+env.pop("NVIM_LISTEN_ADDRESS")
+
+call( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper' ],env=env)
 
 # vim: set foldlevel=0 foldnestmax=2 foldmethod=indent :

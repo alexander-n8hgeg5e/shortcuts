@@ -384,4 +384,5 @@ dobin git_reverse_graph_color
 dobin fgd
 dobin ff
 dobin datesort
+dobin snap2
 }

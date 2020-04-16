@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo -u tox env PULSE_SERVER=$PULSE_SERVER toxic -b 2>| logger -p user.info

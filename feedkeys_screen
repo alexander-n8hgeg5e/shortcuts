@@ -1,20 +1,98 @@
-#!/bin/fish
+#!/usr/bin/env python3
 
 #if string match -r '^izbs.*$' "$hostnamE" 
 #    test "$argv[1]" = 1;and i3-msg -t command focus left
 #    test "$argv[1]" = 2;and i3-msg -t command focus right
 #    exit
 #end
+from sys import argv
+from os import environ
+from subprocess import call
 
-test "$argv[1]" = 1;and set -x  DISPLAY :0
-test "$argv[1]" = 2;and set -x  DISPLAY skyscraper:0
-test "$argv[1]" = 3;and set -x  DISPLAY :0
-test "$argv[1]" = 4;and set -x  DISPLAY skyscraper:0
+def setup_logging():
+    # setup logging
+    from logging import getLogger,Formatter
+    from logging.handlers import SysLogHandler
+    from logging import DEBUG,WARNING
+    logger=getLogger()
+    handler=SysLogHandler(address=("/dev/log"))
+    logger.setLevel(WARNING)
+    formatter = Formatter('%(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    global debug
+    global warn
+    global error
+    def debug(msg):
+        logger.debug(msg)
+    def warn(msg):
+        logger.warn(msg)
+    def error(msg):
+        logger.error(msg)
+    
+#debug("feedkeys screen "+argv[1])
 
 
-xdotool key ctrl+alt+"$argv[1]"
+try:
+    n=int(argv[1])-1
+    if not n >=0:
+        raise Exception("ERROR: wrong argument: \""+argv[1]+"\"")
+    try:
+        from pylib.screen_utils import parse_screen_layout_env_var_v2
+        screen_layout=parse_screen_layout_env_var_v2()
+        display=screen_layout[n]["x_server"]
+        displays = [ i['x_server'] for i  in screen_layout ]
+    except:
+        screen_layout=None
+        warn("\"feedkeys_screen\" likes to find a \"screen_layout_v2\" env variable.")
+        displays = [ "skyscraper:0" , "esadc:0" ]
+        if argv[1] == "1" :
+            display=displays[1]
+        elif argv[1] == "2" :
+            display=displays[0]
+        elif argv[1] == "3" :
+            display=displays[1]
+        elif argv[1] == "4" :
+            display=displays[0]
+    #debug("display="+str(display)) 
+    # switch the screen 
+    environ.update({'DISPLAY':display})
+    cmd= [ 'xdotool', 'key', 'ctrl+alt+' + argv[1] ]
+    call( cmd, env=environ )
+    call( cmd, env=environ )
 
-for i in 1 2
-    sleep 0.005
-    xdotool key ctrl+alt+"$argv[1]"
-end
+    # make sure no pressed keys are left
+    cmd = [ 'xdotool', 'keyup', '--clearmodifiers', argv[1] ]
+    for d in displays:
+        environ.update({'DISPLAY':d})
+        call(cmd,env=environ)
+    
+    # move the mouse out of the view
+    if screen_layout is None:
+        cmd=[ 'xdotool', 'mousemove_relative', '0', '2000' ]
+    else:
+        from pylib.screen_utils.screen_utils import layout2xpos_v2
+        from pylib.screen_utils.screen_utils import env_screen_layout_2_region_layout_v2
+        from pylib.screen_utils.screen_utils import get_connected_output_count_at_env_layout_index_v2
+        reg_layout=env_screen_layout_2_region_layout_v2(layout=screen_layout,x_display=display)
+        reg_index=get_connected_output_count_at_env_layout_index_v2(n,layout=screen_layout)
+        x = layout2xpos_v2(reg_layout,reg_index) + int(screen_layout[n]["dim"][0]) - 5
+        y = int(screen_layout[n]["dim"][1]) - 5
+        environ.update({'DISPLAY':display})
+        #debug(x)
+        #debug(y)
+        cmd=[ 'xdotool', 'mousemove', str(x) , str(y) ]
+    call(cmd,env=environ)
+    
+except Exception as e:
+    try:
+        setup_logging()
+        from pylib.du import ftb_list
+        tb=ftb_list(e)
+        for line in tb:
+            error(line)
+    except Exception as e:
+        from subprocess import call
+        call(['logger','-p','user.error',"ERROR: feedkeys_screen not working"])
+        call(['logger','-p','user.error',str(e)])
+

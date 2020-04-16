@@ -34,7 +34,7 @@ class Popen(subprocess_Popen):
 def parse_args():
     from argparse import ArgumentParser
     a=ArgumentParser()
-    a.add_argument(dest="actions",nargs='*',choices=['starts','stop','startc','r'])
+    a.add_argument(dest="actions",nargs='*',choices=['starts','stop','startc','r',[]])
     a.add_argument('-D','--debug',action='store_true')
     a.add_argument('-v','--verbose',action='store_true')
     a.add_argument('-r','--restart',action='store_true')

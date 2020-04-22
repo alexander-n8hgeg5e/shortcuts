@@ -62,13 +62,13 @@ try:
     call( cmd, env=environ )
 
     # make sure no pressed keys are left
-    cmd = [ 'xdotool', 'keyup', '--clearmodifiers', argv[1] ]
+    cmd = [ 'xdotool', 'keyup', '--clearmodifiers', '--sync' , argv[1] ]
     for d in displays:
         environ.update({'DISPLAY':d})
         call(cmd,env=environ)
     
     # move the mouse out of the view
-    if screen_layout is None:
+    if True or screen_layout is None:
         cmd=[ 'xdotool', 'mousemove_relative', '0', '2000' ]
     else:
         from pylib.screen_utils.screen_utils import layout2xpos_v2
@@ -78,10 +78,10 @@ try:
         reg_index=get_connected_output_count_at_env_layout_index_v2(n,layout=screen_layout)
         x = layout2xpos_v2(reg_layout,reg_index) + int(screen_layout[n]["dim"][0]) - 5
         y = int(screen_layout[n]["dim"][1]) - 5
-        environ.update({'DISPLAY':display})
         #debug(x)
         #debug(y)
         cmd=[ 'xdotool', 'mousemove', str(x) , str(y) ]
+    environ.update({'DISPLAY':display})
     call(cmd,env=environ)
     
 except Exception as e:
@@ -96,3 +96,4 @@ except Exception as e:
         call(['logger','-p','user.error',"ERROR: feedkeys_screen not working"])
         call(['logger','-p','user.error',str(e)])
 
+# vim: set foldmethod=indent foldlevel=0 foldnestmax=1 :

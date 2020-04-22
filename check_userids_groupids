@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+
+with open('/etc/nodes') as f:
+    hostnames=f.read().strip().decode().split("\n")
+
+from subprocess import check_output
+from socket import gethostname
+from re import subn
+from pprint import pprint
+from shutil import get_terminal_size
+
+#########################################################################
+##  make dicts for users,groups that should exist from installed pkgs  ##
+##  indexed by hostname                                                ##
+#########################################################################
+pkg_users={}
+pkg_groups={}
+for hostname in hostnames:
+    pkg_users.update({hostname:[]})
+    pkg_groups.update({hostname:[]})
+    usercmd=[ 'eix', '-#I', 'acct-user/' ]
+    groupcmd=[ 'eix', '-#I', 'acct-group/' ]
+    if not hostname==gethostname():
+        usercmd  = ['ssh',hostname] + usercmd
+        groupcmd = ['ssh',hostname] + groupcmd
+    pkg_users[  hostname ].extend( check_output(usercmd).strip().decode().split("\n")  )
+    pkg_groups[ hostname ].extend( check_output(groupcmd).strip().decode().split("\n") )
+
+pkg_users= { k : [j.split("/")[1] for j in v] for k,v in  pkg_users.items()}
+pkg_groups={ k : [j.split("/")[1] for j in v] for k,v in  pkg_groups.items()}
+
+
+#####################################################
+##  make dicts for real existing users and groups  ##
+##  indexed by hostname                            ##
+#####################################################
+real_users={}
+real_groups={}
+for hostname in hostnames:
+
+    real_users.update({hostname:{}})
+    real_groups.update({hostname:{}})
+    if not hostname==gethostname():
+        usercmd= ['ssh',hostname,'cat','/etc/passwd' ]
+        groupcmd=['ssh',hostname,'cat','/etc/group' ]
+        real_users_data  = check_output(usercmd).strip().decode().split("\n")
+        real_groups_data = check_output(groupcmd).strip().decode().split("\n")
+    else:
+        with open("/etc/passwd") as f:
+            real_users_data=f.read().split("\n")
+        with open("/etc/group") as f:
+            real_groups_data=f.read().split("\n")
+
+    for line in real_users_data:
+        x,n = subn("[:]",":",line)
+        if n>0:
+            if  n < 6:
+                line_o=line
+                line=line + ":"*( 6 - n )
+            try:
+                username,something,userid,groupid,comment,homedir,shell=line.split(":")
+                real_users[hostname].update({userid:{ 'username' :username,'groupid' :groupid,  'comment' :comment,  'homedir' :homedir,  'shell':shell }})
+            except ValueError as e:
+                print(e)
+                print(line_o)
+    for line in real_groups_data:
+        x,n = subn("[:]",":",line)
+        if n>0:
+            if  n < 3:
+                line_o=line
+                line=line + ":"*( 3 - n )
+            try:
+                groupname,something,groupid,groups=line.split(":")
+                real_groups[hostname].update({groupid:{"groupname":groupname,"groups":groups}})
+            except ValueError as e:
+                print(e)
+                print(line_o)
+
+
+##################################################
+##  make oveall usernames, and groupnames list  ##
+##################################################
+usernames=[]
+groupnames=[]
+for hostname in hostnames:
+    for user in real_users[hostname].values():
+        try:
+            username=user['username']
+        except KeyError as e:
+            from pprint import pprint
+            print('ERROR',e)
+            pprint(user)
+        if not username in usernames:
+            usernames.append(username)
+    for group in real_groups[hostname].values():
+        try:
+            groupname=group['groupname']
+        except KeyError as e:
+            from pprint import pprint
+            print('ERROR:',e)
+            pprint(group)
+        if not groupname in groupnames:
+            groupnames.append(groupname)
+
+#######################
+##  check functions  ##
+#######################
+def check_userids():
+    th=get_terminal_size().lines
+    ret=[]
+    toprint=[]
+    for username in usernames:
+        found_userids=[]
+        for hostname in hostnames:
+            for userid,user in real_users[hostname].items():
+                if username == user['username'] and not userid in [i for i,j in found_userids]:
+                    found_userids.append((userid,hostname))
+        if len(found_userids) > 1:
+            ret.append((username,found_userids[1],found_userids[0]))
+    count=0
+    for thing in ret:
+        lens=[max(len(thing[0]),8)]
+        lens.append(max([len(j[1]) for j  in thing[1:]]+[8]))
+        formatstr=" {:"+str(lens[0])+"} | {:"+str(lens[1])+"} | {:5} | {:8}"
+        formatstr2=" {:"+str(lens[0])+"}|{:"+str(lens[1])+"}|{:5}|{:8}"
+        if count%(th-1)==0:
+            print(formatstr.format("username","hostname","uid","has_pkg?"))
+            print(formatstr2.format("-"*(lens[0]+1),"-"*(lens[1]+2),"-------","--------"))
+            count+=2
+        for thingy in thing[1:]:
+            is_pkg = thing[0] in pkg_users[thingy[1]]
+            print(formatstr.format(thing[0],thingy[1],thingy[0],"True" if is_pkg else "False"))
+            count+=1
+        print()
+        count+=1
+
+def check_groupids():
+    th=get_terminal_size().lines
+    ret=[]
+    toprint=[]
+    for groupname in groupnames:
+        found_groupids=[]
+        for hostname in hostnames:
+            for groupid,group in real_groups[hostname].items():
+                if groupname == group['groupname'] and not groupid in [i for i,j in found_groupids]:
+                    found_groupids.append((groupid,hostname))
+        if len(found_groupids) > 1:
+            ret.append((groupname,found_groupids[1],found_groupids[0]))
+    count=0
+    for thing in ret:
+        lens=[max(len(thing[0]),8)]
+        lens.append(max([len(j[1]) for j  in thing[1:]]+[8]))
+        formatstr=" {:"+str(lens[0])+"} | {:"+str(lens[1])+"} | {:5} | {:8}"
+        formatstr2=" {:"+str(lens[0])+"}|{:"+str(lens[1])+"}|{:5}|{:8}"
+        if count%(th-1)==0:
+            print(formatstr.format("groupname","hostname","gid","has_pkg?"))
+            print(formatstr2.format("-"*(lens[0]+1),"-"*(lens[1]+2),"-------","--------"))
+            count+=2
+        for thingy in thing[1:]:
+            is_pkg = thing[0] in pkg_groups[thingy[1]]
+            print(formatstr.format(thing[0],thingy[1],thingy[0],"True" if is_pkg else "False"))
+            count+=1
+        print()
+        count+=1
+
+if __name__=="__main__":
+    print("####################")
+    print("##  group check:  ##")
+    print("####################")
+    check_groupids()
+    print()
+    print("###################")
+    print("##  user check:  ##")
+    print("###################")
+    check_userids()
+
+
+
+
+# vim: set syntax=python foldmethod=indent foldnestmax=1 foldlevel=0  :

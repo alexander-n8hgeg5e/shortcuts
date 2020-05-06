@@ -1,0 +1,38 @@
+#!/usr/bin/python3
+
+# logging stuff first
+from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug
+
+from pylib.ioutils import AsyncLineReader
+from time import sleep
+from re import match
+
+try:
+    from subprocess import check_call,Popen,DEVNULL,PIPE
+    from os import environ
+    
+    # remove NVIM_LISTEN_ADDRESS because xservers cannot be nested inside nvim
+    env=environ.copy()
+    env.pop("NVIM_LISTEN_ADDRESS")
+    
+    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--keyev', '--', environ['HOME']+'/.xserverrc_skyscraper' ],env=env, shell=False, close_fds=False,start_new_session=False)
+    alr_o=AsyncLineReader(p.stdout)
+    alr_e=AsyncLineReader(p.stderr)
+    nothing=0
+    done=False
+    while nothing<5000 and not done:
+        lines=alr_o.read()
+        lines+=alr_e.read()
+        if len(lines) == 0:
+            nothing+=1
+        for line in lines:
+            if match(b"^.*X[ ]connection[ ]to[ ].*[ ]broken",line):
+                done=True
+            debug(line.decode())
+        sleep(0.1)
+    if not done:
+        debug("TIMEOUT: stdout,stderr reading aborted")
+except Exception as e:
+    warn_exp(e,with_traceback=True)
+
+# vim: set nowrap foldlevel=0 foldnestmax=0 foldmethod=indent :

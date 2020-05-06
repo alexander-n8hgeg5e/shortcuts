@@ -386,4 +386,5 @@ dobin ff
 dobin datesort
 dobin snap2
 dobin check_userids_groupids
+dobin eixv
 }

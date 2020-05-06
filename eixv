@@ -1,0 +1,8 @@
+#!/bin/fish
+
+set -x INSTFORMAT='<version>::<overlayplainname>'
+set -x DATEFORMAT='%x'
+
+set formatstring='<category>/<name><installedversions:INSTFORMAT>\\n'
+
+eix --format $formatstring $argv

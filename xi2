@@ -12,10 +12,14 @@ try:
     from os import environ
     
     # remove NVIM_LISTEN_ADDRESS because xservers cannot be nested inside nvim
-    env=environ.copy()
-    env.pop("NVIM_LISTEN_ADDRESS")
+    remove_var="NVIM_LISTEN_ADDRESS"
+    if remove_var in environ.keys():
+        env=environ.copy()
+        env.pop(remove_var)
+    else:
+        env=environ
     
-    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--keyev', '--', environ['HOME']+'/.xserverrc_skyscraper' ],env=env, shell=False, close_fds=False,start_new_session=False)
+    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--keyev', '--', environ['HOME']+'/.xserverrc_skyscraper' ],env=env, shell=False, close_fds=False,start_new_session=False,stdout=PIPE,stderr=PIPE)
     alr_o=AsyncLineReader(p.stdout)
     alr_e=AsyncLineReader(p.stderr)
     nothing=0

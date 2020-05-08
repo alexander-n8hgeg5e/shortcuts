@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+from argparse import ArgumentParser
+
+a=ArgumentParser("this program renames the files it finds or it is pointed at and replaces unprintable and non ascii stuff with something suitable")
+a.add_argument(dest="pathes",nargs="*",default=["."])
+a.add_argument("--recursive","-r",action="store_true",default=False)
+a.add_argument("--rename-dirs","-d",action="store_true",default=False)
+args=a.parse_args()
+
+allowed_ranges = ["AZ","az","09"]
+allowed_chars = "_:.-"
+
+allowed=[]
+for r in allowed_ranges:
+    r=[int(i) for i in range(*r.encode(encoding="ascii"))]
+    allowed+=r
+for c in allowed_chars:
+    i=c.encode(encoding="ascii")[0]
+    if not i in allowed:
+        allowed.append(i)
+print(allowed)
+
+pathes=[]
+other_pathes=[]
+from re import sub
+def convert_basename(name):
+    name = sub("[ ]","_",name)
+    name = sub("([^"+bytes(allowed).decode()+"])","_{:02x}_".format("\\1".encode()[0]),name)
+    name = sub("__","_",name)
+    return name
+
+
+from os.path import isdir,isfile,normpath
+from os import listdir
+
+for path in args.pathes:
+    path=normpath(path)
+    if isfile(path):
+        pathes.append(path)
+    elif isdir(path):
+        if args.rename_dirs:
+            pathes.append(path)
+        if args.recursive:
+            dirs2go=[]
+            dirs2go.append(path)
+            while len(dirs2go) > 0:
+                d=dirs2go.pop(-1)
+                dirlist=listdir(d)
+                dirlist=[d+"/"+i for i in dirlist]
+                for thing in dirlist:
+                    thing=normpath(thing)
+                    if isdir(thing):
+                        dirs2go.append(thing)
+                        if args.rename_dirs:
+                            pathes.append(thing)
+                    elif isfile(thing):
+                        pathes.append(thing)
+                    else:
+                        other_pathes.append(thing)
+    else:
+        other_pathes.append(path)
+if not len(other_pathes) == 0:
+    from warnings import warning
+    warning("don't know what to do with some pathes:")
+    print(other_pathes)
+
+from os.path import basename
+rename_data=[]
+for path in pathes:
+    bn=basename(path)
+    cbn=convert_basename(bn)
+    print(bn)
+    print(cbn)
+    print()
+    rename_data.append((bn,cbn))
+inp=input("Rename files ? (Y/[N]):")
+if inp=="Y":
+    from os import rename
+    for a,b in rename_data:
+        rename(a,b)
+
+
+            
+

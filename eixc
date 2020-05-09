@@ -1,0 +1,2 @@
+#!/bin/fish
+    eix --format '<category>/<name>         <description>\n' $argv

@@ -389,4 +389,5 @@ dobin check_userids_groupids
 dobin eixv
 dobin fname_clean
 dobin defrag
+dobin eixc
 }

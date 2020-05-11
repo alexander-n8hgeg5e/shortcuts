@@ -1,6 +1,6 @@
 #!/bin/fish
 test (count $argv) -ge 1; and set showstr   $argv[1];or set showstr blinky-default
-test (count $argv) -ge 2; and set nr_blink  $argv[2];or set nr_blink 5
+test (count $argv) -ge 2; and set nr_blink  $argv[2];or set nr_blink -1
 test (count $argv) -ge 3; and set fg        $argv[3];or set fg magenta
 test (count $argv) -ge 4; and set nr_lines  $argv[4];or set nr_lines default
 test (count $argv) -ge 5; and set nr_cols   $argv[5];or set nr_cols default

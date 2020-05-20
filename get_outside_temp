@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+from subprocess import check_output
+from os import environ
+from re import sub,DOTALL
+import re
+
+
+
+cmd=['w3m', '-dump', 'http://www.wetteronline.de/wetter/'+environ['POS']]
+
+outp=check_output(cmd)
+
+temp=float(sub( b'^.*\x0a([0-9]+)([.][0-9]+)?\x0a\xc2\xb0\x0a.*',b'\\1',outp ,flags=DOTALL))
+print(temp)

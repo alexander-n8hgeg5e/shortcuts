@@ -1,20 +1,111 @@
-set state 0 
-set counter 100
-set value 0.0855
-while true
-    echo counter= $counter
-    set data (string split ' ' (sensors|grep -Eo '^(fan1|^temp1)[:][ ]+[+0-9.]+'|tr -s ' '|cut -d' ' -f2|tr -d '+'))
+#!/usr/bin/python3
+from subprocess import check_call,call,check_output,DEVNULL,CalledProcessError
+from time import sleep
+from math import inf
 
-    test (echo (math $data[2] / $data[1])" > $value"|bc) -eq 1 
-    and set counter (math "$counter + 1")
-    or set counter (math "$counter - 1")
+LOOPSLEEPTIME=10
 
-    test $counter -gt 103 ; and test $state -eq 0 ; and set state 1 ; and klima_on 
-    test $counter -lt  97 ; and test $state -eq 1 ; and set state 0 ; and klima_off 
+FREEZING=0
+STANDBY=1
+COOLDOWN=2
+UNKNOWN=3
 
-    test $counter -gt 110 ; and set counter 110
-    test $counter -lt 90  ; and set counter 90 
+state=UNKNOWN
 
-    echo counter= $counter
-    sleep 3
-end
+def rf_dev_sw(devcode, on_or_off):
+    if on_or_off == 'on':
+        add = '1'
+    elif on_or_off == 'off':
+        add = '0'
+    call(["rf", str(devcode) + add ],stdout=DEVNULL)
+    sleep(1)
+    call(["rf", str(devcode) + add ],stdout=DEVNULL)
+
+
+def fan_on():
+    rf_dev_sw(12,'on')
+
+def fan_off():
+    rf_dev_sw(12,'off')
+
+def klima_on():
+    rf_dev_sw(24,'on')
+
+def klima_off():
+    rf_dev_sw(24,'off')
+
+def cooldown():
+    global state
+    if state not in [FREEZING,UNKNOWN]:
+        return
+    state=COOLDOWN
+    if args.verbose:
+        print("cooldown")
+    fan_on()
+    klima_off()
+    klima_on()
+    sleep(20)
+    klima_off()
+    klima_on()
+    sleep(20)
+    klima_off()
+    sleep(20)
+    fan_off()
+    state=STANDBY
+
+def freeze():
+    global state
+    state=UNKNOWN
+    fan_on()
+    klima_on()
+    state=FREEZING
+
+def parse_args():
+    from argparse import ArgumentParser
+    ap=ArgumentParser()
+    ap.add_argument(dest='target_temp',type=float,nargs="?",default=27)
+    ap.add_argument('-sd','--shutdown',action="store_true",help="only shutdown and exit")
+    ap.add_argument('--test',action="store_true",help="run test",default=False)
+    ap.add_argument('--verbose',action="store_true",default=True)
+    ap.add_argument('--hysteresis',type=float,default=1)
+    global args
+    args=ap.parse_args()
+
+def get_temp():
+    cmd=['get_room_temp']
+    try:
+        T = float(check_output(cmd).decode().strip())
+    except Exception as e:
+        print(e)
+        T = inf
+    return T
+
+def control_loop():
+    target=args.target_temp
+    mintemp=target-(args.hysteresis/2)
+    maxtemp=target+(args.hysteresis/2)
+    try:
+        while True:
+            temp=get_temp()
+            if temp < mintemp:
+                if args.verbose:
+                    print("T = "+str(temp)+"°C  low")
+                cooldown()
+            elif temp > maxtemp:
+                if args.verbose:
+                    print("T = "+str(temp)+"°C  high")
+                freeze()
+            elif args.verbose:
+                print("T = "+str(temp)+"°C  ok")
+            sleep(LOOPSLEEPTIME)
+    finally:
+        cooldown()
+
+if __name__=='__main__':
+    parse_args()
+    if args.shutdown:
+        cooldown()
+    elif args.test:
+        print("get temp = {}".format(get_temp()))
+    else:
+        control_loop()

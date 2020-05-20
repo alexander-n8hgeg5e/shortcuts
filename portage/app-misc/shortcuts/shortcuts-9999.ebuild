@@ -390,4 +390,7 @@ dobin eixv
 dobin fname_clean
 dobin defrag
 dobin eixc
+dobin get_room_temp
+dobin get_outside_temp
+dobin klima_control
 }

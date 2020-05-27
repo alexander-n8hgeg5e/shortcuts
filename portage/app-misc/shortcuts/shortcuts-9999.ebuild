@@ -394,4 +394,5 @@ dobin get_room_temp
 dobin get_outside_temp
 dobin klima_control
 dobin mti
+dobin gitpack_remote_up2date_check
 }

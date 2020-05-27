@@ -1,0 +1,4 @@
+#!/bin/fish 
+set gitpack $argv[1]
+echo checking gitpack: $gitpack
+gsp -f ~/.gitpacks/$gitpack  -C 'gds refs/remotes/github/master -- ;and echo (pwd)"=ok";or echo (pwd) failed' |grep -v 'bad revision'|rev|sort|rev

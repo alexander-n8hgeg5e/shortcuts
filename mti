@@ -1,0 +1,7 @@
+#!/usr/bin/env python3
+
+from subprocess import call
+cmd=['sudo','mec']
+while True:
+    input()
+    call(cmd)

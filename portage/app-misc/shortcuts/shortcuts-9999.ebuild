@@ -393,4 +393,5 @@ dobin eixc
 dobin get_room_temp
 dobin get_outside_temp
 dobin klima_control
+dobin mti
 }

@@ -16,7 +16,7 @@ POLYDATA='''
 24.3 360
 '''
 
-POLY_DEGREE=4
+POLY_DEGREE=3
 
 CMD = [ '/var/src/433control/transmitter/gpio', '-a3' ]
 

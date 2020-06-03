@@ -8,12 +8,12 @@ from numpy.polynomial.polynomial import Polynomial
 
 POLYDATA='''
 28.0 305
+27.4 314 
 27.0 316
 26.7 333
 26.0 338
 25.5 344
-25.2 356
-24.3 360
+23.8 356 
 '''
 
 POLY_DEGREE=3

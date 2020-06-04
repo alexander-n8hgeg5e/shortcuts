@@ -4,88 +4,38 @@ from subprocess import check_output
 from time import sleep
 from re import match,sub
 from math import floor
-from numpy.polynomial.polynomial import Polynomial
 
-POLYDATA='''
-28.0 305
-27.4 314 
-27.0 316
-26.7 333
-26.0 338
-25.5 344
-23.8 356 
-'''
-
-POLY_DEGREE=3
-
-CMD = [ '/var/src/433control/transmitter/gpio', '-a3' ]
-
-SAMPLES=1
-PRECISION=10
+VERBOSE=False
+DEBUG=False
+PRECISION=0.1
 MAXTRY=100
 SAMPLESLEEP=0.05
-VERBOSE=True
-DEBUG=True
 
-def init():
-    global P
-    P = make_poly(POLYDATA)
+CMD = [ '/var/src/433control/transmitter/gpio', '-t' ]
 
 if DEBUG or VERBOSE:
     from sys import stderr
 
-#def sensorval2Celsius(val):
-#    s=0
-#    for i in range(len(A)):
-#        s+=A[i]*val**i
-#    return s
-
-def sensorval2Celsius(val):
-    return P(val)
-
-def make_poly_from_file(filepath):
-    from numpy.polynomial.polynomial import Polynomial as P
-    with open(filepath) as f:
-        data=f.read()
-    return make_poly(data)
-
-def make_poly(data):
-    data=data.strip()
-    data=data.split('\n')
-    data=[i.strip().split(" ") for i in data]
-    data.pop(-1)
-    data=[[float(j) for j in i] for i in data]
-    x=[i[1] for i in data]
-    y=[i[0] for i in data]
-    p=Polynomial.fit( x, y, POLY_DEGREE, domain=[0,1023])
-    return p
-
-def print_poly(filepath):
-    p=make_poly_from_file(filepath)
-    print( repr(p) )
-    
-def get_temp1(convert2Celsius=True):
+def get_temp1():
     outp=check_output(CMD)
     outp=outp.split(b'\n')
     temp=None
     for line in outp:
-        if match(b'^aread[=]',line):
+        if match(b'^T[=]',line):
             line=line.decode()
-            temp=sub('^aread[=]([0-9]+).*$','\\1',line)
-            temp=int(temp)
             if DEBUG:
-                print("sensor val = {}".format(temp),file=stderr)
-            if convert2Celsius:
-                temp=sensorval2Celsius(temp)
+                print("sensor outp: {}".format(line),file=stderr)
+            temp=sub('^T[=]([0-9]+[.][0-9]+).*$','\\1',line)
+            temp=float(temp)
     return temp
 
-def get_temp(convert2Celsius=True,samples=3):
+def get_temp(samples=1):
     done=False
     fails=0
     avgtemp=None
     temps=[]
     while not done and fails <= MAXTRY and len(temps) < samples:
-        temp=get_temp1(convert2Celsius=convert2Celsius)
+        temp=get_temp1()
         if temp is None:
             fails+=1
         else:
@@ -114,17 +64,10 @@ def get_temp(convert2Celsius=True,samples=3):
 def parse_args():
     from argparse import ArgumentParser as Ap
     ap=Ap()
-    ap.add_argument("--print-poly",action='store_true',help="calc and print coefficients")
-    ap.add_argument("-a","--avg-sensor-val",action='store_true',help="calc and print coefficients")
-    ap.add_argument("-s","--samples",action='store',type=int,default=3)
-    ap.add_argument("-f","--file",help="file with data (one \"x y\" pair each line)")
+    ap.add_argument("-s","--samples",action='store',type=int,default=1)
     global args
     args=ap.parse_args()
 
 if __name__ == '__main__':
     parse_args()
-    init()
-    if args.print_poly:
-        print_poly(args.file)
-    else:
-        print("{:.1f}".format(get_temp(convert2Celsius=not args.avg_sensor_val,samples=args.samples)))
+    print("{:.2f}".format(get_temp(samples=args.samples)))

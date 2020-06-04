@@ -67,7 +67,8 @@ def parse_args():
     ap.add_argument('-sd','--shutdown',action="store_true",help="only shutdown and exit")
     ap.add_argument('--test',action="store_true",help="run test",default=False)
     ap.add_argument('--verbose',action="store_true",default=True)
-    ap.add_argument('--hysteresis',type=float,default=1)
+    ap.add_argument('--debug',action="store_true",default=False)
+    ap.add_argument('--hysteresis',type=float,default=2)
     global args
     args=ap.parse_args()
 

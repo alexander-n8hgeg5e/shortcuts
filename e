@@ -518,7 +518,7 @@ def gen_focus_of_nvim_by_socketnum_list(mode=0):
         try:
             active_win = int(nvims[socket_index].call( 'system', 'xdotool getwindowfocus' ))
         except ValueError:
-            pass
+            active_win = None
         try:
             nvim_win = int( nvims[socket_index].call( 'expand' , "$WINDOWID" ))  # luckily some of my progs saves this to the env
         except ValueError:

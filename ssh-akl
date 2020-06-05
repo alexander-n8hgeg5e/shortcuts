@@ -1,0 +1,17 @@
+#!/bin/fish
+#
+if test "$argv[1]" = "-h" ;or test "$argv[1]" = "--help"
+    echo supply home dir(s) as args
+end
+
+if test (count $argv) -eq 0
+    set argv "$HOME"
+end
+
+for i in $argv
+    set headline "home = \"$i\""
+    echo $headline
+    echo (string repeat -n (string length $headline ) "=")
+    cat $argv[1]"/.ssh/authorized_keys" |grep -oE '.{15}[ ]+\w*[@]\w*'
+    echo
+end

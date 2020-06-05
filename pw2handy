@@ -2,9 +2,9 @@
 from subprocess import check_call
 from sys import argv,path
 from os.path import expanduser,sep as psep
-path.append(expanduser('~/code/pylib/pylib'))
+#path.append(expanduser('~/code/pylib/pylib'))
 from os import makedirs
-from run_utils.run import Cmdrunner
+from pylib.run_utils.run import Cmdrunner
 
 
 pwname=argv[1]

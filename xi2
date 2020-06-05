@@ -1,11 +1,17 @@
 #!/usr/bin/python3
 
 # logging stuff first
-from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug
+from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug,DEBUG
 
 from pylib.ioutils import AsyncLineReader
 from time import sleep
 from re import match
+from argparse import ArgumentParser
+ap=ArgumentParser("xi2 runs xinit for the second xserver")
+ap.add_argument( "-d","--debug", type=int , default=WARN)
+args=ap.parse_args()
+loglevel=args.debug
+
 
 try:
     from subprocess import check_call,Popen,DEVNULL,PIPE
@@ -34,7 +40,7 @@ try:
                 done=True
             debug(line.decode())
         sleep(0.1)
-    if not done:
+    if not done and debuglevel <= DEBUG:
         debug("TIMEOUT: stdout,stderr reading aborted")
 except Exception as e:
     warn_exp(e,with_traceback=True)

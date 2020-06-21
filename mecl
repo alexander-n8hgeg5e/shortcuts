@@ -1,0 +1,2 @@
+#!/bin/fish
+sudo mec;xtrlock;sudo mec

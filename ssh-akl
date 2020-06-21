@@ -12,6 +12,6 @@ for i in $argv
     set headline "home = \"$i\""
     echo $headline
     echo (string repeat -n (string length $headline ) "=")
-    cat $argv[1]"/.ssh/authorized_keys" |grep -oE '.{15}[ ]+\w*[@]\w*'
+    cat $argv[1]"/.ssh/authorized_keys" |grep -oE '.{15}[ ]+\w+[@]\w+'
     echo
 end

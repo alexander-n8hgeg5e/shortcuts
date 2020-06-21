@@ -1,16 +1,35 @@
 #!/usr/bin/python3
+from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug,DEBUG
+from syslog import LOG_LOCAL0 as LOGFACILITY
 from subprocess import check_call,call,check_output,DEVNULL,CalledProcessError
-from time import sleep
+from time import sleep,time
 from math import inf
+from sys import stderr
 
 LOOPSLEEPTIME=10
+COOLDOWN_CYLCES=2
+COOLDOWN_CYLCE_SLEEP=20
+COOLDOWN_FINAL_FANTIME=20
 
-FREEZING=0
-STANDBY=1
-COOLDOWN=2
-UNKNOWN=3
+STATES =    {
+            "UNKNOWN"     : -1,
+            "OFF"         : 0,
+            "STANDBY"     : 1,
+            "FREEZING"    : 2,
+            "VENTILATING" : 3,
+            "COOLDOWN"    : 9,
+            "ANY_STATE"   : 99,
+            }
+for k,v in STATES.items():
+    exec("{}={}".format(k,v))
 
-state=UNKNOWN
+states=[UNKNOWN,UNKNOWN,UNKNOWN]
+
+compressor_running = None
+
+ensure_state_count=0
+ENSURE_STATE_INTERVAL = 10
+NUM_INITIAL_ENSURE_STATE=1
 
 def rf_dev_sw(devcode, on_or_off):
     if on_or_off == 'on':
@@ -21,44 +40,235 @@ def rf_dev_sw(devcode, on_or_off):
     sleep(1)
     call(["rf", str(devcode) + add ],stdout=DEVNULL)
 
-
 def fan_on():
-    rf_dev_sw(12,'on')
+    #rf_dev_sw(12,'on')
+    pass
 
 def fan_off():
-    rf_dev_sw(12,'off')
+    #rf_dev_sw(12,'off')
+    pass
 
 def klima_on():
-    rf_dev_sw(24,'on')
+    global compressor_running
+    #rf_dev_sw(24,'on')
+    compressor_running=True
+    store_start_time()
 
 def klima_off():
-    rf_dev_sw(24,'off')
+    #rf_dev_sw(24,'off')
+    global compressor_running
+    was_running=compressor_running
+    compressor_running=False
+    if was_running:
+        log_runtime()
+
+def get_temp():
+    cmd=['get_room_temp']
+    try:
+        T = float(check_output(cmd).decode().strip())
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        print(e,file=stderr)
+        T = inf
+    return T
+
+def log_runtime():
+    global states
+    runtime = time() - read_start_time()
+    log("Klima did run for "+str(runtime)+" seconds.",LOGFACILITY)
+    erase_start_time()
+
+def update_state(state2update):
+    global states
+    # only overwrite past state if state actually differs
+    if state2update != states[0]:
+        ls=len(states)
+        for i in range(ls-1):
+            states[ls-i-1]=states[ls-i-2]
+        write_state(state2update)
+        states[0]=state2update
+
+class WrongStateError(Exception):
+    pass
+
+def _run_state_function(from_states,function_state,target_state,function):
+    global states
+    if not ANY_STATE in from_states:
+        if not states[0] in from_states:
+            raise WrongStateError   (
+                                    "State should be in \"{}\", but state is \"{}\".\nfunction: {}".format(
+                                    [ get_state_name(s) for s in from_states ],
+                                    get_state_name(states[0]),function)
+                                    )
+    update_state(target_state)
+    if args.verbose:
+        print("state="+get_state_name(target_state))
+    function()
+    update_state(target_state)
+
+def run_state_function(from_states,function_state,target_state,function):
+    global states
+    if states[0] is target_state:
+        return
+    _run_state_function(from_states,function_state,target_state,function)
+
+def ensure_state(from_states,function_state,target_state,function):
+    global states
+    global ensure_state_count
+    if states[0] != target_state:
+        run_state_function(from_states,function_state,target_state,function)
+        ensure_state_count=0
+        update_state(target_state)
+    else:
+        ensure_state_count+=1
+        if ensure_state_count <= NUM_INITIAL_ENSURE_STATE or ensure_state_count%ENSURE_STATE_INTERVAL==0:
+            if args.verbose:
+                print("ensuring state="+get_state_name(target_state)+" ... ",end="")
+            _run_state_function(from_states,function_state,target_state,function)
+
+def get_state_name(state):
+    for k,v in STATES.items():
+        if v==state:
+            break
+    return k
+
+def _cooldown():
+    fan_on()
+    klima_off()
+    for i in range(COOLDOWN_CYLCES):
+        klima_on()
+        sleep(COOLDOWN_CYLCE_SLEEP)
+        klima_off()
+    sleep(COOLDOWN_FINAL_FANTIME)
+    fan_off()
+
+def _freeze():
+    fan_on()
+    klima_on()
+
+def _instant_off():
+    klima_off()
+    fan_off()
+
+def _unhealty_instant_off():
+    print("UNHEALTY INSTANT OFF !",file=stderr)
+    _instant_off()
+    global states
+    if states[0] not in [STANDBY,VENTILATING]:
+        warn("Unhealty instant shutdown of klima device from state \"{}\" occured.".format(states[0]))
+
+def instant_off():
+    ensure_state([STANDBY,OFF],UNKNOWN, OFF, _instant_off)
+
+def unhealty_standby():
+    ensure_state([ANY_STATE], UNKNOWN, STANDBY, _instant_off)
+
+def unhealty_instant_off():
+    ensure_state([ANY_STATE],UNKNOWN, OFF, _unhealty_instant_off)
 
 def cooldown():
-    global state
-    if state not in [FREEZING,UNKNOWN]:
-        return
-    state=COOLDOWN
-    if args.verbose:
-        print("cooldown")
-    fan_on()
-    klima_off()
-    klima_on()
-    sleep(20)
-    klima_off()
-    klima_on()
-    sleep(20)
-    klima_off()
-    sleep(20)
-    fan_off()
-    state=STANDBY
+    run_state_function([OFF,COOLDOWN,UNKNOWN,FREEZING],COOLDOWN,STANDBY,_cooldown)
+
+def stop_ventilation():
+    ensure_state([OFF,VENTILATING,STANDBY],UNKNOWN,STANDBY,fan_off)
+
+def start_ventilation():
+    ensure_state([OFF,STANDBY,VENTILATING],UNKNOWN,VENTILATING,fan_on)
 
 def freeze():
-    global state
-    state=UNKNOWN
-    fan_on()
-    klima_on()
-    state=FREEZING
+    ensure_state([ANY_STATE],UNKNOWN,FREEZING,_freeze)
+
+def ensure_standby():
+    ensure_state([OFF,STANDBY],UNKNOWN,STANDBY,_instant_off)
+
+def store_start_time():
+    with open("/var/run/klima_control_freezing_start_time",mode="wt") as f:
+        f.write(str(time()))
+
+def write_state(state):
+    with open("/var/run/klima_control_state",mode="wt") as f:
+        f.write(str(state))
+
+def read_state():
+    global states
+    with open("/var/run/klima_control_state",mode="rt") as f:
+        try:
+            return int(f.read())
+        except ValueError:
+            return UNKNOWN
+
+def erase_start_time():
+    with open("/var/run/klima_control_freezing_start_time",mode="wt") as f:
+        f.write("invalid")
+
+def read_start_time():
+    with open("/var/run/klima_control_freezing_start_time",mode="rt") as f:
+        return float(f.read())
+
+def init():
+    global states
+    update_state(args.state)
+    if states[0] == UNKNOWN:
+        print("WARNING: Init with unknown state",file=stderr)
+        warn("WARNING: Init with unknown state")
+        if args.fan_only:
+            if args.verbose:
+                print("Running cooldown to get valid state ...")
+            run_handle_exception(cooldown)
+
+def run_handle_exception(function):
+    try:
+        function()
+    except (Exception, KeyboardInterrupt) as e:
+        try:
+            if type(e) is KeyboardInterrupt:
+                if args.verbose:
+                    # newline for KeyboardInterrupt
+                    print()
+            else:
+                warn_exp(e)
+            if not args.fan_only:
+                cooldown()
+            else:
+                stop_ventilation()
+        except (Exception,KeyboardInterrupt) as ee:
+            print(file=stderr)
+            unhealty_instant_off()
+            # newline for KeyboardInterrupt
+            warn_exp(e)
+            warn_exp(ee)
+    finally:
+        instant_off()
+
+def _control_loop():
+    target=args.target_temp
+    mintemp=target-(args.hysteresis/2)
+    maxtemp=target+(args.hysteresis/2)
+    while True:
+        temp=get_temp()
+        if temp < mintemp:
+            if args.verbose:
+                print("T = "+str(temp)+"°C  low")
+            if not args.fan_only:
+                cooldown()
+            else:
+                stop_ventilation()
+        elif temp > maxtemp:
+            if args.verbose:
+                print("T = "+str(temp)+"°C  high")
+            if not args.fan_only:
+                freeze()
+            else:
+                start_ventilation()
+        elif args.verbose:
+            print("T = "+str(temp)+"°C  ok")
+        if args.verbose and states[0] == FREEZING:
+            print("runtime = {:.3f} [s]".format(time()-read_start_time()))
+        sleep(LOOPSLEEPTIME)
+
+def control_loop():
+    run_handle_exception(_control_loop)
 
 def parse_args():
     from argparse import ArgumentParser
@@ -67,46 +277,42 @@ def parse_args():
     ap.add_argument('-sd','--shutdown',action="store_true",help="only shutdown and exit")
     ap.add_argument('--test',action="store_true",help="run test",default=False)
     ap.add_argument('--verbose',action="store_true",default=True)
+    ap.add_argument('--fan-only',action="store_true",default=False)
     ap.add_argument('--debug',action="store_true",default=False)
+    ap.add_argument('--state',action="store",default=read_state())
     ap.add_argument('--hysteresis',type=float,default=2)
+    ap.add_argument('--testing',action="store_true",default=False)
     global args
     args=ap.parse_args()
-
-def get_temp():
-    cmd=['get_room_temp']
     try:
-        T = float(check_output(cmd).decode().strip())
-    except Exception as e:
-        print(e)
-        T = inf
-    return T
-
-def control_loop():
-    target=args.target_temp
-    mintemp=target-(args.hysteresis/2)
-    maxtemp=target+(args.hysteresis/2)
-    try:
-        while True:
-            temp=get_temp()
-            if temp < mintemp:
-                if args.verbose:
-                    print("T = "+str(temp)+"°C  low")
-                cooldown()
-            elif temp > maxtemp:
-                if args.verbose:
-                    print("T = "+str(temp)+"°C  high")
-                freeze()
-            elif args.verbose:
-                print("T = "+str(temp)+"°C  ok")
-            sleep(LOOPSLEEPTIME)
-    finally:
-        cooldown()
+        args.state=int(args.state)
+    except ValueError:
+        if args.state in STATES.keys():
+            args.state=STATES[args.state]
 
 if __name__=='__main__':
     parse_args()
+    if args.test:
+        LOOPSLEEPTIME=1
+        COOLDOWN_CYLCES=1
+        COOLDOWN_CYLCE_SLEEP=0.4
+        COOLDOWN_FINAL_FANTIME=5
+
+        test_temp=50.0
+        test_temp_d=0
+        def get_temp():
+            global test_temp
+            global test_temp_d
+            if states[0] in (FREEZING,VENTILATING):
+                test_temp_d-=0.005
+            else:
+                test_temp_d+=0.005
+            test_temp+=test_temp_d*test_temp
+            return test_temp
+    init()
     if args.shutdown:
         cooldown()
-    elif args.test:
-        print("get temp = {}".format(get_temp()))
     else:
         control_loop()
+
+# vim: foldmethod=indent foldlevel=0 foldnestmax=1 :

@@ -5,6 +5,17 @@ from subprocess import check_call,call,check_output,DEVNULL,CalledProcessError
 from time import sleep,time
 from math import inf
 from sys import stderr
+from traceback import format_tb
+
+RUN_FILENAMES = [
+                'klima_control_fan_running',
+                'klima_control_fan_start_time',
+                'klima_control_klima_running',
+                'klima_control_klima_start_time',
+                'klima_control_state',
+                ]
+USERNAME  ="klima-control"
+GROUPNAME ="klima-control"
 
 LOOPSLEEPTIME=10
 COOLDOWN_CYLCES=2
@@ -25,12 +36,24 @@ for k,v in STATES.items():
 
 states=[UNKNOWN,UNKNOWN,UNKNOWN]
 
-compressor_running = None
-
+sw_states = {
+                "klima_running" : None,
+                "fan_running"        : None,
+                }
 ensure_state_count=0
 ENSURE_STATE_INTERVAL = 10
 NUM_INITIAL_ENSURE_STATE=1
 
+class WrongStateError(Exception):
+    pass
+
+class InvalidStartTimeError(ValueError):
+    pass
+
+
+#------------------------------------------#
+#  low level switch state "base" functions #
+#------------------------------------------#
 def rf_dev_sw(devcode, on_or_off):
     if on_or_off == 'on':
         add = '1'
@@ -40,45 +63,59 @@ def rf_dev_sw(devcode, on_or_off):
     sleep(1)
     call(["rf", str(devcode) + add ],stdout=DEVNULL)
 
-def fan_on():
-    #rf_dev_sw(12,'on')
-    pass
+def switch_state_tracked( state_name, state , sw_func, on_sw_action ):
+    global sw_states
+    was_state = sw_states[state_name]
+    if not args.test:
+        sw_func()
+    sw_states[state_name] = state
+    write_sw_state(state_name,state)
+    if was_state != state:
+        on_sw_action()
 
-def fan_off():
-    #rf_dev_sw(12,'off')
-    pass
+def write_sw_state(name,state):
+    with open("/var/run/klima_control_"+name,mode="wt") as f:
+        f.write(repr(state))
 
-def klima_on():
-    global compressor_running
-    #rf_dev_sw(24,'on')
-    compressor_running=True
-    store_start_time()
+def read_sw_state(name):
+    with open("/var/run/klima_control_"+name,mode="rt") as f:
+        try:
+            return eval(f.read())
+        except SyntaxError:
+            return UNKNOWN
 
-def klima_off():
-    #rf_dev_sw(24,'off')
-    global compressor_running
-    was_running=compressor_running
-    compressor_running=False
-    if was_running:
-        log_runtime()
 
-def get_temp():
-    cmd=['get_room_temp']
-    try:
-        T = float(check_output(cmd).decode().strip())
-    except KeyboardInterrupt:
-        raise
-    except Exception as e:
-        print(e,file=stderr)
-        T = inf
-    return T
+#-----------------------------------#
+#  low level switch state functions #
+#-----------------------------------#
+def _sw_klima_off():
+    rf_dev_sw(24,'off')
 
-def log_runtime():
-    global states
-    runtime = time() - read_start_time()
-    log("Klima did run for "+str(runtime)+" seconds.",LOGFACILITY)
-    erase_start_time()
+def _sw_klima_on():
+    rf_dev_sw(24,'on')
 
+def _sw_fan_on():
+    rf_dev_sw(12,'on')
+
+def _sw_fan_off():
+    rf_dev_sw(12,'off')
+
+def sw_klima_off():
+    switch_state_tracked("klima_running",False,_sw_klima_off,lambda :log_runtime("klima"))
+
+def sw_klima_on():
+    switch_state_tracked("klima_running",True,_sw_klima_on,lambda:store_start_time("klima"))
+
+def sw_fan_on():
+    switch_state_tracked("fan_running",True,_sw_fan_on,lambda:store_start_time("fan"))
+
+def sw_fan_off():
+    switch_state_tracked("fan_running",False,_sw_fan_off,lambda:log_runtime("fan"))
+
+
+#------------------------------------#
+# high level state "base" functions  #
+#------------------------------------#
 def update_state(state2update):
     global states
     # only overwrite past state if state actually differs
@@ -89,8 +126,17 @@ def update_state(state2update):
         write_state(state2update)
         states[0]=state2update
 
-class WrongStateError(Exception):
-    pass
+def write_state(state):                                       
+    with open("/var/run/klima_control_state",mode="wt") as f: 
+        f.write(str(state))                                   
+
+def read_state():
+    global states
+    with open("/var/run/klima_control_state",mode="rt") as f:
+        try:
+            return int(f.read())
+        except ValueError:
+            return UNKNOWN
 
 def _run_state_function(from_states,function_state,target_state,function):
     global states
@@ -101,11 +147,13 @@ def _run_state_function(from_states,function_state,target_state,function):
                                     [ get_state_name(s) for s in from_states ],
                                     get_state_name(states[0]),function)
                                     )
+    update_state(function_state)
+    if args.verbose:
+        print("state="+get_state_name(function_state))
+    function()
     update_state(target_state)
     if args.verbose:
         print("state="+get_state_name(target_state))
-    function()
-    update_state(target_state)
 
 def run_state_function(from_states,function_state,target_state,function):
     global states
@@ -133,23 +181,27 @@ def get_state_name(state):
             break
     return k
 
+
+#-----------------------------#
+# high level state functions  #
+#-----------------------------#
 def _cooldown():
-    fan_on()
-    klima_off()
+    sw_fan_on()
+    sw_klima_off()
     for i in range(COOLDOWN_CYLCES):
-        klima_on()
+        sw_klima_on()
         sleep(COOLDOWN_CYLCE_SLEEP)
-        klima_off()
+        sw_klima_off()
     sleep(COOLDOWN_FINAL_FANTIME)
-    fan_off()
+    sw_fan_off()
 
 def _freeze():
-    fan_on()
-    klima_on()
+    sw_fan_on()
+    sw_klima_on()
 
 def _instant_off():
-    klima_off()
-    fan_off()
+    sw_klima_off()
+    sw_fan_off()
 
 def _unhealty_instant_off():
     print("UNHEALTY INSTANT OFF !",file=stderr)
@@ -171,10 +223,10 @@ def cooldown():
     run_state_function([OFF,COOLDOWN,UNKNOWN,FREEZING],COOLDOWN,STANDBY,_cooldown)
 
 def stop_ventilation():
-    ensure_state([OFF,VENTILATING,STANDBY],UNKNOWN,STANDBY,fan_off)
+    ensure_state([OFF,VENTILATING,STANDBY],UNKNOWN,STANDBY,sw_fan_off)
 
 def start_ventilation():
-    ensure_state([OFF,STANDBY,VENTILATING],UNKNOWN,VENTILATING,fan_on)
+    ensure_state([OFF,STANDBY,VENTILATING],UNKNOWN,VENTILATING,sw_fan_on)
 
 def freeze():
     ensure_state([ANY_STATE],UNKNOWN,FREEZING,_freeze)
@@ -182,33 +234,79 @@ def freeze():
 def ensure_standby():
     ensure_state([OFF,STANDBY],UNKNOWN,STANDBY,_instant_off)
 
-def store_start_time():
-    with open("/var/run/klima_control_freezing_start_time",mode="wt") as f:
+
+#---------------------#
+#  logging functions  #
+#---------------------#
+def store_start_time(name):
+    with open("/var/run/klima_control_"+name+"_start_time",mode="wt") as f:
         f.write(str(time()))
 
-def write_state(state):
-    with open("/var/run/klima_control_state",mode="wt") as f:
-        f.write(str(state))
+def log_runtime(name):
+    try:
+        runtime = time() - read_start_time(name)
+        prefix  = name[0].upper()+name[1:]+" " 
+        postfix = " for "+str(runtime)+" seconds."
+        if not args.test:
+            middlefix="ran"
+        else:
+            middlefix="did testrun"
+        msg=prefix+middlefix+postfix
+        log(msg,LOGFACILITY)
+        erase_start_time(name)
+    except InvalidStartTimeError:
+        log("Invalid klima start time, can not log klima runtime.")
 
-def read_state():
-    global states
-    with open("/var/run/klima_control_state",mode="rt") as f:
+def erase_start_time(name):
+    with open("/var/run/klima_control_"+name+"_start_time",mode="wt") as f:
+        f.write("\"invalid\"")
+
+def read_start_time(name):
+    with open("/var/run/klima_control_"+name+"_start_time",mode="rt") as f:
         try:
-            return int(f.read())
+            return float(f.read())
         except ValueError:
-            return UNKNOWN
+            raise InvalidStartTimeError()
 
-def erase_start_time():
-    with open("/var/run/klima_control_freezing_start_time",mode="wt") as f:
-        f.write("invalid")
 
-def read_start_time():
-    with open("/var/run/klima_control_freezing_start_time",mode="rt") as f:
-        return float(f.read())
+#-------------#
+# temp sensor #
+#-------------#
+def get_temp():
+    cmd=['get_room_temp']
+    try:
+        T = float(check_output(cmd).decode().strip())
+    except KeyboardInterrupt:
+        raise
+    except Exception as e:
+        print(e,file=stderr)
+        T = inf
+    return T
+
+
+#----------------#
+# init functions #
+#----------------#
+def gen_run_files():
+    from subprocess import check_call
+    for fn in RUN_FILENAMES:
+        path="/run/"+fn
+        cmd=["sudo","touch",path]
+        check_call(cmd)
+        cmd=["sudo","chown",USERNAME+":"+GROUPNAME,path]
+        check_call(cmd)
+        cmd=["sudo","chmod","g+rw",path]
+        check_call(cmd)
 
 def init():
     global states
+    global sw_states
     update_state(args.state)
+    if args.debug:
+        print("DEBUG: init with states={}".format(states))
+        print("DEBUG: init with sw_states={}".format(sw_states))
+    for name in ["klima_running","fan_running"]:
+        sw_states[name] = read_sw_state(name)
     if states[0] == UNKNOWN:
         print("WARNING: Init with unknown state",file=stderr)
         warn("WARNING: Init with unknown state")
@@ -216,6 +314,15 @@ def init():
             if args.verbose:
                 print("Running cooldown to get valid state ...")
             run_handle_exception(cooldown)
+
+
+#-------------------#
+# control functions #
+#-------------------#
+def print_exp(e,file=stderr):
+    for line in format_tb(e.__traceback__):
+        print(line,file=file)
+    print("EXCEPTION("+type(e).__name__+"): "+str(e),file=file)
 
 def run_handle_exception(function):
     try:
@@ -228,6 +335,8 @@ def run_handle_exception(function):
                     print()
             else:
                 warn_exp(e)
+                if args.debug:
+                    print_exp(e)
             if not args.fan_only:
                 cooldown()
             else:
@@ -236,6 +345,9 @@ def run_handle_exception(function):
             print(file=stderr)
             unhealty_instant_off()
             # newline for KeyboardInterrupt
+            if args.debug:
+                print_exp(e)
+                print_exp(ee)
             warn_exp(e)
             warn_exp(ee)
     finally:
@@ -251,7 +363,8 @@ def _control_loop():
             if args.verbose:
                 print("T = "+str(temp)+"°C  low")
             if not args.fan_only:
-                cooldown()
+                cooldown() #cooldown will return if allready standby or cooldown
+                ensure_standby()
             else:
                 stop_ventilation()
         elif temp > maxtemp:
@@ -261,10 +374,22 @@ def _control_loop():
                 freeze()
             else:
                 start_ventilation()
-        elif args.verbose:
-            print("T = "+str(temp)+"°C  ok")
-        if args.verbose and states[0] == FREEZING:
-            print("runtime = {:.3f} [s]".format(time()-read_start_time()))
+        else:
+            if args.debug:
+                print("states={}".format([get_state_name(s) for s in states]))
+            if args.verbose:
+                print("T = "+str(temp)+"°C  ok")
+        
+        if sw_states['klima_running']:
+            try:
+                start_time=read_start_time("klima")
+                if args.verbose:
+                    print("runtime = {:.3f} [s]".format(time() - start_time))
+            except ValueError:
+                warn_msg="WARNING: Invalid klima runtime."
+                print(warn_msg,file=stderr)
+                warn(warn_msg)
+    
         sleep(LOOPSLEEPTIME)
 
 def control_loop():
@@ -280,8 +405,9 @@ def parse_args():
     ap.add_argument('--fan-only',action="store_true",default=False)
     ap.add_argument('--debug',action="store_true",default=False)
     ap.add_argument('--state',action="store",default=read_state())
-    ap.add_argument('--hysteresis',type=float,default=2)
+    ap.add_argument('--hysteresis',type=float,default=1)
     ap.add_argument('--testing',action="store_true",default=False)
+    ap.add_argument('-G','--gen-run-files',action="store_true",default=False)
     global args
     args=ap.parse_args()
     try:
@@ -292,23 +418,25 @@ def parse_args():
 
 if __name__=='__main__':
     parse_args()
+    if args.gen_run_files:
+        gen_run_files()
     if args.test:
         LOOPSLEEPTIME=1
         COOLDOWN_CYLCES=1
         COOLDOWN_CYLCE_SLEEP=0.4
         COOLDOWN_FINAL_FANTIME=5
 
-        test_temp=50.0
-        test_temp_d=0
-        def get_temp():
-            global test_temp
-            global test_temp_d
-            if states[0] in (FREEZING,VENTILATING):
-                test_temp_d-=0.005
-            else:
-                test_temp_d+=0.005
-            test_temp+=test_temp_d*test_temp
-            return test_temp
+        #test_temp=50.0
+        #test_temp_d=0
+        #def get_temp():
+        #    global test_temp
+        #    global test_temp_d
+        #    if states[0] in (FREEZING,VENTILATING):
+        #        test_temp_d-=0.005
+        #    else:
+        #        test_temp_d+=0.005
+        #    test_temp+=test_temp_d*test_temp
+        #    return test_temp
     init()
     if args.shutdown:
         cooldown()

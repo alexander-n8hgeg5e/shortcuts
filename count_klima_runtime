@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+
+COMPRESSOR_START_TIME=180
+PPKWH=0.33
+
+power  =    {
+                "klima_compressor":   0.95   ,
+                "klima_fan"       :   0.05   ,
+                "fan"             :   0.06   ,
+            }
+
+from pprint import pprint
+from argparse import ArgumentParser
+from re import sub,match
+from math import floor
+
+ap=ArgumentParser()
+ap.add_argument(dest="price",nargs="?",default=0.33)
+args=ap.parse_args()
+
+with open("/var/log/klima_log") as f:
+    data=f.read()
+data=data.split("\n")
+data=[d.strip() for d in data]
+
+
+rexps = {
+        'klima' : "^.*(Klima|Compressor) (did run for|ranfor|ran for) ([0-9]+[.][0-9]+) seconds[.]",
+        'fan'   : "^.*(Fan) (did run for|ranfor|ran for) ([0-9]+[.][0-9]+) seconds[.]",
+        }
+
+
+times = {}
+for k in rexps.keys():
+    times.update({k:[]})
+
+for line in data:
+    for name,rexp in rexps.items():
+        if match(rexp,line):
+            times[name].append(float(sub(rexp,"\\3",line)))
+            break
+
+
+for name,v in times.copy().items():
+    times[name] = [round(t,1) for t in v]
+
+for name,vals in times.copy().items():
+    if name=="klima":
+        compressor_times = []
+        klima_fan_times  = []
+        for v in vals:
+            if v > COMPRESSOR_START_TIME:
+                compressor_runtime = v - COMPRESSOR_START_TIME
+            else:
+                compressor_runtime = 0
+            klima_fan_runtime  = v
+            if compressor_runtime > 0:
+                compressor_times.append(compressor_runtime)
+            if klima_fan_runtime > 0:
+                klima_fan_times.append(klima_fan_runtime)
+        times["klima_compressor"] = compressor_times
+        times["klima_fan"]        = klima_fan_times
+
+def pretty_print(name,timeval,left_side_align):
+    total=timeval
+    print(total)
+    days      = floor(total/3600/24)
+    hours     = floor(total/3600)
+    minutes   = floor(total/60)
+    seconds   = round(total%60)
+    left_side_align=str(left_side_align)+"."+str(left_side_align)
+    left_side ="{:>"+left_side_align+"} did run for "
+    fs = ""  
+    doall=False
+    parameters=[]
+    
+    if days > 0:
+        fs+="{:2d} [days] + "
+        parameters.append( days)
+    if hours > 0 or doall:
+        fs+="{:2d} [h] + "
+        doall=True
+        parameters.append( hours%24)
+    if minutes > 0 or doall:
+        fs+="{:2d} [m] + "
+        doall=True
+        parameters.append( minutes%60)
+    if seconds > 0 or doall:
+        fs+="{:2d} [s]"
+        parameters.append( seconds )
+
+    fs=left_side+fs+"."
+    print(fs.format(name,*parameters))
+
+def make_name_pretty(name):
+    k=name
+    return k[0].upper() + " ".join(k[1:].split("_"))
+
+totals={}
+times.pop("klima")
+for k,v in times.items():
+    total=sum(v)
+    totals.update({k:total})
+    #name=make_name_pretty(k)
+    #pretty_print(name,total,30)    
+
+
+total_price=0
+fs="{:>20.20} | {:10.10} | {:10.10}"
+print(fs.format("device name","runtime [h]","price [Euro]"))
+print(fs.format(*(["-"*10]*3)))
+for k,v in totals.items():
+    hours=v/3600
+    name=make_name_pretty(k)
+    price = hours * power[k] * args.price
+    print(fs.format(name,"{:.3f}".format(hours),"{:.2f}".format(price)))
+    total_price += price
+
+print(fs.format(*(["-"*10]*3)))
+print(fs.format("TOTAL","","{:.2f}".format(total_price)))

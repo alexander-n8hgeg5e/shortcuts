@@ -106,7 +106,7 @@ for k,v in times.items():
 
 
 total_price=0
-fs="{:>20.20} | {:10.10} | {:10.10}"
+fs="{:>20.20} | {:11.11} | {:12.12}"
 print(fs.format("device name","runtime [h]","price [Euro]"))
 print(fs.format(*(["-"*10]*3)))
 for k,v in totals.items():

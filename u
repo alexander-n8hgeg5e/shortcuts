@@ -41,7 +41,7 @@ def argdict2args(d):
         l+=argdict_tuple2arglist(k,v)
     return l
         
-def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], bdeps=True, backtrack=10 ,pkg_set='@world', light=True ,insane=False,**zz):
+def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], bdeps=True, backtrack=100 ,pkg_set='@world', light=True ,insane=False,**zz):
     include=Include(True)
     not_include=Include(False)
 
@@ -69,7 +69,7 @@ def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_arg
                         }
     args_insane = args_full.copy()
     args_insane.update( {'--selective':'n'})
-    args_insane['--backtrack']=backtrack*(10**6)
+    args_insane['--backtrack']=backtrack*(10**5)
                         
     args_emptytree = {'--emptytree':include, '--newuse':include}
     args_bdeps = {'--with-bdeps':'y'}
@@ -154,7 +154,7 @@ def parse_args():
                         help='add ask to arglist',default=False)
     parser.add_argument('-j', '--jobs', type=int, action="store" ,default=None,
                         help='jobs to run simultaniously')
-    parser.add_argument('-b', '--backtrack', type=int , action="store", default=30,
+    parser.add_argument('-b', '--backtrack', type=int , action="store", default=99999,
             help="how far to go back to find dependency solution" )
     parser.add_argument('additional_args',nargs='*',
                         help='additional args will be forwarded and "--" prepended, so specify without minus ("--"). And because of this Only "--"-long-type-args are supported')

@@ -40,7 +40,7 @@ try:
                 done=True
             debug(line.decode())
         sleep(0.1)
-    if not done and debuglevel <= DEBUG:
+    if not done and loglevel <= DEBUG:
         debug("TIMEOUT: stdout,stderr reading aborted")
 except Exception as e:
     warn_exp(e,with_traceback=True)

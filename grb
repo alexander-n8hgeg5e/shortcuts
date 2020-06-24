@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+from subprocess import check_call,check_output,CalledProcessError
+from re import sub
+from pprint import pprint
+from sys import stdin,stdout
+from os import set_blocking
+from time import sleep
+from termios import tcsetattr,tcgetattr,TCSADRAIN
+from tty import setraw
+from pylib.syslog_utils import debug
+CTRL_C = bytes([0x03])
+BS     = bytes([0x08])
+DEL    = bytes([0x7f])
+ESC    = bytes([0x1b])
+DCH1   = bytes([0x1b,0x5b,0x50])
+CL     = bytes([0x1b,0x5b,0x4b])
+LF     = bytes([0x0a])
+CR     = bytes([0x0d])
+TAB    = bytes([0x09])
+
+LOOPLIMIT=400
+
+ghb=check_output(['ghb']).decode().strip()
+cmd=['echo', 'git', 'checkout', '-b', ghb+'.rebase' ]
+print(cmd)
+check_call(cmd)
+
+branches=check_output(['git','log','--pretty=tformat:%D']).decode()
+
+branches=sub("\n",",",branches) 
+branches=sub("[ ]*[,]+[ ]*","\n",branches)
+branches=sub('HEAD -> ','',branches)
+branches=branches.strip().split("\n")
+
+PROMPT=b"$>"
+
+print()
+print("select upstream branch:")
+print("=============")
+for br in branches:
+ print(" "*len(PROMPT)+br)
+
+term_attributes = tcgetattr(stdin.fileno())                   
+branches=[i.encode(encoding="ascii") for i in branches]
+
+w=stdout.buffer.raw.write
+r=stdin.buffer.raw.read
+f=stdin.buffer.raw.flush
+
+
+
+
+try:
+    data=b""
+    all_branches=branches.copy()
+    databuffer=b""
+    setraw(stdin.fileno())
+    pos=0
+    writeskip=0
+    loopcount=0
+    auto=True
+    w(b"$>")
+    c=b"_"
+    wait_for_char=False
+    branches_of_pos=[]
+    while loopcount < LOOPLIMIT:
+        loopcount+=1
+        lbranches=[]
+        if len(branches) > 0:
+            while pos >= len(branches_of_pos): 
+                branches_of_pos.append(branches)
+        if auto:
+            for br in branches:
+                if len(br) == pos:
+                    auto=False
+        if auto:
+            equal=True
+            br0=branches[0]
+            br0c=br0[pos:pos+1]
+            for br in branches:
+                brc=br[pos:pos+1]
+                if brc != br0c:
+                    equal=False
+                    break
+            if equal:
+                pos+=1
+                data+=br0c
+                #debug("auto: data={}".format(data))
+                w(br0c)
+                continue
+        #debug("reading input, data={}".format(data))
+        c=r(1)
+        if c == CTRL_C:
+            break
+        elif c == DEL:
+            if pos>0:
+                w(BS)
+                w(DCH1)
+                data=data[:pos-1]
+                pos-=1
+                auto=False
+                branches=branches_of_pos[pos]
+                #debug("del pressed,continue loop, data={}".format(data))
+                continue
+        elif c == TAB:
+            continue
+        elif c == CR:
+            break
+        else:
+            auto=True
+        fi=[]
+        for i in range(len(branches)):
+            if len(branches[i]) > pos and  c == branches[i][pos:pos+1]:
+                fi.append(i)
+        lfi=len(fi)
+        if lfi == 1:
+            br=branches[fi[0]]
+            w(br[pos:])
+            data+=br[pos:]
+            #debug("done: data={}".format(data))
+            pos=len(data)
+            continue
+        elif lfi > 1:
+            branches=[branches[i] for i in fi]
+            br=branches[0]
+            brc=br[pos:pos+1]
+            w(brc)
+            data+=brc
+            #debug("gt1: data={}".format(data))
+            pos+=1
+        #debug("loopcount={}".format(loopcount))
+finally:
+    tcsetattr(stdin.fileno(), TCSADRAIN, term_attributes)
+
+data=data.decode()
+print()
+cmd=["git", 'branch', '--set-upstream-to' , data ]
+print(cmd)
+check_call(cmd)
+
+try:
+    print(cmd)
+    cmd=[ "git","rebase","-i" ]
+    check_call(cmd)
+except CalledProcessError:
+    print(cmd)

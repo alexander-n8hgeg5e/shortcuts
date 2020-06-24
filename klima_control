@@ -172,7 +172,7 @@ def ensure_state(from_states,function_state,target_state,function):
         ensure_state_count+=1
         if ensure_state_count <= NUM_INITIAL_ENSURE_STATE or ensure_state_count%ENSURE_STATE_INTERVAL==0:
             if args.verbose:
-                print("ensuring state="+get_state_name(target_state)+" ... ",end="")
+                print("ensuring state="+get_state_name(target_state)+" ... ")
             _run_state_function(from_states,function_state,target_state,function)
 
 def get_state_name(state):

@@ -21,7 +21,7 @@ TAB    = bytes([0x09])
 LOOPLIMIT=400
 
 ghb=check_output(['ghb']).decode().strip()
-cmd=['echo', 'git', 'checkout', '-b', ghb+'.rebase' ]
+cmd=['git', 'checkout', '-b', ghb+'.rebase' ]
 print(cmd)
 check_call(cmd)
 

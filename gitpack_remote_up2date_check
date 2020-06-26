@@ -2,7 +2,7 @@
 set gitpack $argv[1]
 echo checking gitpack: $gitpack
 gsp -f ~/.gitpacks/$gitpack  -C '\
-gd --quiet --exit-code refs/remotes/github/master -- 
+gd --quiet --exit-code refs/remotes/github/(ghb) -- 
 and begin
     echo -n 1b5b306d|xxd -p -r
     echo -n (pwd)" = "

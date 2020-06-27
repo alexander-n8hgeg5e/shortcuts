@@ -1,0 +1,2 @@
+#!/bin/fish
+tail -n(math $LINES - 2) |cut -c-$COLUMNS

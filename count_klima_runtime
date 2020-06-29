@@ -17,6 +17,7 @@ from math import floor
 ap=ArgumentParser()
 ap.add_argument(dest="price",nargs="?",default=0.33)
 ap.add_argument("-r","--regex",default=None,help="use only lines matching regex")
+ap.add_argument("-t","--total",action="store_true",default=False,help="output only total")
 args=ap.parse_args()
 
 with open("/var/log/klima_log") as f:
@@ -112,15 +113,20 @@ for k,v in times.items():
 
 
 total_price=0
-fs="{:>20.20} | {:11.11} | {:12.12}"
-print(fs.format("device name","runtime [h]","price [Euro]"))
-print(fs.format(*(["-"*10]*3)))
+if not args.total:
+    fs="{:>20.20} | {:11.11} | {:12.12}"
+    print(fs.format("device name","runtime [h]","price [Euro]"))
+    print(fs.format(*(["-"*10]*3)))
 for k,v in totals.items():
     hours=v/3600
     name=make_name_pretty(k)
     price = hours * power[k] * args.price
-    print(fs.format(name,"{:.3f}".format(hours),"{:.2f}".format(price)))
+    if not args.total:
+        print(fs.format(name,"{:.3f}".format(hours),"{:.2f}".format(price)))
     total_price += price
 
-print(fs.format(*(["-"*10]*3)))
-print(fs.format("TOTAL","","{:.2f}".format(total_price)))
+if not args.total:
+    print(fs.format(*(["-"*10]*3)))
+    print(fs.format("TOTAL","","{:.2f}".format(total_price)))
+else:
+    print("{:.2f}".format(total_price))

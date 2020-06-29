@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug,DEBUG
-from syslog import LOG_LOCAL0 as LOGFACILITY
+from syslog import LOG_LOCAL0 as LOGFACILITY,LOG_USER
 from subprocess import check_call,call,check_output,DEVNULL,CalledProcessError
 from time import sleep,time
 from math import inf
@@ -252,10 +252,12 @@ def log_runtime(name):
         else:
             middlefix="did testrun"
         msg=prefix+middlefix+postfix
-        log(msg,LOGFACILITY)
+        log(msg,level=INFO,facility=LOGFACILITY)
         erase_start_time(name)
     except InvalidStartTimeError:
-        log("Invalid klima start time, can not log klima runtime.")
+        msg="Invalid klima start time, can not log klima runtime."
+        log(msg,level=ERR,facility=LOGFACILITY)
+        log(msg,level=ERR,facility=LOG_USER)
 
 def erase_start_time(name):
     with open("/var/run/klima_control_"+name+"_start_time",mode="wt") as f:

@@ -26,8 +26,8 @@ data=[d.strip() for d in data]
 
 
 rexps = {
-        'klima' : "^.*(Klima|Compressor) (did run for|ranfor|ran for) ([0-9]+[.][0-9]+) seconds[.]",
-        'fan'   : "^.*(Fan) (did run for|ranfor|ran for) ([0-9]+[.][0-9]+) seconds[.]",
+        'klima' : "^.*(Klima|Compressor) (did run for|ranfor|ran for|has run for) ([0-9]+[.][0-9]+) seconds[.]",
+        'fan'   : "^.*(Fan) (did run for|ranfor|ran for|has run for) ([0-9]+[.][0-9]+) seconds[.]",
         }
 
 

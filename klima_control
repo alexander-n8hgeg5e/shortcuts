@@ -248,7 +248,7 @@ def log_runtime(name):
         prefix  = name[0].upper()+name[1:]+" " 
         postfix = " for "+str(runtime)+" seconds."
         if not args.test:
-            middlefix="ran"
+            middlefix="has run"
         else:
             middlefix="did testrun"
         msg=prefix+middlefix+postfix

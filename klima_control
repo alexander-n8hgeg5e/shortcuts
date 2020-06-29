@@ -250,7 +250,7 @@ def log_runtime(name):
         if not args.test:
             middlefix="has run"
         else:
-            middlefix="did testrun"
+            middlefix="has been doing a testrun"
         msg=prefix+middlefix+postfix
         log(msg,level=INFO,facility=LOGFACILITY)
         erase_start_time(name)

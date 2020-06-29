@@ -16,6 +16,7 @@ from math import floor
 
 ap=ArgumentParser()
 ap.add_argument(dest="price",nargs="?",default=0.33)
+ap.add_argument("-r","--regex",default=None,help="use only lines matching regex")
 args=ap.parse_args()
 
 with open("/var/log/klima_log") as f:
@@ -37,8 +38,13 @@ for k in rexps.keys():
 for line in data:
     for name,rexp in rexps.items():
         if match(rexp,line):
-            times[name].append(float(sub(rexp,"\\3",line)))
-            break
+            if args.regex is None:
+                times[name].append(float(sub(rexp,"\\3",line)))
+                break
+            else:
+                if match(args.regex,line):
+                    times[name].append(float(sub(rexp,"\\3",line)))
+                    break
 
 
 for name,v in times.copy().items():

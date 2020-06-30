@@ -397,4 +397,10 @@ dobin mti
 dobin gitpack_remote_up2date_check
 dobin ssh-akl
 dobin logfilter_old
+dobin tox
+dobin mecl
+dobin show_klima_state
+dobin xi2
+dobin grb
+dobin count_klima_runtime
 }

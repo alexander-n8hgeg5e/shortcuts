@@ -396,4 +396,5 @@ dobin klima_control
 dobin mti
 dobin gitpack_remote_up2date_check
 dobin ssh-akl
+dobin logfilter_old
 }

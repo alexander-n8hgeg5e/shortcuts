@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+from pprint import pprint
+from argparse import ArgumentParser
+from re import sub,match
+from math import floor
+from sys import exit,stdout
+from subprocess import check_call
+from os import stat,chmod,chown,getuid,getgid
+
+def write_file(file_path,outdata,st_uid,st_gid,st_mode):
+    # set temp permissions for writing and write
+    cmd=['sudo','chown', ":"+str(getgid()),file_path]
+    check_call(cmd)
+    chmod(file_path,st_mode|0o0060)
+    with open(file_path,mode="wb") as tf:
+        tf.write(outdata)
+    
+    # restore permissions
+    chmod(file_path,st_mode)
+    cmd=['sudo','chown',str(st_uid)+":"+str(st_gid),file_path]
+    check_call(cmd)
+
+ap=ArgumentParser()
+ap.add_argument(dest="files",nargs="+")
+ap.add_argument(dest="from_regex",nargs=1)
+ap.add_argument("-I","--non-interactive",action="store_true",default=False)
+args=ap.parse_args()
+from_regex=args.from_regex[0]
+
+for infile in args.files:
+    if infile[-14:] == ".logfilter.old":
+        print("Skipping backup file \"{}\".".format(infile))
+        continue
+    try:
+        with open(infile,'rb') as f:
+            data=f.read()
+    except IsADirectoryError:
+        print("Skipping directory \"{}\".".format(infile))
+        continue
+    lines=data.split(b"\n")
+    
+    start=0
+    regex=from_regex.encode()
+    for i in range(len(lines)):
+        if match(regex,lines[i]):
+            break
+    
+    a=None
+    skip=False
+    if i > 0:
+        while not a == "y" or args.non_interactive:
+            print("\nstart={}".format(i))
+            a=input("rewrite file \"{}\" from line \"{}\" on (y)? or show head (h)? (y/[n]/h)".format(infile,i))
+            a=a.lower()
+            if a  == "h":
+                print("HEAD:")
+                for line in lines[i:i+10]:
+                    stdout.buffer.write(line+b"\n")
+                continue
+            elif a == "y":
+                continue
+            else:
+                skip=True
+                break
+    else:
+        print("Skipping file \"{}\" because filter makes no difference.".format(infile))
+        continue
+    if skip:
+        print("Skipping file \"{}\".\n".format(infile))
+        continue
+    
+    temp_file_path=infile+".logfilter.tmpfile"
+    lines=lines[i:]
+    outdata=b"\n".join(lines)
+    
+    # make file
+    cmd=['sudo','touch',temp_file_path]
+    check_call(cmd)
+    
+    # save permissions
+    st=stat(infile)
+    st_mode=st.st_mode
+    st_uid=st.st_uid
+    st_gid=st.st_gid
+    
+    write_file(temp_file_path,outdata,st_uid,st_gid,st_mode)
+    
+    # exchange the files
+    cmd0=['sudo','mv',infile,infile+".logfilter.old"]
+    cmd1=['sudo','mv',temp_file_path,infile]
+    check_call(cmd0)
+    check_call(cmd1)
+    print("File \"{}\" exchanged.\n".format(infile))

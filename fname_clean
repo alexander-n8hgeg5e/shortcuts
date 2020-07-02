@@ -13,6 +13,8 @@ allowed_chars = "_:.-"
 allowed=[]
 for r in allowed_ranges:
     r=[int(i) for i in range(*r.encode(encoding="ascii"))]
+    # add the ommitted last char
+    r.append(r[-1]+1)
     allowed+=r
 for c in allowed_chars:
     i=c.encode(encoding="ascii")[0]
@@ -69,10 +71,11 @@ rename_data=[]
 for path in pathes:
     bn=basename(path)
     cbn=convert_basename(bn)
-    print(bn)
-    print(cbn)
-    print()
-    rename_data.append((bn,cbn))
+    if bn != cbn:
+        print(bn)
+        print(cbn)
+        print()
+        rename_data.append((bn,cbn))
 inp=input("Rename files ? (Y/[N]):")
 if inp=="Y":
     from os import rename

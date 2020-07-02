@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+from os import listdir
+from re import match
+from subprocess import Popen,PIPE
+from sys import argv
+
+basepath="/sys/devices/system/cpu"
+
+dirlist=listdir(basepath)
+
+cpus=[]
+for d in dirlist:
+    if match("cpu[0-9]+",d):
+        cpus.append(basepath+"/"+d+"/cpufreq/scaling_governor")
+
+cmd=['sudo','dd']
+for cpu in cpus:
+    cmd.append('of='+cpu)
+    p=Popen(cmd,stdin=PIPE)
+    cmd.pop()
+    p.stdin.write(argv[1].encode())
+    p.stdin.close()
+    p.wait()

@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+
+from sys import stdin,stdout,stderr
+from re import sub
+from math import floor
+from argparse import ArgumentParser
+from pprint import pprint
+
+def parse_args():
+    ap=ArgumentParser()
+    ap.add_argument("-r","--reverse",action="store_true")
+    ap.add_argument("-b","--bits",action="store_true")
+    ap.add_argument("-c","--columns",action="store",type=int,default=8)
+    ap.add_argument("-bs","--blocksize",action="store",type=int,default=8)
+    global args
+    args=ap.parse_args()
+
+def octets2bytes(o):
+    lo=len(o)
+    if not lo %2 == 0:
+        raise Exception("need even octet number")
+    b=[]
+    for i in range(int(lo/2)):
+        b.append(o[2*i]<<4|o[2*i+1])
+    return bytes(b)
+
+def reverse_bits(data):
+    data=data.decode()
+    data=sub("[^10]","",data)
+    octets=[]
+    num_octets=floor(len(data)/4)
+    for o in range(num_octets):
+        s=data[o*4:o*4+4]
+        #print(s,end='',file=stderr)
+        n =int(s[-1]) * 2**0
+        n+=int(s[-2]) * 2**1
+        n+=int(s[-3]) * 2**2
+        n+=int(s[-4]) * 2**3
+        octets.append(n)
+    return octets2bytes(octets)
+
+def data2bitstring(data):
+    s=''
+    for b in data:
+        s+="{:08b}".format(b)
+    return s
+
+def output_data(data):
+    if type(data) is bytes:
+        #pprint(data)
+        stdout.buffer.write(data)
+    elif type(data) is str:
+        cpl = args.blocksize * args.columns
+        nfl=floor(len(data)/cpl)
+        bs=args.blocksize
+        for i in range(nfl):
+            for j in range(args.columns-1):
+                stdout.write(data[i*cpl+j*bs:i*cpl+j*bs+bs])
+                stdout.write(' ')
+            lj=args.columns-1
+            stdout.write(data[i*cpl+lj*bs:i*cpl+lj*bs+bs]+"\n")
+
+                
+
+if __name__=="__main__":
+    parse_args()
+    data=stdin.buffer.read()
+    if args.reverse and args.bits:
+        data=reverse_bits(data)
+    elif args.bits:
+        data=data2bitstring(data)
+        
+    output_data(data)
+

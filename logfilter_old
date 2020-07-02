@@ -11,12 +11,14 @@ def write_file(file_path,outdata,st_uid,st_gid,st_mode):
     # set temp permissions for writing and write
     cmd=['sudo','chown', ":"+str(getgid()),file_path]
     check_call(cmd)
-    chmod(file_path,st_mode|0o0060)
+    cmd=['sudo','chmod','g+rw' ,file_path]
+    check_call(cmd)
     with open(file_path,mode="wb") as tf:
         tf.write(outdata)
     
     # restore permissions
-    chmod(file_path,st_mode)
+    cmd=['sudo','chmod',sub('^0o','',oct(st_mode-1*8**5)),file_path]
+    check_call(cmd)
     cmd=['sudo','chown',str(st_uid)+":"+str(st_gid),file_path]
     check_call(cmd)
 
@@ -30,6 +32,9 @@ from_regex=args.from_regex[0]
 for infile in args.files:
     if infile[-14:] == ".logfilter.old":
         print("Skipping backup file \"{}\".".format(infile))
+        continue
+    elif infile[-18:] == ".logfilter.tmpfile":
+        print("Skipping logfilter tmp file \"{}\".".format(infile))
         continue
     try:
         with open(infile,'rb') as f:
@@ -50,8 +55,13 @@ for infile in args.files:
     if i > 0:
         while not a == "y" or args.non_interactive:
             print("\nstart={}".format(i))
-            a=input("rewrite file \"{}\" from line \"{}\" on (y)? or show head (h)? (y/[n]/h)".format(infile,i))
+            a=input("rewrite file \"{}\" from line \"{}\" on (y)? or show head (h)? or show \"cut-of\" tail (t)? (y/[n]/h/t)".format(infile,i))
             a=a.lower()
+            if a  == "t":
+                print("TAIL:")
+                for line in lines[:i]:
+                    stdout.buffer.write(line+b"\n")
+                continue
             if a  == "h":
                 print("HEAD:")
                 for line in lines[i:i+10]:

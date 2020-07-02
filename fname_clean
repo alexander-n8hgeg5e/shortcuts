@@ -81,7 +81,5 @@ if inp=="Y":
     from os import rename
     for a,b in rename_data:
         rename(a,b)
-
-
-            
-
+else:
+    print("rename aborted")

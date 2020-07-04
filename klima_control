@@ -6,6 +6,7 @@ from time import sleep,time
 from math import inf
 from sys import stderr
 from traceback import format_tb
+from pprint import pprint
 
 RUN_FILENAMES = [
                 'klima_control_fan_running',
@@ -17,6 +18,11 @@ RUN_FILENAMES = [
 USERNAME  ="klima-control"
 GROUPNAME ="klima-control"
 
+MAX_FREEZER_START_TIME=200
+RATE_CHECK_AVERAGE_SEC=(30,60,90)
+MIN_FREEZING_RATE_FREEZER=-0.001
+MIN_FREEZING_RATE_VENTILATION=-0.0005
+MAX_TIME_DELTA=60
 LOOPSLEEPTIME=10
 COOLDOWN_CYLCES=2
 COOLDOWN_CYLCE_SLEEP=20
@@ -34,7 +40,7 @@ STATES =    {
 for k,v in STATES.items():
     exec("{}={}".format(k,v))
 
-states=[UNKNOWN,UNKNOWN,UNKNOWN]
+state_sequence=[UNKNOWN,UNKNOWN,UNKNOWN]
 
 sw_states = {
                 "klima_running" : None,
@@ -117,21 +123,20 @@ def sw_fan_off():
 # high level state "base" functions  #
 #------------------------------------#
 def update_state(state2update):
-    global states
+    global state_sequence
     # only overwrite past state if state actually differs
-    if state2update != states[0]:
-        ls=len(states)
+    if state2update != state_sequence[0]:
+        ls=len(state_sequence)
         for i in range(ls-1):
-            states[ls-i-1]=states[ls-i-2]
+            state_sequence[ls-i-1]=state_sequence[ls-i-2]
         write_state(state2update)
-        states[0]=state2update
+        state_sequence[0]=state2update
 
 def write_state(state):                                       
     with open("/var/run/klima_control_state",mode="wt") as f: 
         f.write(str(state))                                   
 
 def read_state():
-    global states
     with open("/var/run/klima_control_state",mode="rt") as f:
         try:
             return int(f.read())
@@ -139,13 +144,13 @@ def read_state():
             return UNKNOWN
 
 def _run_state_function(from_states,function_state,target_state,function):
-    global states
+    global state_sequence
     if not ANY_STATE in from_states:
-        if not states[0] in from_states:
+        if not state_sequence[0] in from_states:
             raise WrongStateError   (
                                     "State should be in \"{}\", but state is \"{}\".\nfunction: {}".format(
                                     [ get_state_name(s) for s in from_states ],
-                                    get_state_name(states[0]),function)
+                                    get_state_name(state_sequence[0]),function)
                                     )
     update_state(function_state)
     if args.verbose:
@@ -156,15 +161,15 @@ def _run_state_function(from_states,function_state,target_state,function):
         print("state="+get_state_name(target_state))
 
 def run_state_function(from_states,function_state,target_state,function):
-    global states
-    if states[0] is target_state:
+    global state_sequence
+    if state_sequence[0] is target_state:
         return
     _run_state_function(from_states,function_state,target_state,function)
 
 def ensure_state(from_states,function_state,target_state,function):
-    global states
+    global state_sequence
     global ensure_state_count
-    if states[0] != target_state:
+    if state_sequence[0] != target_state:
         run_state_function(from_states,function_state,target_state,function)
         ensure_state_count=0
         update_state(target_state)
@@ -206,9 +211,9 @@ def _instant_off():
 def _unhealty_instant_off():
     print("UNHEALTY INSTANT OFF !",file=stderr)
     _instant_off()
-    global states
-    if states[0] not in [STANDBY,VENTILATING]:
-        warn("Unhealty instant shutdown of klima device from state \"{}\" occured.".format(states[0]))
+    global state_sequence
+    if state_sequence[0] not in [STANDBY,VENTILATING]:
+        warn("Unhealty instant shutdown of klima device from state \"{}\" occured.".format(state_sequence[0]))
 
 def instant_off():
     ensure_state([STANDBY,OFF],UNKNOWN, OFF, _instant_off)
@@ -270,6 +275,121 @@ def read_start_time(name):
         except ValueError:
             raise InvalidStartTimeError()
 
+#----------------------#
+#  learning functions  #
+#----------------------#
+class State_memory():
+    def __init__(self):
+        self.states=[]
+
+    def remember_temp(self,temp):
+        global state_sequence
+        state=  {
+                'time': time(),
+                'state0': state_sequence[0],
+                'state1': state_sequence[1],
+                'state2': state_sequence[2],
+                'temp': temp,
+                }
+        self.states.append(state)
+        if len(self.states) >= 1000:
+            self.states=self.states[200:]
+
+        self.state_working={}
+        for k in STATES.keys():
+            self.state_working.update({k:True})
+
+    def get_continous_state_history(self,state_list,skip=[]):
+        states=[]
+        pos=-1
+        ls=len(self.states)
+        for _state in skip:
+            while ls >= -pos and self.states[pos]['state0'] == _state:
+                pos-=1
+        while ls >= -pos and self.states[pos]['state0'] in state_list:
+            if not self.states[pos]['temp'] is inf:
+                states.append(self.states[pos])
+            pos-=1
+        states.reverse()
+
+        # start at recent states
+        start_index=None
+        ls=len(states)
+        for i in range(ls-1):
+            if states[i+1]['time'] - states[i]['time'] > MAX_TIME_DELTA:
+                startindex = i+1
+        states=states[start_index:]
+
+        return states
+
+    def calc_temp_rate(self,_time,state_history):
+        if len(state_history) < 2:
+            debug("short state history")
+            return None
+        t=state_history[-1]['time']
+        states=[]
+        if t-state_history[0]['time'] < 0.8 * _time:
+            debug("d1 dt={}".format(t-state_history[0]['time']))
+            return None
+        for state in state_history:
+            if t - state['time'] <= _time:
+                states.append(state)
+
+        ls=len(states)
+        if ls < 2:
+            debug("d2")
+            return None
+        else:
+            rates=[]
+            for i in range(ls-1):
+                rate = (states[i+1]['temp'] - states[i]['temp']) / (states[i+1]['time']-states[i]['time'])
+                rates.append(rate)
+            avg_rate=sum(rates)/len(rates)
+        return avg_rate
+
+    def state_considered_working(self,state):
+        # simple check based on rate
+        sh1=self.get_continous_state_history([state])
+        r1  = self.calc_temp_rate(RATE_CHECK_AVERAGE_SEC[0],sh1)
+        r5  = self.calc_temp_rate(RATE_CHECK_AVERAGE_SEC[1],sh1)
+        r15 = self.calc_temp_rate(RATE_CHECK_AVERAGE_SEC[2],sh1)
+        sh0=self.get_continous_state_history([STANDBY,OFF],skip=[state])
+        s15 = self.calc_temp_rate(RATE_CHECK_AVERAGE_SEC[2],sh0)
+        if None in (s15,r1,r5,r15):
+            print("s15={} r1={} r5={} r15={}".format(s15,r1,r5,r15))
+        else:
+            print("s15={:.6f} r1={:.6f} r5={:.6f} r15={:.6f}".format(s15,r1,r5,r15))
+        if not None in (r1,r5,r15,s15):
+            fw1  =  -s15+r1 
+            fw5  =  -s15+r5
+            fw15 =  -s15+r15
+            if None in (fw15,fw1,fw5):
+                print("fw1={} fw5={} fw15={}".format(fw1,fw5,fw15))
+            else:
+                print("fw1={:.6f} fw5={:.6f} fw15={:.6f}".format(fw1,fw5,fw15))
+            if state == FREEZING:
+                min_freezing_rate=MIN_FREEZING_RATE_FREEZER
+            elif state == VENTILATING:
+                min_freezing_rate=MIN_FREEZING_RATE_VENTILATION
+            else:
+                min_freezing_rate=inf
+            if state==FREEZING:
+                for fw in (fw5,fw15):
+                    if fw > min_freezing_rate*2  and time() - read_start_time("klima") > MAX_FREEZER_START_TIME:
+                        warn_msg="WARNING: Freezer seems weak. Check system!"
+                        warn(warn_msg)
+                        print(warn_msg,file=stderr)
+            if all([(fw > min_freezing_rate) for fw in (fw1,fw5,fw15)]):
+                self.state_working.update({get_state_name(state) : False })
+                return False
+            elif all([(fw <= min_freezing_rate) for fw in (fw1,fw5,fw15)]):
+                self.state_working.update({get_state_name(state) : True })
+                return True
+            else:
+                return self.state_working[get_state_name(state)]
+        else:
+            return True
+
 
 #-------------#
 # temp sensor #
@@ -283,6 +403,8 @@ def get_temp():
     except Exception as e:
         print(e,file=stderr)
         T = inf
+    global state_memory
+    state_memory.remember_temp(T)
     return T
 
 
@@ -301,22 +423,23 @@ def gen_run_files():
         check_call(cmd)
 
 def init():
-    global states
+    global state_sequence
     global sw_states
     update_state(args.state)
     if args.debug:
-        print("DEBUG: init with states={}".format(states))
+        print("DEBUG: init with state_sequence={}".format(state_sequence))
         print("DEBUG: init with sw_states={}".format(sw_states))
     for name in ["klima_running","fan_running"]:
         sw_states[name] = read_sw_state(name)
-    if states[0] == UNKNOWN:
+    if state_sequence[0] == UNKNOWN:
         print("WARNING: Init with unknown state",file=stderr)
         warn("WARNING: Init with unknown state")
         if args.fan_only:
             if args.verbose:
                 print("Running cooldown to get valid state ...")
             run_handle_exception(cooldown)
-
+    global state_memory
+    state_memory=State_memory()
 
 #-------------------#
 # control functions #
@@ -356,11 +479,16 @@ def run_handle_exception(function):
         instant_off()
 
 def _control_loop():
+    global state_memory
     target=args.target_temp
     mintemp=target-(args.hysteresis/2)
     maxtemp=target+(args.hysteresis/2)
+    loop_start_time=time()
+    delay = not args.disable_rate_tracking_delay
     while True:
         temp=get_temp()
+        if delay and time() - loop_start_time > 1.5 * RATE_CHECK_AVERAGE_SEC[2]:
+            delay=False
         if temp < mintemp:
             if args.verbose:
                 print("T = "+str(temp)+"°C  low")
@@ -369,18 +497,34 @@ def _control_loop():
                 ensure_standby()
             else:
                 stop_ventilation()
-        elif temp > maxtemp:
+        elif temp > maxtemp: 
             if args.verbose:
                 print("T = "+str(temp)+"°C  high")
-            if not args.fan_only:
-                freeze()
-            else:
-                start_ventilation()
+                if delay:
+                    print("Delaying freeze ({:.1f} [s] left), measuring room heatup rate.".format(1.5 * RATE_CHECK_AVERAGE_SEC[2] - time() + loop_start_time))
+            if not delay:
+                if not args.fan_only:
+                    if state_memory.state_considered_working(FREEZING):
+                        freeze()
+                    elif time() - read_start_time("klima") > MAX_FREEZER_START_TIME:
+                        err_msg="ERROR: Freezing aborted because min freezing rate not reached. Check freezing device!"
+                        print(err_msg,file=stderr)
+                        err(err_msg)
+                        cooldown() #cooldown will return if allready standby or cooldown
+                        ensure_standby()
+                else:
+                    if state_memory.state_considered_working(VENTILATING):
+                        start_ventilation()
+                    else:
+                        stop_ventilation()
         else:
             if args.debug:
-                print("states={}".format([get_state_name(s) for s in states]))
+                print("state_sequence={}".format([get_state_name(s) for s in state_sequence]))
             if args.verbose:
                 print("T = "+str(temp)+"°C  ok")
+
+        if args.verbose:
+            print("{} state considered working = {}".format(get_state_name(state_sequence[0]),state_memory.state_considered_working(state_sequence[0])))
         
         if sw_states['klima_running']:
             try:
@@ -406,6 +550,7 @@ def parse_args():
     ap.add_argument('--verbose',action="store_true",default=True)
     ap.add_argument('--fan-only',action="store_true",default=False)
     ap.add_argument('--debug',action="store_true",default=False)
+    ap.add_argument('-R','--disable-rate-tracking-delay',action="store_true",default=False)
     ap.add_argument('--state',action="store",default=read_state())
     ap.add_argument('--hysteresis',type=float,default=1)
     ap.add_argument('--testing',action="store_true",default=False)
@@ -445,4 +590,4 @@ if __name__=='__main__':
     else:
         control_loop()
 
-# vim: foldmethod=indent foldlevel=0 foldnestmax=1 :
+# vim: foldmethod=indent foldlevel=0 foldnestmax=2 :

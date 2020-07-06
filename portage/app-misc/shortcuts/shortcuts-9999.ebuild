@@ -403,4 +403,5 @@ dobin show_klima_state
 dobin xi2
 dobin grb
 dobin count_klima_runtime
+dobin statm
 }

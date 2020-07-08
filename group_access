@@ -7,6 +7,7 @@ a=ArgumentParser()
 a.add_argument("-p","--path",default=None ,help="path to operate on")
 a.add_argument("-gid","--group-id", type=int ,default=None ,help="path to operate on")
 a.add_argument("-g","--group",type=str ,default=None ,help="path to operate on")
+a.add_argument("-w","--write-access",action="store_true")
 a.parse_args()
 args=a.parse_args()
 
@@ -21,9 +22,15 @@ if args.group_id and not args.group:
 
 group=(args.group if args.group else (str(args.group_id)))
 
-cmds = [[ 'sudo'  , 'find', path, '-type', 'd', '-exec', 'chmod' , 'g+s' ,'{}' , ';' ]]
-cmds+= [[ 'chown' , '-R', ':'+group , path ]]
-cmds+= [[ 'chmod' , '-R', 'g+rX', path ]]
+cmds  = [[ 'find', path, '-type', 'd', '-exec', 'chmod' , 'g+s' ,'{}' , ';' ]]
+cmds += [[ 'chown' , '-R', ':'+group , path ]]
+
+if args.write_access:
+    group_access_string="g+rwX"
+else:
+    group_access_string="g+rX"
+
+cmds+= [[ 'chmod' , '-R', group_access_string , path ]]
 
 for cmd in cmds:
     print(cmd)

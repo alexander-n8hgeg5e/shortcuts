@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+
+ap=ArgumentParser()
+ap.add_argument("-p","--path",default=".")
+ap.add_argument("-v","--verbose",action="store_true")
+ap.add_argument("-P","--packs",action="store_true")
+args=ap.parse_args()
+
+from os import listdir
+
+path = args.path
+from os import readlink
+from os.path import sep as psep,abspath,exists,islink,isdir,isfile
+
+def looks_git(d):
+    if d[-4:]==".git":
+        obj_path = d+psep+"objects"
+        if isdir(obj_path):
+            # means is a dir or a valid link to a dir
+            return True
+    return False
+    
+def check_dir(path):
+    if args.verbose:
+        print("checking: {}".format(path))
+    if looks_git(path):
+        return [path],[]
+    dirlist = listdir(path)
+    prob_git_dirs = []
+    other_subdirs = []
+    for d in dirlist:
+        fullp=path+psep+d
+        if looks_git(fullp):
+            prob_git_dirs.append(fullp)
+        elif isdir(fullp):
+            other_subdirs.append(fullp)
+    return prob_git_dirs,other_subdirs
+
+prob_git_dirs,dirs2check=check_dir(path)
+while len(dirs2check) > 0:
+    d=dirs2check.pop()
+    a,b=check_dir(d)
+    prob_git_dirs+=a
+    dirs2check+=b
+
+from pprint import pprint
+
+if not args.packs:
+    for gd in prob_git_dirs:
+        obj_dir=gd+psep+"objects"
+        dirlist=listdir(obj_dir)
+        for d in dirlist:
+            if len(d) == 2 :
+                print(obj_dir+psep+d)
+else:
+    for gd in prob_git_dirs:
+        obj_dir=gd+psep+"objects"
+        if exists(obj_dir):
+            pack_dir=obj_dir+psep+"pack"
+            if exists(pack_dir):
+                dirlist=listdir(pack_dir)
+                for d in dirlist:
+                    if d[-5:]==".pack":
+                        print(pack_dir+psep+d)

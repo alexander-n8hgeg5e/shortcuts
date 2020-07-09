@@ -404,4 +404,5 @@ dobin xi2
 dobin grb
 dobin count_klima_runtime
 dobin statm
+dobin find-git-objects
 }

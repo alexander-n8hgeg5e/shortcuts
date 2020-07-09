@@ -1,66 +1,36 @@
 #!/usr/bin/env python3
 
 from argparse import ArgumentParser
+from pylib.git_utils import looks_git,are_gitdirs_inside,find_git_dirs,get_git_objects_pathes,find_git_pack_pathes
+from os.path import sep as psep
 
-ap=ArgumentParser()
-ap.add_argument("-p","--path",default=".")
+ap=ArgumentParser("""Find the git objects.
+        Finds only the loose objects unless option --packs is specified.""")
+ap.add_argument(dest="pathes",default=".",nargs="+")
 ap.add_argument("-v","--verbose",action="store_true")
-ap.add_argument("-P","--packs",action="store_true")
+ap.add_argument("-p","--packs",action="store_true",help="find packs")
 args=ap.parse_args()
-
-from os import listdir
-
-path = args.path
-from os import readlink
-from os.path import sep as psep,abspath,exists,islink,isdir,isfile
-
-def looks_git(d):
-    if d[-4:]==".git":
-        obj_path = d+psep+"objects"
-        if isdir(obj_path):
-            # means is a dir or a valid link to a dir
-            return True
-    return False
-    
-def check_dir(path):
-    if args.verbose:
-        print("checking: {}".format(path))
-    if looks_git(path):
-        return [path],[]
-    dirlist = listdir(path)
-    prob_git_dirs = []
-    other_subdirs = []
-    for d in dirlist:
-        fullp=path+psep+d
-        if looks_git(fullp):
-            prob_git_dirs.append(fullp)
-        elif isdir(fullp):
-            other_subdirs.append(fullp)
-    return prob_git_dirs,other_subdirs
-
-prob_git_dirs,dirs2check=check_dir(path)
-while len(dirs2check) > 0:
-    d=dirs2check.pop()
-    a,b=check_dir(d)
-    prob_git_dirs+=a
-    dirs2check+=b
-
-from pprint import pprint
+if args.verbose:
+    from sys import stderr
+pathes = args.pathes
+prob_git_dirs=[]
+for p in pathes:
+    add_prob_git_dirs=find_git_dirs(p,verbose=args.verbose,msg_out=stderr)
+    # add no duplicates
+    for d in add_prob_git_dirs:
+        if not d in prob_git_dirs:
+            prob_git_dirs.append(d)
 
 if not args.packs:
     for gd in prob_git_dirs:
-        obj_dir=gd+psep+"objects"
-        dirlist=listdir(obj_dir)
-        for d in dirlist:
-            if len(d) == 2 :
-                print(obj_dir+psep+d)
+        for p in get_git_objects_pathes(gd):
+            print(p)
 else:
     for gd in prob_git_dirs:
-        obj_dir=gd+psep+"objects"
-        if exists(obj_dir):
-            pack_dir=obj_dir+psep+"pack"
-            if exists(pack_dir):
-                dirlist=listdir(pack_dir)
-                for d in dirlist:
-                    if d[-5:]==".pack":
-                        print(pack_dir+psep+d)
+        gpp=find_git_pack_pathes(gd)
+        if args.verbose and len(gpp) > 0:
+            headline="GIT DIR = {}".format(gd)
+            print(headline,file=stderr)
+            print(("="*len(headline))+"\n",file=stderr)
+        for p in gpp:
+            print(p)

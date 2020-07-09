@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+
+from pylib.git_utils import find_git_dirs
+from os.path import sep as psep,exists
+from os import makedirs,listdir,stat
+
+def parse_args():
+    from argparse import ArgumentParser
+    ap=ArgumentParser()
+    ap.add_argument(dest="source",default=".",nargs=1)
+    ap.add_argument(dest="destination",default=".",nargs="?")
+    ap.add_argument("-v","--verbose",action="store_true")
+    ap.add_argument("-n","--dry-run",action="store_true",default=False)
+    return ap.parse_args()
+
+def do(src,dst,verbose=False,dry_run=True):
+    if args.verbose:
+        from sys import stdout
+        if stdout.isatty():
+            from os import get_terminal_size
+            cols=get_terminal_size().columns
+        else:
+            cols=None
+    src_gd=find_git_dirs(src)
+    if len(src_gd)==1:
+        src=src_gd[0]
+    else:
+        raise Exception("ERROR: could not find source git dir")
+    
+    dst_gd=find_git_dirs(dst)
+    if len(dst_gd)==1:
+        dst=dst_gd[0]
+    else:
+        raise Exception("ERROR: could not find dest git dir")
+    if verbose:
+        print("source =",src)
+        print("dest   =",dst)
+    from pylib.git_utils import unpack_packs
+    if verbose:
+        print("unpacking dest to ensure unpacked state")
+    unpack_packs([dst],verbose=verbose)
+    from pylib.git_utils import get_git_objects_pathes
+    src_objs = get_git_objects_pathes(src)
+    dst_objs = get_git_objects_pathes(dst)
+    if verbose:
+        print("num src objs={}, num dst objs={}".format(len(src_objs),len(dst_objs)))
+    from pylib.git_utils import get_hash_from_obj_path    
+    for src_obj in src_objs:
+        # check 
+        # TODO: improve here
+        found=False
+        src_hash=get_hash_from_obj_path(src_obj)
+        for dst_obj in dst_objs:
+            size=None
+            dst_hash=get_hash_from_obj_path(dst_obj)
+            if dst_hash == src_hash:
+                if verbose:
+                    print("hash already in dst: {}".format(dst_hash))
+                # if it was a hash collision
+                # it would be a problem
+                # first check for 0 len file on dest
+                # usually caused by failed src read
+                size=stat(dst_obj).st_size
+                if size != 0:
+                    # if size is 0, not found,
+                    # file will be overwriten
+                    found=True
+                    # check for collision
+                    with open(dst_obj,mode="rb") as dst_f:
+                        dst_data = dst_f.read()
+                    with open(src_obj,mode="rb") as src_f:
+                        src_data = src_f.read()
+                    if src_data!=dst_data:
+                        raise Exception("""ERROR: Got hash collision.
+                        Can not proceed.
+                        colliding files:
+                        {}
+                        {}
+                        """.format(src_obj,dst_obj))
+                else:
+                    print("""WARNING: Zero size file found at destination
+                            file: {}
+                            File will be overwritten.""".format(dst_obj))
+
+                break
+        if not found:
+            dd=dst+psep+"objects"
+            count=0
+            subdir="".join(src_hash[count:count+2])
+            dd+=psep+subdir
+            makedirs(dd,exist_ok=True)
+            ldd=len(listdir(dd))
+            while not ldd < 256:
+                count+=2
+                subdir="".join(src_hash[count:count+2])
+                dd+=psep+subdir
+                makedirs(dd,exist_ok=True)
+                ldd=len(listdir(dd))
+            dest_object_path=dd+psep+"".join(src_hash[count+2:])
+            if verbose:
+                if cols is None:
+                    w="140"
+                else:
+                    w=str(cols-5)
+                wdotw=w+"."+w
+                print("cp from,to:")
+                print(("{:>"+wdotw+"}").format(src_obj))
+                print(("{:>"+wdotw+"}").format(dest_object_path))
+            if not dry_run:
+                # check
+                if exists(dest_object_path) and not size==0:
+                    raise Exception("""ERROR: existing dest object file.
+                    dest should not exists.
+                    filename= {}""".format(dest_object_path))
+                else:
+                    with open(dest_object_path,mode="wb") as dst_f:
+                        with open(src_obj,mode="rb") as src_f:
+                            dst_f.write(src_f.read())
+            
+if __name__ == "__main__":
+    args=parse_args()
+    src=args.source[0]
+    dest=args.destination[0]
+    do(src,dest,verbose=args.verbose,dry_run=args.dry_run)
+    
+
+# vim: foldlevel=0 foldnestmax=3 foldmethod=indent :

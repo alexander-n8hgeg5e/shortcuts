@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from pylib.git_utils import looks_git,are_gitdirs_inside,find_git_dirs,get_git_objects_pathes,find_git_pack_pathes
 from os.path import sep as psep
+from sys import stderr
 
 ap=ArgumentParser("""Find the git objects.
         Finds only the loose objects unless option --packs is specified.""")
@@ -10,8 +11,7 @@ ap.add_argument(dest="pathes",default=".",nargs="+")
 ap.add_argument("-v","--verbose",action="store_true")
 ap.add_argument("-p","--packs",action="store_true",help="find packs")
 args=ap.parse_args()
-if args.verbose:
-    from sys import stderr
+
 pathes = args.pathes
 prob_git_dirs=[]
 for p in pathes:
@@ -34,3 +34,5 @@ else:
             print(("="*len(headline))+"\n",file=stderr)
         for p in gpp:
             print(p)
+
+# vim: foldlevel=0 foldnestmax=3 foldmethod=indent :

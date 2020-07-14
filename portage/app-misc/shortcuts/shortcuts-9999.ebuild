@@ -405,4 +405,7 @@ dobin grb
 dobin count_klima_runtime
 dobin statm
 dobin find-git-objects
+dobin df-GMK
+dobin n2s
+dobin sed_align4
 }

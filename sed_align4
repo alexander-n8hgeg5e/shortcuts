@@ -1,0 +1,19 @@
+#!/bin/fish
+test -z $1; and set a 25 ; or set a $1
+test -z $2; and set b 15 ; or set a $2
+test -z $3; and set c 15 ; or set a $3
+test -z $4; and set d 15 ; or set a $4
+sed -E \
+'s@^((\S+)\s+)((\S+)\s+)((\S+)\s+)((\S+))@'\
+'\2'(string repeat -n $a " ")\
+'\4'(string repeat -n $b " ")\
+'\6'(string repeat -n $c " ")\
+'\8'(string repeat -n $d " ")\
+'@' | \
+sed -E \
+'s@^'\
+'((.{1,'$a'})\S*\s*)'\
+'((.{1,'$b'})\S*\s*)'\
+'((.{1,'$c'})\S*\s*)'\
+'((.{1,'$d'})\S*\s*)'\
+'@\2 \4 \6 \8@'

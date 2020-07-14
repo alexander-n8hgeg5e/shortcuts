@@ -1,0 +1,2 @@
+#!/bin/fish
+tr \x0a ' '|sed -E 's/(.{'(math $COLUMNS - 10)'}[ ])/\1\n/g'

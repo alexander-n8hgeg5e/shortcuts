@@ -1,0 +1,45 @@
+#!/bin/fish
+
+set opts
+set options_counter 0
+for a in $argv
+    if test $a = '--';or test (string sub -l1 -- $a) != -
+        # options end
+        break
+    end
+    set options_counter (math $options_counter +1 )
+    if test (string sub -l8 -- $a) = '--output'
+        if not set -q oopts
+            set oopts $a
+        end
+    end
+end        
+
+if not set -q oopts
+    set oopts '--output=target,used,avail,size'
+end
+
+if test $options_counter -lt (count $argv)
+    # after the option-args comes the files arg
+    set files $argv[( math $options_counter +1)..-1]
+end
+
+set -a opts $oopts
+
+#echo 'oopts='"$oopts"'#'"count="(count $oopts)
+#echo 'files='"$files"'#'"count="(count $files)
+#echo 'opts='"$opts"'#'"count="(count $opts)
+
+
+for c in G M K
+    for line in (df $opts -B"$c" $files|tail -n+2|sed_align4)
+        set -a lines"$c" $line
+    end
+end
+
+for i in (seq (count $linesG))
+    for c in G M K
+        eval echo \$lines"$c"[\$i]
+    end
+end
+

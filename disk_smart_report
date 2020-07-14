@@ -14,15 +14,16 @@ end
 
 function scan_keyword -a keyw -a line
 	echo $line |grep -q $keyw
-	and set var1  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |rev|cut -d' ' -f1|rev)
+	and set var1  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |rev|cut -d'-' -f1|rev|tr -s ' ')
 	and set var2  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |cut -d' ' -f1)
 	and if test $keyw = 'Device Model'
+	     set var1  ( echo $line | egrep -o $keyw'.*$' |tr -d \t |rev|cut -d' ' -f1|rev)
 	     set var2 $keyw
 	end
 	and align $var2 $var1 40 20
 end
 
-set keywords "Device Model" "Power_On_Hours" "Read_Error" "Pending" "Realloc"
+set keywords "Device Model" "Power_On_Hours" "Read_Error" "Pending" "Realloc" "Temp"
 
 for i in a b c d
     set var var_$i

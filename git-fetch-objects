@@ -90,12 +90,13 @@ def do(src,dst,verbose=False,dry_run=True):
             dd+=psep+subdir
             makedirs(dd,exist_ok=True)
             ldd=len(listdir(dd))
-            while not ldd < 256:
-                count+=2
-                subdir="".join(src_hash[count:count+2])
-                dd+=psep+subdir
-                makedirs(dd,exist_ok=True)
-                ldd=len(listdir(dd))
+            if False: # it seems git does not go deeper with subdirs
+                while not ldd < 256:
+                    count+=2
+                    subdir="".join(src_hash[count:count+2])
+                    dd+=psep+subdir
+                    makedirs(dd,exist_ok=True)
+                    ldd=len(listdir(dd))
             dest_object_path=dd+psep+"".join(src_hash[count+2:])
             if verbose:
                 if cols is None:

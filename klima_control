@@ -271,9 +271,9 @@ def read_start_time(name):
             raise InvalidStartTimeError()
 
 
-#-------------#
-# temp sensor #
-#-------------#
+#------------#
+#  get data  #
+#------------#
 def get_temp():
     cmd=['get_room_temp']
     try:
@@ -284,6 +284,20 @@ def get_temp():
         print(e,file=stderr)
         T = inf
     return T
+
+def is_sleeping_time():
+    t0=args.night_sleep[0]
+    t1=args.night_sleep[1]
+    lt=localtime()
+    current_hour = lt.tm_hour + lt.tm_min/60 + lt.tm_sec/3600
+    if t0 > t1:
+        d=24-t0
+        t1 += d
+        current_hour += d
+        t0=0
+    if t0 < current_hour < t1:
+        return True
+    return False
 
 
 #----------------#
@@ -316,6 +330,9 @@ def init():
             if args.verbose:
                 print("Running cooldown to get valid state ...")
             run_handle_exception(cooldown)
+    if not args.night_sleep is None:
+        global localtime
+        from time import localtime
 
 
 #-------------------#
@@ -360,28 +377,38 @@ def _control_loop():
     mintemp=target-(args.hysteresis/2)
     maxtemp=target+(args.hysteresis/2)
     while True:
-        temp=get_temp()
-        if temp < mintemp:
+        if not args.night_sleep is None and is_sleeping_time():
             if args.verbose:
-                print("T = "+str(temp)+"°C  low")
+                print("klima sleeping until hour {}".format(args.night_sleep[1]))
             if not args.fan_only:
-                cooldown() #cooldown will return if allready standby or cooldown
+                if not states[0] is OFF:
+                    cooldown() #cooldown will return if allready standby or cooldown
                 ensure_standby()
             else:
                 stop_ventilation()
-        elif temp > maxtemp:
-            if args.verbose:
-                print("T = "+str(temp)+"°C  high")
-            if not args.fan_only:
-                freeze()
-            else:
-                start_ventilation()
         else:
-            if args.debug:
-                print("states={}".format([get_state_name(s) for s in states]))
-            if args.verbose:
-                print("T = "+str(temp)+"°C  ok")
-        
+            temp=get_temp()
+            if temp < mintemp:
+                if args.verbose:
+                    print("T = "+str(temp)+"°C  low")
+                if not args.fan_only:
+                    cooldown() #cooldown will return if allready standby or cooldown
+                    ensure_standby()
+                else:
+                    stop_ventilation()
+            elif temp > maxtemp:
+                if args.verbose:
+                    print("T = "+str(temp)+"°C  high")
+                if not args.fan_only:
+                    freeze()
+                else:
+                    start_ventilation()
+            else:
+                if args.debug:
+                    print("states={}".format([get_state_name(s) for s in states]))
+                if args.verbose:
+                    print("T = "+str(temp)+"°C  ok")
+            
         if sw_states['klima_running']:
             try:
                 start_time=read_start_time("klima")
@@ -408,6 +435,7 @@ def parse_args():
     ap.add_argument('--debug',action="store_true",default=False)
     ap.add_argument('--state',action="store",default=read_state())
     ap.add_argument('--hysteresis',type=float,default=1)
+    ap.add_argument('--night-sleep',nargs=2,metavar=('START-SLEEP-TIME','STOP-SLEEP-TIME'),type=float,default=None,help='makes the klima sleep during the time interval')
     ap.add_argument('--testing',action="store_true",default=False)
     ap.add_argument('-G','--gen-run-files',action="store_true",default=False)
     global args
@@ -423,10 +451,12 @@ if __name__=='__main__':
     if args.gen_run_files:
         gen_run_files()
     if args.test:
-        LOOPSLEEPTIME=1
-        COOLDOWN_CYLCES=1
-        COOLDOWN_CYLCE_SLEEP=0.4
-        COOLDOWN_FINAL_FANTIME=5
+        print(args)
+        exit()
+        #LOOPSLEEPTIME=1
+        #COOLDOWN_CYLCES=1
+        #COOLDOWN_CYLCE_SLEEP=0.4
+        #COOLDOWN_FINAL_FANTIME=5
 
         #test_temp=50.0
         #test_temp_d=0

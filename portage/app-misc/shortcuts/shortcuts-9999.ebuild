@@ -401,7 +401,7 @@ dobin tox
 dobin mecl
 dobin show_klima_state
 dobin xi2
-dobin grb
+dobin gr
 dobin count_klima_runtime
 dobin statm
 dobin find-git-objects

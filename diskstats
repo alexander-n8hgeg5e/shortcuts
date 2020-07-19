@@ -22,6 +22,27 @@ field_desc= [
             ]
 from os.path import sep as psep
 from pprint import pprint
+from argparse import ArgumentParser
+ap=ArgumentParser()
+ap.add_argument(dest='devname',nargs=1)
+ap.add_argument(dest='fields',nargs="+",type=int,help="interger indices")
+ap.add_argument("-u","--unit",choices=["M","G","K","k","g","m","b","B","T","t"],help="if not specified sectors are unit as listed with -i",default=None)
+ap.add_argument("-s","--sector-size",type=float,help="sector size in bytes required if unit specified")
+ap.add_argument('-l',action="store_true",help="print available device names")
+ap.add_argument('-i',action="store_true",help="print available field indices")
+args=ap.parse_args()
+
+def print_field_indices():
+    for i in range(len(field_desc)):
+        print("{} : {}".format(i,field_desc[i]))
+if args.i:
+    print("available field indices")
+    print_field_indices()
+    exit()
+
+def print_available_dev_names():
+    for k in name2_major_minor.keys():
+        print(k)
 
 with open("/proc/diskstats") as f:
     lines=f.read().strip().split("\n")
@@ -43,27 +64,49 @@ for line in lines:
     name2_major_minor.update({name:(major,minor)})
     datadict[major][minor].update(d)
 
-from sys import argv,exit
+if args.l:
+    print("available dev names")
+    print_available_dev_names()
+    exit()
+
+from sys import exit
 
 try:
-    major,minor = name2_major_minor[argv[1]]
+    major,minor = name2_major_minor[args.devname[0]]
 except KeyError:
     print("KeyError, available keys:")
-    for k in name2_major_minor.keys():
-        print(k)
+    print_available_dev_names()
     exit(1)
 maxkeylen=0
 printstuff=[]
-for i in [ int(j) for j in argv[2:]]:
+for i in args.fields:
     try:
         k=field_desc[i]
         maxkeylen=max(len(k),maxkeylen)
         v=datadict[major][minor][k]
     except IndexError:
         print("IndexError, available indices:")
-        for i in range(len(field_desc)):
-            print("{} : {}".format(i,field_desc[i]))
+        print_field_indices()
         exit(1)
     printstuff.append((k,v))
 for k,v in printstuff:
-    print(("{:"+str(maxkeylen)+"} = {}").format(k,v))
+    postfix=""
+    if not args.unit is None and k.lower().find("sectors") != -1:
+        v=int(v)*args.sector_size
+        if args.unit.upper() == "T":
+            v=v/1024/1024/1024/1024
+            postfix="Tb"
+        elif args.unit.upper() == "G":
+            v=v/1024/1024/1024
+            postfix="Gb"
+        elif args.unit.upper() == "M":
+            v=v/1024/1024
+            postfix="Mb"
+        elif args.unit.upper() == "K":
+            v=v/1024
+            postfix="Kb"
+        elif args.unit.upper() == "B":
+            postfix="B"
+        else:
+            postfix="error"
+    print(("{:"+str(maxkeylen)+"} = {} {}").format(k,v,postfix))

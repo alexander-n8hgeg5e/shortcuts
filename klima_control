@@ -294,6 +294,7 @@ def is_sleeping_time():
         d=24-t0
         t1 += d
         current_hour += d
+        current_hour %=24
         t0=0
     if t0 < current_hour < t1:
         return True
@@ -378,6 +379,7 @@ def _control_loop():
     maxtemp=target+(args.hysteresis/2)
     while True:
         if not args.night_sleep is None and is_sleeping_time():
+            # sleeping time stop
             if args.verbose:
                 print("klima sleeping until hour {}".format(args.night_sleep[1]))
             if not args.fan_only:
@@ -443,8 +445,9 @@ def parse_args():
     try:
         args.state=int(args.state)
     except ValueError:
-        if args.state in STATES.keys():
-            args.state=STATES[args.state]
+        s=args.state.upper()
+        if s in STATES.keys():
+            args.state=STATES[s]
 
 if __name__=='__main__':
     parse_args()

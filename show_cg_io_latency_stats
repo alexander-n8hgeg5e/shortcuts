@@ -1,0 +1,31 @@
+#!/bin/fish
+set a 5
+set b 10
+set c 10
+set d 10
+set e 10
+set f 10
+set aa (string repeat -n $a " ")
+set bb (string repeat -n $b " ")
+set cc (string repeat -n $c " ")
+set dd (string repeat -n $d " ")
+set ee (string repeat -n $e " ")
+set ff (string repeat -n $f " ")
+for ar in $argv[2..-1]
+    echo "$ar " (cat "$ar"/io.latency|sed -E 's@[ ]@:@g'|sort)
+    cat "$ar"/io.stat \
+    | grep -E $argv[1] \
+    | sed -E 's/ ([rwd](bytes|ios)|total|missed)=[0-9]+//g;
+              s/(.*$)/\1 - - - - -/;
+              s/^(\S+)(([ ]\S+){5}).*$/\1\2/;
+              s/(( \S+)+)( -)/\3\1/;
+              s/(( \S+)+)( -)/\3\1/;
+              s/(( \S+)+)( -)/\3\1/;
+              s/(( \S+)+)( avg_lat=[0-9]+)/\3\1/;
+              s/(( \S+)+)( win=[0-9]+)/\3\1/;
+              s/(( \S+)+)( -)/\3\1/;
+              s/(( \S+)+)( -)/\3\1/;
+s@^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(.*$)@\1'"$aa"'\2'"$bb"'\3'"$cc"'\4'"$dd"'\5'"$ee"'\6'"$ff"'\7@;
+s@^(.{1,'$a'})\S*\s*(.{1,'$b'})\S*\s*(.{1,'$c'})\S*\s*(.{1,'$d'})\S*\s*(.{1,'$e'})\S*\s*(.{1,'$f'})\S*\s*@\1 \2 \3 \4 \5 \6@;'
+    echo
+end

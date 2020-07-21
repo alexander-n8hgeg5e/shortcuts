@@ -1,0 +1,26 @@
+#!/bin/fish
+while true
+    set chars a b c d e f g h i j k l m n o p q r s t u v w x y z \
+    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+    set cmd "sudo find / -xdev -mindepth "(random 0 (random 1 10))" \
+    -iname '"(random choice $chars)"*' \
+    -ipath '*/"(random choice $chars)"*' \
+    -type f -print \
+    -exec sudo dd if='{}' count=100000 of=/dev/null status=none \; \
+    -quit"
+    #echo $cmd
+    fish -c $cmd&
+    for i in (seq 10)
+        sleep 0.5;
+        echo -n .
+        if not jobs -l
+            echo done
+            break
+        end
+    end
+    if jobs -q -l
+        set pid (jobs -l -p|tail -n+1)
+        echo kill pid $pid
+        kill $pid
+    end
+end

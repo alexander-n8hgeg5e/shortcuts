@@ -409,4 +409,5 @@ dobin df-GMK
 dobin n2s
 dobin sed_align4
 dobin diskstats
+dobin stop_keyev_mouseev
 }

@@ -1,0 +1,2 @@
+#!/bin/sh
+kill $(ps -A -o pid,cmd|grep -E 'python3[ ]+/usr/bin/(mouseev|keyev)'|cut -d' ' -f1)

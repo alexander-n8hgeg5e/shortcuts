@@ -16,12 +16,11 @@ patterns={
         'endlinepattern' : '^(.*)(pyend[ ]*'+MLCE+')(.*)$',
         'endline_replace_pattern_get_befor' : '\\1' ,
         'endline_replace_pattern_get_after' : '\\4' ,
-        'at_pos_pattern' : '^.*'+MLCS+'[ ]*(def[ ]py[(][^)]*[)][:])(.*)'+MLCE+'.*$' ,
-        'at_pos_replace_pattern' : '\\2\n',
+        'at_pos_pattern' : '^(.*)'+MLCS+'[ ]*(def[ ]py[(][^)]*[)][:])(.*)'+MLCE+'(.*)$' ,
+        'at_pos_replace_pattern_get_befor' : '\\1',
+        'at_pos_replace_pattern_get_code' :  '\\4',
+        'at_pos_replace_pattern_get_after' : '\\6',
         }
-# TODO: replace varnames, remove next 2 lines
-patterns.update({'at_pos_sub_pattern':patterns['at_pos_pattern']})
-patterns.update({'startline_sub_pattern':patterns['startlinepattern']})
 
 from argparse import ArgumentParser
 parser=ArgumentParser( description="generates *.pyout\"[.extension]\" files from *.pyin\"[.extension]\" files")
@@ -50,8 +49,28 @@ pyprep_msg =  ('   ||*\\\\\\   *\\       /* ||*\\\\\\   ||*\\\\\\    ||====*  ||
                 '|*     \\|'
                )
 
-def get_code_from_oneline(line):
-    return sub(patterns['at_pos_sub_pattern'],patterns['at_pos_replace_pattern'],line)
+def get_code_from_oneline(m):
+    p=m.groupdict()
+    parts = {
+            'prematch':         p["1"],
+            'commentstart':     p["2"],
+            'key':              p["3"],
+            'code':             p["4"],
+            'commentstop':      p["5"],
+            'postmatch':        p["6"],
+            }
+    return parts
+
+def get_code(d):
+    if not d["code"] is None:
+        return d["code"]
+    else:
+        return d["c"]
+
+def prepare_dict(d):
+    d['code'] = None
+    d['c'] = None
+    return d
 
 def load(data_dict):
     if "load_path" in data_dict.keys():
@@ -85,18 +104,25 @@ def prepfile(in_file,out_file):
                 p1=inf.tell()
                 m=search(patterns['at_pos_pattern'],line)
                 if not m is None:
-
-                    exec_code = sub( patterns['at_pos_sub_pattern'], patterns['at_pos_replace_pattern'], m.string )
+                    parts = get_parts_from_match(m)
                     if args.verbose:
-                        print("py code found at line,char "+str(linecounter)+","+str( m.start() )+" : \n" +exec_code)
-                        print(line)
+                        print("py code found at line={}, char={}".format(linecounter,len(befor)))
+                        print("code: {}".format(repr(code)))
 
-                    of.write( line[:m.start()])
-                    d.update({'code' : None })
-                    exec('if True:\n    '+exec_code+'\n' )
-                    if not d['code'] is None:
-                        of.write( d['code'] )
-                    of.write( line[m.end():] )
+                    of.write(befor)
+                    code='if True:'+code
+                    if args.verbose:
+                        print("    executing prep gen code:")
+                        print("              ==============")
+                        print(code)
+                        print("-----------------code-end---")
+                    d=prepare_dict(d)
+                    exec(code,d,d)
+                    c=get_code(d)
+                    if not c is None:
+                        of.write( c )
+                        code=""
+                    of.write( after )
                     d=load(d)
 
                 elif match( patterns['startlinepattern'], line ):
@@ -143,19 +169,20 @@ def prepfile(in_file,out_file):
                             print("              ==============")
                             print(code)
                             print("-----------------code-end---")
-                        d.update({'code' : None })
                         # as exec is a function,
                         # to get the locals of exec
                         # give it the dict "d"
                         # as locals and globals
+                        d=prepare_dict(d)
                         exec(code,d,d)
-                        if not d['code'] is None:
+                        c=get_code(d)
+                        if not c is None:
                             if args.verbose:
                                 print("at line {} following result will be inserted:".format(startline))
                                 print("                     ======")
-                                print(repr(d['code']))
+                                print(d['code'])
                                 print("----result-end---")
-                            of.write(d['code'])
+                            of.write(c)
                         d=load(d)
                         code=""
                         started_at=None

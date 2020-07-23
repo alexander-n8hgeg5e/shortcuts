@@ -47,14 +47,17 @@ pyprep_msg =  ('   ||*\\\\\\   *\\       /* ||*\\\\\\   ||*\\\\\\    ||====*  ||
                )
 
 def get_code(d):
-    if not d["code"] is None:
-        return d["code"]
-    else:
+    if not d["c"] is None:
         return d["c"]
+    else:
+        # deprecated stuff
+        if not d['d']['code'] is None:
+            return d['d']["code"]
 
 def prepare_dict(d):
-    d['code'] = None
     d['c'] = None
+    # deprecated stuff below
+    d['d']['code'] = None
     return d
 
 def load(data_dict):
@@ -66,13 +69,8 @@ def store(data_dict):
     if "store_path" in data_dict.keys():
         with open(data_dict['store_path'],"wt") as f:
             f.write(pformat(data_dict))
-#def use_file(file):
-#    if match('[^/]+[.]c$',file) and not isdir(file):
-#        return True
-#    else:
-#        return False
 
-d={}
+d={'d':{'code':None}, 'c': None }
 def prepfile(in_file,out_file):
     global d
     linecounter=0

@@ -1,18 +1,27 @@
 #!/usr/bin/python3
-from re import match,sub,search
+from re import match,sub,search,DOTALL
 #from os import listdir
 from os.path import isdir
 from os import linesep
 from pprint import pformat
+
+MULTI_LINE_COMMENT_START = "([/][*]|--\[\[)"
+MLCS=MULTI_LINE_COMMENT_START
+MULTI_LINE_COMMENT_END = "([*][/]|[]][]])"
+MLCE=MULTI_LINE_COMMENT_END
 patterns={
-        'at_pos_pattern' : '[/][*]def[ ]py[(][^)]*[)][:].*[*][/]' ,
-        'startlinepattern' : '^[ ]*[/][*]def[ ]pystart[(][^)]*[)][:][ ]*$',
-        'endlinepattern' : '^.*pyend[*][/].*$' ,
-        'startline_sub_pattern' : '^[ ]*[/][*](def[ ]pystart[(][^)]*[)][:])[ ]*$',
-        'startline_replace_pattern' : '\\1\n',
-        'at_pos_sub_pattern' :  '^.*[/][*](def[ ]py[(][^)]*[)][:])(.*)[*][/].*$' ,
+        'startlinepattern' : '^(.*)'+MLCS+'[ ]*(def[ ]pystart[(][^)]*[)][:])(.*)$',
+        'startline_replace_pattern_get_before' : '\\1',
+        'startline_replace_pattern_get_after' : '\\4',
+        'endlinepattern' : '^(.*)(pyend[ ]*'+MLCE+')(.*)$',
+        'endline_replace_pattern_get_befor' : '\\1' ,
+        'endline_replace_pattern_get_after' : '\\4' ,
+        'at_pos_pattern' : '^.*'+MLCS+'[ ]*(def[ ]py[(][^)]*[)][:])(.*)'+MLCE+'.*$' ,
         'at_pos_replace_pattern' : '\\2\n',
         }
+# TODO: replace varnames, remove next 2 lines
+patterns.update({'at_pos_sub_pattern':patterns['at_pos_pattern']})
+patterns.update({'startline_sub_pattern':patterns['startlinepattern']})
 
 from argparse import ArgumentParser
 parser=ArgumentParser( description="generates *.pyout\"[.extension]\" files from *.pyin\"[.extension]\" files")
@@ -90,35 +99,77 @@ def prepfile(in_file,out_file):
                     of.write( line[m.end():] )
                     d=load(d)
 
-                elif match( patterns['startlinepattern'],line ):
+                elif match( patterns['startlinepattern'], line ):
+                    # startline pattern found
+                    # what is befor is normal file content
+                    # that will be written to the outputfile (name here "of").
+                    # What comes after "startline-keyword"
+                    # will be used as start of the code
                     if args.verbose:
-                        print("startline at: "+str(linecounter) )
+                        print("startline at {} : {} ".format(linecounter, repr(line) ))
                     if started_at is None:
                         started_at = p1
                         startline = linecounter
-                        #code+=sub(patterns['startline_sub_pattern'],patterns['startline_replace_pattern'], line )+linesep
+                        after=sub(patterns['startlinepattern'],patterns['startline_replace_pattern_get_after'], line ,flags=DOTALL)
+                        # add to code, do not reset
+                        # code should be  allready the empty string
+                        # provoke errors to reveal them
+                        #print("appending startline code : {} ".format( repr(after) ))
+                        code+=after
+                        befor=sub(patterns['startlinepattern'],patterns['startline_replace_pattern_get_before'], line,flags=DOTALL )
+                        #print("writing startline content :{}".format(repr(befor)))
+                        of.write(befor)
                     else:
                         raise Exception("Pyprep Syntax Error: after start follows end not start")
 
                 elif match(patterns['endlinepattern'],line):
+                    # endline pattern found
+                    # what comes after the "endline-keyword"
+                    # is normal file content
+                    # that will be written to the outputfile (name here: "of")
+                    # after the generated code will have been written.
+                    # What comes befor the "endline-keyword"
+                    # will be used as end of the code
+                    befor=sub(patterns['endlinepattern'],patterns['endline_replace_pattern_get_befor'], line )
+                    after=sub(patterns['endlinepattern'],patterns['endline_replace_pattern_get_after'], line )
                     if args.verbose:
                         print("    endline at: "+str(linecounter) )
+                        #print("line:",repr(line))
                     if started_at is not None:
+                        #print("appending endline code : {}".format(repr(befor)))
+                        code='if True:'+code+befor
                         if args.verbose:
+                            print("    executing prep gen code:")
+                            print("              ==============")
                             print(code)
+                            print("-----------------code-end---")
                         d.update({'code' : None })
-                        exec('if True:\n'+code+'\n' )
+                        # as exec is a function,
+                        # to get the locals of exec
+                        # give it the dict "d"
+                        # as locals and globals
+                        exec(code,d,d)
                         if not d['code'] is None:
+                            if args.verbose:
+                                print("at line {} following result will be inserted:".format(startline))
+                                print("                     ======")
+                                print(repr(d['code']))
+                                print("----result-end---")
                             of.write(d['code'])
                         d=load(d)
                         code=""
                         started_at=None
+                        #if args.verbose:
+                        #    print("writing endline content :{}".format(repr(after)))
+                        of.write(after)
                     else:
                         raise Exception("Pyprep Syntax Error:  end needs start befor")
                 else:
                     if started_at is not None:
+                        #print("collecting code at line {}".format(linecounter))
                         code += line
                     else:
+                        #print("writing line {} :{}".format(linecounter,repr(line)))
                         of.write(line)
                 #print( linecounter,end="  " )
             if not started_at is None:

@@ -410,4 +410,14 @@ dobin n2s
 dobin sed_align4
 dobin diskstats
 dobin stop_keyev_mouseev
+dobin b
+dobin random_file_read
+dobin show_cg_io_latency_stats
+dobin ch
+dobin ct
+dobin set_cpu_governor
+dobin pyxd
+dobin git-unpack-packs
+dobin git-fetch-objects
+dobin show_dirtytime
 }

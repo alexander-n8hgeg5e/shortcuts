@@ -1,30 +1,27 @@
 #!/usr/bin/python3
-from re import match,sub,search,DOTALL
+from re import match,sub,search,DOTALL as DA
 #from os import listdir
 from os.path import isdir
 from os import linesep
 from pprint import pformat
+from collections import OrderedDict as Od
+import sys
+sys.path.insert(0,"/var/src/pylib")
+from pylib.log_utils import shorten_msg
 
-MULTI_LINE_COMMENT_START = "([/][*]|--\[\[)"
+MULTI_LINE_COMMENT_START = "(?P<c_start>[/][*]|--\[\[)"
 MLCS=MULTI_LINE_COMMENT_START
-MULTI_LINE_COMMENT_END = "([*][/]|[]][]])"
+MULTI_LINE_COMMENT_END = "(?P<c_end>[*][/]|[]][]])"
 MLCE=MULTI_LINE_COMMENT_END
 patterns={
-        'startlinepattern' : '^(.*)'+MLCS+'[ ]*(def[ ]pystart[(][^)]*[)][:])(.*)$',
-        'startline_replace_pattern_get_before' : '\\1',
-        'startline_replace_pattern_get_after' : '\\4',
-        'endlinepattern' : '^(.*)(pyend[ ]*'+MLCE+')(.*)$',
-        'endline_replace_pattern_get_befor' : '\\1' ,
-        'endline_replace_pattern_get_after' : '\\4' ,
-        'at_pos_pattern' : '^(.*)'+MLCS+'[ ]*(def[ ]py[(][^)]*[)][:])(.*)'+MLCE+'(.*)$' ,
-        'at_pos_replace_pattern_get_befor' : '\\1',
-        'at_pos_replace_pattern_get_code' :  '\\4',
-        'at_pos_replace_pattern_get_after' : '\\6',
+        'startlinepattern' : '^(?P<pre>.*)'+MLCS+'[ ]*(?P<pymagic>def[ ]pystart[(][^)]*[)][:])(?P<code>.*)$',
+        'endlinepattern' : '^(?P<code>.*)(?P<pymagic>pyend)(?P<space>[ ]*)'+MLCE+'(?P<post>.*)$',
+        'at_pos_pattern' : '^(?P<pre>.*)'+MLCS+'(?P<space>[ ]*)(?P<pymagic>def[ ]*py[(][^)]*[)][:])(?P<code>.*)'+MLCE+'(?P<post>.*)$' ,
         }
-
+ML0=100
 from argparse import ArgumentParser
 parser=ArgumentParser( description="generates *.pyout\"[.extension]\" files from *.pyin\"[.extension]\" files")
-parser.add_argument( "--verbose",'-v',action="store_true", default=False )
+parser.add_argument( "--verbose",'-v',action="count", default=False )
 parser.add_argument('files', metavar='files', nargs='*', type=str, help='input filenames without extension prefix , ".pyin"  ')
 parser.add_argument( "--outfile-extension-prefix",'-o',action="store",type=str ,default=".pyout",help='infile.pyin.ext will result in a outfile.outfile-extension-prefix.ext' )
 parser.add_argument( "--infile-extension-prefix",'-i',action="store", type=str, default=".pyin",help='use infile.infile-extension-prefix.ext as infile' )
@@ -48,18 +45,6 @@ pyprep_msg =  ('   ||*\\\\\\   *\\       /* ||*\\\\\\   ||*\\\\\\    ||====*  ||
                '   **         */        **       ||     \\* ||====*  **       **       ** '
                 '|*     \\|'
                )
-
-def get_code_from_oneline(m):
-    p=m.groupdict()
-    parts = {
-            'prematch':         p["1"],
-            'commentstart':     p["2"],
-            'key':              p["3"],
-            'code':             p["4"],
-            'commentstop':      p["5"],
-            'postmatch':        p["6"],
-            }
-    return parts
 
 def get_code(d):
     if not d["code"] is None:
@@ -102,103 +87,108 @@ def prepfile(in_file,out_file):
                 line=inf.readline()
                 linecounter+=1
                 p1=inf.tell()
-                m=search(patterns['at_pos_pattern'],line)
+                m=search(patterns['at_pos_pattern'],line,flags=DA)
                 if not m is None:
-                    parts = get_parts_from_match(m)
+                    parts = m.groupdict()
                     if args.verbose:
-                        print("py code found at line={}, char={}".format(linecounter,len(befor)))
-                        print("code: {}".format(repr(code)))
+                        fs="happy -> py code found at line={}, char={}"
+                        print(fs.format(linecounter,1+len(''.join(m.groups()[:4]))))
+                        print("code={}".format(repr(parts['code'])))
 
-                    of.write(befor)
-                    code='if True:'+code
+                    of.write(parts['pre'])
+                    code='if True:'+ parts['code']
                     if args.verbose:
-                        print("    executing prep gen code:")
-                        print("              ==============")
+                        print("    exec prep code:")
+                        print("         ==========")
                         print(code)
-                        print("-----------------code-end---")
+                        print("----------code-end-")
                     d=prepare_dict(d)
                     exec(code,d,d)
                     c=get_code(d)
                     if not c is None:
+                        if args.verbose > 0:
+                            print("at line {} following result will be inserted:".format(linecounter))
+                            print("                     ======                  ")
+                            if args.verbose > 1:
+                                print(c)
+                            else:
+                                print(shorten_msg(c,ML0))
+                            print("----result-end---")
                         of.write( c )
                         code=""
-                    of.write( after )
+                    of.write( parts['post'] )
                     d=load(d)
-
-                elif match( patterns['startlinepattern'], line ):
-                    # startline pattern found
-                    # what is befor is normal file content
-                    # that will be written to the outputfile (name here "of").
-                    # What comes after "startline-keyword"
-                    # will be used as start of the code
-                    if args.verbose:
-                        print("startline at {} : {} ".format(linecounter, repr(line) ))
-                    if started_at is None:
-                        started_at = p1
-                        startline = linecounter
-                        after=sub(patterns['startlinepattern'],patterns['startline_replace_pattern_get_after'], line ,flags=DOTALL)
-                        # add to code, do not reset
-                        # code should be  allready the empty string
-                        # provoke errors to reveal them
-                        #print("appending startline code : {} ".format( repr(after) ))
-                        code+=after
-                        befor=sub(patterns['startlinepattern'],patterns['startline_replace_pattern_get_before'], line,flags=DOTALL )
-                        #print("writing startline content :{}".format(repr(befor)))
-                        of.write(befor)
-                    else:
-                        raise Exception("Pyprep Syntax Error: after start follows end not start")
-
-                elif match(patterns['endlinepattern'],line):
-                    # endline pattern found
-                    # what comes after the "endline-keyword"
-                    # is normal file content
-                    # that will be written to the outputfile (name here: "of")
-                    # after the generated code will have been written.
-                    # What comes befor the "endline-keyword"
-                    # will be used as end of the code
-                    befor=sub(patterns['endlinepattern'],patterns['endline_replace_pattern_get_befor'], line )
-                    after=sub(patterns['endlinepattern'],patterns['endline_replace_pattern_get_after'], line )
-                    if args.verbose:
-                        print("    endline at: "+str(linecounter) )
-                        #print("line:",repr(line))
-                    if started_at is not None:
-                        #print("appending endline code : {}".format(repr(befor)))
-                        code='if True:'+code+befor
-                        if args.verbose:
-                            print("    executing prep gen code:")
-                            print("              ==============")
-                            print(code)
-                            print("-----------------code-end---")
-                        # as exec is a function,
-                        # to get the locals of exec
-                        # give it the dict "d"
-                        # as locals and globals
-                        d=prepare_dict(d)
-                        exec(code,d,d)
-                        c=get_code(d)
-                        if not c is None:
-                            if args.verbose:
-                                print("at line {} following result will be inserted:".format(startline))
-                                print("                     ======")
-                                print(d['code'])
-                                print("----result-end---")
-                            of.write(c)
-                        d=load(d)
-                        code=""
-                        started_at=None
-                        #if args.verbose:
-                        #    print("writing endline content :{}".format(repr(after)))
-                        of.write(after)
-                    else:
-                        raise Exception("Pyprep Syntax Error:  end needs start befor")
                 else:
-                    if started_at is not None:
-                        #print("collecting code at line {}".format(linecounter))
-                        code += line
+                    m = match( patterns['startlinepattern'], line , flags=DA)
+                    if not m is None:
+                        # startline pattern found
+                        # what is befor is normal file content
+                        # that will be written to the outputfile (name here "of").
+                        # What comes after "startline-keyword"
+                        # will be used as start of the code
+                        if args.verbose:
+                            print("happy -> found startline at {} : {} ".format(linecounter, repr(line) ))
+                        if started_at is None:
+                            started_at = p1
+                            startline = linecounter
+                            parts=m.groupdict()
+                            # add to code, do not reset
+                            # code should be  allready the empty string
+                            # provoke errors to reveal them
+                            code+=parts['code']
+                            of.write(parts['pre'])
+                        else:
+                            raise Exception("PyPrepSyntaxError: expecting end after start but found start.")
                     else:
-                        #print("writing line {} :{}".format(linecounter,repr(line)))
-                        of.write(line)
-                #print( linecounter,end="  " )
+                        m =  match(patterns['endlinepattern'],line,flags=DA)
+                        if not m is None:
+                            # endline pattern found
+                            # what comes after the "endline-keyword"
+                            # is normal file content
+                            # that will be written to the outputfile (name here: "of")
+                            # after the generated code will have been written.
+                            # What comes befor the "endline-keyword"
+                            # will be used as end of the code
+                            if args.verbose:
+                                print("    endline at: "+str(linecounter) )
+                            if started_at is not None:
+                                parts=m.groupdict()
+                                code='if True:'+code+parts['code']
+                                if args.verbose:
+                                    print("    exec prep code:")
+                                    print("         ==========")
+                                    if args.verbose > 1:
+                                        print(code)
+                                    else:
+                                        print(shorten_msg(code,ML0))
+                                    print("----------code-end-")
+                                # as exec is a function,
+                                # to get the locals of exec
+                                # give it the dict "d"
+                                # as locals and globals
+                                d=prepare_dict(d)
+                                exec(code,d,d)
+                                c=get_code(d)
+                                if not c is None:
+                                    if args.verbose > 0:
+                                        print("at line {} following result will be inserted:".format(startline))
+                                        print("                     ======")
+                                        if args.verbose > 1:
+                                            print(d['code'])
+                                        else:
+                                            print(shorten_msg(d['code'],ML0))
+                                        print("----result-end---")
+                                    of.write(c)
+                                d=load(d)
+                                code=""
+                                started_at=None
+                            else:
+                                raise Exception("Pyprep Syntax Error:  end needs start befor")
+                        else:
+                            if started_at is not None:
+                                code += line
+                            else:
+                                of.write(line)
             if not started_at is None:
                 raise Exception("no end line found\n"+"startline was: "+str(startline))
 

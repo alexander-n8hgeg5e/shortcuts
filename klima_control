@@ -7,13 +7,14 @@ from math import inf
 from sys import stderr
 from traceback import format_tb
 
-RUN_FILENAMES = [
-                'klima_control_fan_running',
-                'klima_control_fan_start_time',
-                'klima_control_klima_running',
-                'klima_control_klima_start_time',
-                'klima_control_state',
-                ]
+RUN_FILENAMES = {
+                'fan_running'       :  'fan_running',      
+                'fan_start_time'    :  'fan_start_time',   
+                'klima_running'     :  'klima_running',    
+                'klima_start_time'  :  'klima_start_time', 
+                'state'             :  'state',            
+                }
+RUN_SUBDIR = "klima-control"
 USERNAME  ="klima-control"
 GROUPNAME ="klima-control"
 
@@ -74,11 +75,11 @@ def switch_state_tracked( state_name, state , sw_func, on_sw_action ):
         on_sw_action()
 
 def write_sw_state(name,state):
-    with open("/var/run/klima_control_"+name,mode="wt") as f:
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES[name],mode="wt") as f:
         f.write(repr(state))
 
 def read_sw_state(name):
-    with open("/var/run/klima_control_"+name,mode="rt") as f:
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES[name],mode="rt") as f:
         try:
             return eval(f.read())
         except SyntaxError:
@@ -127,12 +128,12 @@ def update_state(state2update):
         states[0]=state2update
 
 def write_state(state):                                       
-    with open("/var/run/klima_control_state",mode="wt") as f: 
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES["state"],mode="wt") as f: 
         f.write(str(state))                                   
 
 def read_state():
     global states
-    with open("/var/run/klima_control_state",mode="rt") as f:
+    with open('/run/'+RUN_SUBDIR+"/"+RUN_FILENAMES['state'],mode="rt") as f:
         try:
             return int(f.read())
         except ValueError:
@@ -239,7 +240,7 @@ def ensure_standby():
 #  logging functions  #
 #---------------------#
 def store_start_time(name):
-    with open("/var/run/klima_control_"+name+"_start_time",mode="wt") as f:
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES[name+"_start_time"],mode="wt") as f:
         f.write(str(time()))
 
 def log_runtime(name):
@@ -260,11 +261,11 @@ def log_runtime(name):
         log(msg,level=ERR,facility=LOG_USER)
 
 def erase_start_time(name):
-    with open("/var/run/klima_control_"+name+"_start_time",mode="wt") as f:
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES[name+"_start_time"],mode="wt") as f:
         f.write("\"invalid\"")
 
 def read_start_time(name):
-    with open("/var/run/klima_control_"+name+"_start_time",mode="rt") as f:
+    with open("/run/"+RUN_SUBDIR+"/"+RUN_FILENAMES[name+"_start_time"],mode="rt") as f:
         try:
             return float(f.read())
         except ValueError:
@@ -304,16 +305,15 @@ def is_sleeping_time():
 #----------------#
 # init functions #
 #----------------#
-def gen_run_files():
-    from subprocess import check_call
-    for fn in RUN_FILENAMES:
-        path="/run/"+fn
-        cmd=["sudo","touch",path]
-        check_call(cmd)
-        cmd=["sudo","chown",USERNAME+":"+GROUPNAME,path]
-        check_call(cmd)
-        cmd=["sudo","chmod","g+rw",path]
-        check_call(cmd)
+def print_run_files_gen_cmds():
+    subdir = "/run/"+RUN_SUBDIR
+    print("umask 027")
+    print("mkdir -p "+subdir)
+    for fn in RUN_FILENAMES.values():
+        path = subdir + "/" + fn
+        print("touch "+path)
+    print("chown -R "+USERNAME+":"+GROUPNAME+" "+subdir)
+    print("chmod -R g+rX "+subdir)
 
 def init():
     global states
@@ -435,13 +435,17 @@ def parse_args():
     ap.add_argument('--verbose',action="store_true",default=True)
     ap.add_argument('--fan-only',action="store_true",default=False)
     ap.add_argument('--debug',action="store_true",default=False)
-    ap.add_argument('--state',action="store",default=read_state())
+    ap.add_argument('--state',action="store",default=None)
     ap.add_argument('--hysteresis',type=float,default=1)
     ap.add_argument('--night-sleep',nargs=2,metavar=('START-SLEEP-TIME','STOP-SLEEP-TIME'),type=float,default=None,help='makes the klima sleep during the time interval')
     ap.add_argument('--testing',action="store_true",default=False)
-    ap.add_argument('-G','--gen-run-files',action="store_true",default=False)
+    ap.add_argument('-G','--print-run-files-gen-cmds',action="store_true",default=False)
     global args
     args=ap.parse_args()
+    if not args.print_run_files_gen_cmds:
+        args.state=read_state()
+    else:
+        args.state=UNKNOWN
     try:
         args.state=int(args.state)
     except ValueError:
@@ -451,8 +455,9 @@ def parse_args():
 
 if __name__=='__main__':
     parse_args()
-    if args.gen_run_files:
-        gen_run_files()
+    if args.print_run_files_gen_cmds:
+        print_run_files_gen_cmds()
+        exit()
     if args.test:
         print(args)
         exit()

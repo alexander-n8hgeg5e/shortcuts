@@ -90,7 +90,7 @@ parser.add_argument('files', nargs='*', default=[] , type=str, help='files to op
 
 def d(msg):
     pass   #{{{
-    ##l.debug(msg)   #}}} 
+    l.debug(msg)   #}}} 
 
 def gen_screens():
     global generated_screens   #{{{
@@ -101,15 +101,9 @@ def gen_screens():
     if generated_screens and mode is 1:
         return
     global screen_utils
-    from pylib import screen_utils
-    screen_layout=screen_utils.parse_screen_layout_env_var()
-    if len(screen_layout) == 0:
-        return None
-    screens = []
-    screens.append( { 'server' : screen_layout[0]['x_server'] , 'x' : 0 , 'y' : 0 } )
-    for screen in screen_layout[1:]:
-            oldscreen=screens[-1]
-            screens.append( { 'server' : screen['x_server'] , 'x' : int(screen['size'][0])+oldscreen['x'] , 'y' : 0 } )   #}}} 
+    from pylib.screen_utils.env import parse_screen_layout_env_var_v3
+    screen_layout=parse_screen_layout_env_var_v3()
+    screens=screen_layout
          
 def is_sock(path):
     return stat.S_ISDIR(stat_file(path).st_mode)   #{{{   #}}} 
@@ -220,6 +214,7 @@ def gen_nvims_visible_state_by_socket(mode=0):
     generated_nvims_visible_state_by_socket=True   #}}} 
 
 def list2int(l):
+    d(l)
     r=[]   #{{{
     for i in l:
         r.append(int(i))
@@ -341,8 +336,9 @@ def gen_monitor_widths(mode=0):
     global generated_monitor_widths
     if ( mode==0 or mode == 1 ) and generated_monitor_widths:
         return
-    monitor_widths = environ['monitor_widths'].split(':')
-    monitor_widths = list2int(monitor_widths)
+    gen_screens()
+    layout=screens
+    monitor_widths=[thing['dim'][0] for thing in layout]
     generated_monitor_widths=True   #}}} 
 
 def _get_active_win_pos_str( x_pos, right_border , max_count_x_distance_from_boarder, widths ):
@@ -403,6 +399,7 @@ def gen_pos_of_nvim_by_sock(mode=0):
     """
     # var to update
     global pos_of_nvim_by_sock
+    global generated_pos_of_nvim_by_sock
     if mode==0 and generated_pos_of_nvim_by_sock:
         return
     if mode==1 and generated_pos_of_nvim_by_sock:
@@ -412,11 +409,13 @@ def gen_pos_of_nvim_by_sock(mode=0):
     # gen required stuff
     gen_visible_nvims_list()
     gen_screens()
+    gen_monitor_widths()
 
     pos_of_nvim_by_sock=[]
     right_border = sum_of_list(monitor_widths)
     for nvim_index in visible_nvims_list:
         win_id = get_win_id_of_nvim_by_socket_index(nvim_index)
+        d(win_id)
         server = sock2server_list[nvim_index] 
         win_x_pos = get_win_x_pos(server,win_id)
         win_pos_index = get_win_pos(win_x_pos)
@@ -485,7 +484,7 @@ def gen_pos_of_nvim_by_sock_list(mode=0):
                1 try determine if update is needed and update in case
                2 update all values unconditionally
     """
-    return   #}}} 
+    return [ "invalid" for s in sockets]  #}}} 
 
 def focused_nvim_index():
     gen_focus_of_nvim_by_socketnum_list(mode=0)   #{{{
@@ -605,7 +604,7 @@ def decide_witch_nvim_sock_to_use_for_edit():
     # default fallback
     global open_other_monitor
     open_other_monitor=False
-
+    print("sockets",sockets)
     # decide
     if len(sockets)==1:
         return
@@ -854,7 +853,7 @@ def enable_debug():
     l.setLevel( DEBUG )   #{{{
     for i in l.handlers:
         i.setLevel( DEBUG )
-    ##l.debug( 'debugging enabled' )   #}}} 
+    l.debug( 'debugging enabled' )   #}}} 
     
 def table(header,columns):
     from columnize import columnize as col   #{{{
@@ -883,6 +882,8 @@ def table(header,columns):
 def do_verbose_stuff():
     gen_focus_of_nvim_by_socketnum_list()   #{{{
     gen_pos_of_nvim_by_sock_list()
+    gen_pos_of_nvim_by_sock()
+    d("pos-by-sock-: {}".format(pos_of_nvim_by_sock))
     gen_nvims_visible_state_by_socket()
 
     header = [[  'socket',
@@ -893,60 +894,77 @@ def do_verbose_stuff():
     columns = [ sockets, focus_of_nvim_by_socketnum_list, nvims_visible_state_by_socket, pos_of_nvim_by_sock ]
     print( table(header,columns))
 
-### main code
-args=parser.parse_args()
+class NvimPool():
+    def __init__(self,sockets=[]):
+        self.sockets=sockets
 
-# testing stuff
-#args.verbose=True
-#args.scan=True
-#def exit(*args):
-#    print('exit '+str(*args))
-##### end testing stuff
+    def add(socket):
+        self.sockets.append(socket)
 
-if args.debug:
-    enable_debug()
+if __name__=="__main__":
+    ### main code
+    args=parser.parse_args()
+    # testing stuff
+    #args.verbose=True
+    #args.scan=True
+    #def exit(*args):
+    #    print('exit '+str(*args))
+    ##### end testing stuff
 
-if args.scan:
-    scan_for_sockets()
-    if not args.verbose:
-        exit()
-decide_witch_nvim_sock_to_use_for_edit()
-attach_nvims()
-
-if args.verbose:
-    #do_verbose_stuff()
+    if args.testing:
+        """
+        testing stuff and exit by exception
+        """
+        from pprint import pprint
+        for k,v in environ.items():
+            print("{}={}".format(k,v))
+        raise Exception('done')
+    
+    
+    if args.debug:
+        enable_debug()
+    
+    if args.scan:
+        scan_for_sockets()
+    decide_witch_nvim_sock_to_use_for_edit()
+    from pylib.du import dd,d0,d1
+    dd(socket_index_to_connect)
+    attach_nvims()
+    
     if args.verbose:
-        exit()
-
-if args.testing:
-    """
-    testing stuff and exit by exception
-    """
-    raise Exception('done')
-
-if args.back:
-    # go back phase 1
-    remember_home_and_to_go_back_there()
-
-# open files
-if not isatty(stdin.fileno()):
-    with open(pagerfilepath,mode="wb") as pf:
-        pf.write(stdin.buffer.read())
-    args.files.append(pagerfilepath)
-
-for i in args.files:
-    nvim_open_file(i)
-
-if args.command:
-    nvim_run_command(args.command)
-        
-if back:
-    # go back phase 2
-    # this after all win and buffer opening , configure the way back
-    setup_way_back()
-
-if args.wait:
-    wait()
-elif len(args.files) > 0:
-    autowait(args.files[0])
-# vim: set foldmethod=marker foldlevel=0 :
+        do_verbose_stuff()
+    
+    if args.testing:
+        """
+        testing stuff and exit by exception
+        """
+        from pprint import pprint
+        pprint(environ())
+        raise Exception('done')
+    
+    if args.back:
+        # go back phase 1
+        remember_home_and_to_go_back_there()
+    
+    # open files
+    if not isatty(stdin.fileno()):
+        with open(pagerfilepath,mode="wb") as pf:
+            pf.write(stdin.buffer.read())
+        args.files.append(pagerfilepath)
+    
+    for i in args.files:
+        nvim_open_file(i)
+    
+    if args.command:
+        nvim_run_command(args.command)
+            
+    if back:
+        # go back phase 2
+        # this after all win and buffer opening , configure the way back
+        setup_way_back()
+    
+    if args.wait:
+        wait()
+    elif len(args.files) > 0:
+        autowait(args.files[0])
+# vim: set foldmethod=indent foldlevel=0 foldnestmax=1 :

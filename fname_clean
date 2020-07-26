@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 from argparse import ArgumentParser
+from sys import stderr
+from os.path import exists
+from os import stat
 
 a=ArgumentParser("this program renames the files it finds or it is pointed at and replaces unprintable and non ascii stuff with something suitable")
 a.add_argument(dest="pathes",nargs="*",default=["."])
 a.add_argument("--recursive","-r",action="store_true",default=False)
 a.add_argument("--rename-dirs","-d",action="store_true",default=False)
+a.add_argument("--existing-compare-size-msg","-ec",action="store_true",default=False)
+a.add_argument("--print-smaller","-ps",action="store_true",default=False)
 args=a.parse_args()
 
 allowed_ranges = ["AZ","az","09"]
@@ -63,7 +68,7 @@ for path in args.pathes:
         other_pathes.append(path)
 if not len(other_pathes) == 0:
     from warnings import warning
-    warning("don't know what to do with some pathes:")
+    warning("don't know what to do with some pathes:",file=stderr)
     print(other_pathes)
 
 from os.path import basename
@@ -76,10 +81,27 @@ for path in pathes:
         print(cbn)
         print()
         rename_data.append((bn,cbn))
-inp=input("Rename files ? (Y/[N]):")
+print("Rename files ? (Y/[N]):",file=stderr,end="")
+inp=input()
 if inp=="Y":
     from os import rename
     for a,b in rename_data:
-        rename(a,b)
+        if not exists(b):
+            rename(a,b)
+        else:
+            print("skipped rename of \"{}\" to \"{}\" because of existing target.".format(a,b),file=stderr)
+            if args.existing_compare_size_msg:
+                sa=stat(a).st_size
+                sb=stat(b).st_size
+                if not args.print_smaller:
+                    if sa == sb:
+                        print('existing target file matches the source in size: "{}"'.format(sb))
+                else:
+                    if sa < sb:
+                        print('conflicting target file "{}" is smaller than "{}"'.format(a,b))
+                    elif sb < sa:
+                        print('conflicting target file "{}" is smaller than "{}"'.format(b,a))
+
+
 else:
-    print("rename aborted")
+    print("rename aborted",file=stderr)

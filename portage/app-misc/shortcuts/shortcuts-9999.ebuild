@@ -260,8 +260,6 @@ dobin gbro
 dobin git_update_process
 dobin get_latest_portage_build_logs
 dobin write_latest_portage_build_logs_to_shm
-dobin klima_off
-dobin klima_on
 dobin sc
 dobin xauth_push
 dobin ovpn
@@ -398,10 +396,8 @@ dobin ssh-akl
 dobin logfilter_old
 dobin tox
 dobin mecl
-dobin show_klima_state
 dobin xi2
 dobin gr
-dobin count_klima_runtime
 dobin statm
 dobin find-git-objects
 dobin df-GMK

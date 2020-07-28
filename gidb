@@ -2,21 +2,72 @@
 
 from sys import argv,stdout
 from subprocess import call
+import sys
+sys.path.insert(1,'/var/src/pylib')
 
 colorcode=b'\x1b[1m\x1b[30m\x1b[43m'
 color_off=b'\x1b[0m'
 
-def wrap_print(*z,end='\n',a=colorcode,b=color_off,**zz):
-	stdout.buffer.write(colorcode)
-	stdout.buffer.write(" ".join(z).encode())
-	stdout.buffer.write(color_off)
-	stdout.buffer.write(end.encode())
-	stdout.buffer.flush()
 
-for i in range(int(argv[1])):
-	back="^"*i
-	wrap_print('######################################################')
-	wrap_print("git diff "+" ".join(argv[2:])+"between HEAD^" + back+" HEAD"+back)
-	wrap_print('######################################################')
-	cmd=["git", "diff"] + argv[2:] + ["HEAD^"+back,"HEAD"+back]
-	call(cmd)
+def parse_args():
+    from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass
+    ap=ArgumentParser(description="")
+    ap.add_argument("-v", action="count", help="increase verbosity" )
+    ap.add_argument(
+                   "-l", "--range-len", type=int, default=1,
+                   help="",
+                   )
+    ap.add_argument(
+                   dest="range0", type=int, nargs=1,
+                   metavar="rangestart", help="",
+                   )
+    ap.add_argument(
+                   dest="pass_throug_arg1", type=str, nargs="?",
+                   help="", default=None
+                   )
+    ap.add_argument(
+                   dest="pass_throug_args", type=str, nargs="*",
+                   help="",
+                   )
+    args=ap.parse_args()
+    r0=args.range0[0]
+    rl=args.range_len
+    #TODO: use pass-through arg parser
+    args.pass_throug_arg1=args.pass_throug_arg1 if not args.pass_throug_arg1 in [None,"--"] else []
+    args.range=range(r0, r0 + rl )
+    print(args)
+    return args
+args=parse_args()
+
+def wrap_print(*z,end='\n',a=colorcode,b=color_off,**zz):
+    stdout.buffer.write(colorcode)
+    stdout.buffer.write(" ".join(z).encode())
+    stdout.buffer.write(color_off)
+    stdout.buffer.write(end.encode())
+    stdout.buffer.flush()
+
+def do_print_head(i,back):
+    back="^"*i
+    wrap_print('#######################################################')
+    do_print_middle(i,back)
+    wrap_print('v  v  v  v  v  v  v  v  v  v  v  v  v  v  v  v  v  v  v')
+
+def do_print_middle(i,back):
+    wrap_print("git diff "+"between HEAD^" +back+" HEAD"+back)
+
+def do_print_tail(i,back):
+    wrap_print('^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^  ^')
+    do_print_middle(i,back)
+    wrap_print('#######################################################')
+
+def do(i):
+    back="^"*i
+    do_print_head(i,back)
+    cmd=["git", "diff"] + args.pass_throug_arg1 + ["HEAD^"+back,"HEAD"+back] + args.pass_throug_args
+    call(cmd)
+    do_print_tail(i,back)
+
+for i in args.range[:-1]:
+    do(i)
+    input("-- press enter to proceed --")
+do(args.range[-1])

@@ -11,7 +11,7 @@ PRECISION=0.1
 MAXTRY=100
 SAMPLESLEEP=0.05
 
-CMD = [ '/var/src/433control/transmitter/gpio', '-t' ]
+CMD = [ 'gpio', '-t' ]
 
 if DEBUG or VERBOSE:
     from sys import stderr

@@ -172,9 +172,9 @@ def prepfile(in_file,out_file):
                                         print("at line {} following result will be inserted:".format(startline))
                                         print("                     ======")
                                         if args.verbose > 1:
-                                            print(d['code'])
+                                            print(c)
                                         else:
-                                            print(shorten_msg(d['code'],ML0))
+                                            print(shorten_msg(c,ML0))
                                         print("----result-end---")
                                     of.write(c)
                                 d=load(d)

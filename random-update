@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+FAILED_FILE_PATH = "/tmp/update_failed_list"
+GET_UPGRADEABLE_CMD = [ 'eix', '-I', '--format', '{upgrade=1}<category>/<name>\n{}' ]
+from random import choice as random_choice
+from subprocess import check_output
+from subprocess import check_call
+from subprocess import CalledProcessError
+
+class UpdateFailed(Exception):
+    pass
+
+def get_random_pkg(exclude_failed=[]):
+    outp = check_output(GET_UPGRADEABLE_CMD)
+    pkgs = outp.decode().strip().split("\n")
+    return random_choice(pkgs)
+
+def add_to_failed_list(pkg):
+    with open(FAILED_FILE_PATH,mode="at") as f:
+        f.write("\n"+pkg)
+        
+def get_failed_list():
+    with open(FAILED_FILE_PATH,mode="rt") as f:
+        return f.read().strip().split("\n")
+
+def update(pkg):
+    try:
+        check_call(["elpau!!",pkg])
+    except CalledProcessError:
+        raise UpdateFailed(pkg)
+
+def main():
+    failed = False
+    while True:
+        if not failed:
+            pkg=get_random_pkg()
+        else:
+            pkg=get_random_pkg(exclude_failed=get_failed_list())
+        try:
+            update(pkg)
+            failed=False
+        except UpdateFailed:
+            add_to_failed_list(pkg)
+            failed=True
+
+if __name__ == "__main__":
+    main()

@@ -6,14 +6,35 @@ from random import choice as random_choice
 from subprocess import check_output
 from subprocess import check_call
 from subprocess import CalledProcessError
+from subprocess import PIPE
+from subprocess import DEVNULL
+from argparse import ArgumentParser
+from sys import stdout
+
+def parse_args():
+    a=ArgumentParser()
+    a.add_argument("-v","--verbose",action="store_true")
+    global args
+    args=a.parse_args()
 
 class UpdateFailed(Exception):
     pass
 
 def get_random_pkg(exclude_failed=[]):
     outp = check_output(GET_UPGRADEABLE_CMD)
-    pkgs = outp.decode().strip().split("\n")
-    return random_choice(pkgs)
+    _pkgs = outp.decode().strip().split("\n")
+    pkgs=[]
+    for p in _pkgs:
+        if not p in exclude_failed:
+            lp=len(p)
+            if lp > 0:
+                if p[0] not in '[ ':
+                    if len(p) < 5 or p[0:5] != "Found":
+                        pkgs.append(p)
+    if len(pkgs) > 0:
+        return random_choice(pkgs)
+    else:
+        return None
 
 def add_to_failed_list(pkg):
     with open(FAILED_FILE_PATH,mode="at") as f:
@@ -25,23 +46,33 @@ def get_failed_list():
 
 def update(pkg):
     try:
-        check_call(["elpau!!",pkg])
+        if args.verbose:
+            print("updating "+pkg+" ...", end="")
+            stdout.flush()
+        check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
+        if args.verbose:
+            print("successfull")
     except CalledProcessError:
+        if args.verbose:
+            print("failed")
         raise UpdateFailed(pkg)
 
+def clear_failed_list():
+    f = open(FAILED_FILE_PATH,mode="wt")
+    f.close()
+        
 def main():
-    failed = False
+    parse_args()
     while True:
-        if not failed:
-            pkg=get_random_pkg()
+        pkg=get_random_pkg(exclude_failed=get_failed_list())
+        if pkg is None:
+            clear_failed_list()
+            continue
         else:
-            pkg=get_random_pkg(exclude_failed=get_failed_list())
-        try:
-            update(pkg)
-            failed=False
-        except UpdateFailed:
-            add_to_failed_list(pkg)
-            failed=True
+            try:
+                update(pkg)
+            except UpdateFailed:
+                add_to_failed_list(pkg)
 
 if __name__ == "__main__":
     main()

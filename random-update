@@ -11,6 +11,9 @@ def init():
     LEN_FAILED_END=len(FAILED_END)
     LEN_SUCCESSFULL_END=len(SUCCESSFULL_END)
     parse_args()
+    if args.simulated_test_run:
+        global FAILED_FILE_PATH
+        FAILED_FILE_PATH+='.test'
 
 from random import choice as random_choice
 from subprocess import check_output
@@ -22,10 +25,12 @@ from argparse import ArgumentParser
 from sys import stdout
 from os import get_terminal_size
 from re import match
+from os.path import exists
 
 def parse_args():
     a=ArgumentParser()
     a.add_argument("-v","--verbose",action="store_true")
+    a.add_argument("--simulated-test-run",action="store_true")
     global args
     args=a.parse_args()
 
@@ -62,11 +67,14 @@ def add_to_failed_list(pkg):
         f.write("\n"+pkg)
         
 def get_failed_list():
-    with open(FAILED_FILE_PATH,mode="rt") as f:
-        return f.read().strip().split("\n")
+    if exists(FAILED_FILE_PATH):
+        with open(FAILED_FILE_PATH,mode="rt") as f:
+            return f.read().strip().split("\n")
+    else:
+        return []
 
-def get_aligned_end( msg, end ):
-    add_space = get_terminal_size().columns - len(msg) - end
+def get_aligned_end( msg, end , space_right_of_end=2):
+    add_space = get_terminal_size().columns - len(msg) - len(end) - space_right_of_end
     if add_space > 0:
         end = " " * add_space + end
     return end
@@ -77,7 +85,11 @@ def update(pkg):
             msg="updating "+pkg+" ... "
             print(msg, end="")
             stdout.flush()
-        check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
+        if not args.simulated_test_run:
+            check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
+        else:
+            if random_choice([True,False]):
+                raise CalledProcessError(-1,"failed_test_cmd")
         if args.verbose:
             print(get_aligned_end(msg,SUCCESSFULL_END))
     except CalledProcessError:

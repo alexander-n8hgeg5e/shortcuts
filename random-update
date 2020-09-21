@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 FAILED_FILE_PATH = "/tmp/update_failed_list"
-GET_UPGRADEABLE_CMD = [ 'eix', '-I', '--format', '{upgrade=1}<category>/<name>\n{}' ]
+GET_UPGRADEABLE_CMD_PREFIX  = [ 'eix', '-I']
+GET_UPGRADEABLE_CMD_POSTFIX = [ '--format', '{upgrade=1}<category>/<name>\n{}' ]
 SUCCESSFULL_END="successfull"
 FAILED_END="failed"
 
@@ -31,14 +32,23 @@ def parse_args():
     a=ArgumentParser()
     a.add_argument("-v","--verbose",action="store_true")
     a.add_argument("--simulated-test-run",action="store_true")
+    a.add_argument(dest = "eix_expressions", default=["--system"],nargs="*")
     global args
     args=a.parse_args()
+    if args.verbose:
+        print("eix-expressions-todo: "+str(args.eix_expressions))
 
 class UpdateFailed(Exception):
     pass
 
-def get_random_pkg(exclude_failed=[], boost={'dev-libs': 5,'.*-libs':4}):
-    outp = check_output(GET_UPGRADEABLE_CMD)
+def get_random_pkg  (   eix_expression,
+                        exclude_failed=[],
+                        boost={'dev-libs': 5,'.*-libs':4},
+                    ):
+    get_upgradeable_cmd = GET_UPGRADEABLE_CMD_PREFIX \
+                          + eix_expression.split(" ") \
+                          + GET_UPGRADEABLE_CMD_POSTFIX
+    outp = check_output(get_upgradeable_cmd)
     _pkgs = outp.decode().strip().split("\n")
     pkgs=[]
     for p in _pkgs:
@@ -100,11 +110,10 @@ def update(pkg):
 def clear_failed_list():
     f = open(FAILED_FILE_PATH,mode="wt")
     f.close()
-        
-def main():
-    init()
+
+def loop_eix_expression(eix_expression):
     while True:
-        pkg=get_random_pkg(exclude_failed=get_failed_list())
+        pkg=get_random_pkg(eix_expression, exclude_failed=get_failed_list())
         if pkg is None:
             clear_failed_list()
             continue
@@ -113,6 +122,13 @@ def main():
                 update(pkg)
             except UpdateFailed:
                 add_to_failed_list(pkg)
+        
+def main():
+    init()
+    for eix_expression in args.eix_expressions:
+        if args.verbose:
+            print('processing eix-expression: "'+eix_expression+'"')
+        loop_eix_expression(eix_expression)
 
 if __name__ == "__main__":
     main()

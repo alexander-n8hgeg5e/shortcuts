@@ -1,0 +1,103 @@
+#!/usr/bin/python3
+FLAGS = {
+        '+HSync' : 1      ,
+        '-HSync' : 2      ,
+        '+VSync' : 4      ,
+        '-VSync' : 8      ,
+        'Interlace'  : 16  ,
+        'DoubleScan' : 32  ,
+        'CSync'      : 64  ,
+        '+CSync'    : 128 ,
+        '-CSync'    : 256 ,
+        }
+
+BASE_MODELINE=[278.75, 3840, 4064, 4464, 5088, 2160, 2163, 2168, 2194]
+DEFAULT_HSYNC_RATIO  = 5088 / 3840
+DEFAULT_VSYNC_RATIO  = 2194 / 2160
+DEFAULT_HBLANK_RATIO = ( 4464 - 4064 ) / ( 5088 - 3840 )
+DEFAULT_VBLANK_RATIO = ( 2168 - 2163 ) / ( 2194 - 2160 )
+DEFAULT_HSTART_RATIO = ( 4064 - 3840 ) / ( 5088 - 3840 )
+DEFAULT_VSTART_RATIO = ( 2163 - 2160 ) / ( 2194 - 2160 )
+#xrandr --newmode 3840x2160 297 3840 4016 4104 4400 2160 2168 2178 2250 +hsync +vsync
+print(DEFAULT_VSTART_RATIO)
+
+def flags2str(flags):
+    s=[]
+    for k,v in FLAGS.items():
+        if (flags & v) > 0:
+            s.append(k)
+    return " ".join(s)
+
+
+def modeline(name, clock, hdisp, hsyncstart, hsyncend, htotal, vdisp, vsyncstart, vsyncend, vtotal, flags):
+    return  " ".join([str(i) for i in [ name, clock, hdisp, hsyncstart, hsyncend, htotal, vdisp, vsyncstart, vsyncend, vtotal, flags2str(flags) ]])
+
+def gen_modeline(x,y,hfreq,vfreq,max_dotclock=300*10**6,flags=0,hblank_ratio_factor=1,vblank_ratio_factor=1,hsync_ratio_factor=1,vsync_ratio_factor=1,hstart_ratio_factor=1,vstart_ratio_factor=1):
+    name=str(x)+"x"+str(y)
+    hdisp=x
+    vdisp=y
+    htotal     =   x * DEFAULT_HSYNC_RATIO * hsync_ratio_factor
+    vtotal     =   y * DEFAULT_VSYNC_RATIO * vsync_ratio_factor
+    hsyncstart = x + (( htotal - x ) * DEFAULT_HSTART_RATIO * hstart_ratio_factor )
+    vsyncstart = y + (( vtotal - y ) * DEFAULT_VSTART_RATIO * vstart_ratio_factor )
+    hsyncend   = ( htotal - x ) * DEFAULT_HBLANK_RATIO * hblank_ratio_factor + hsyncstart
+    vsyncend   = ( vtotal - y ) * DEFAULT_VBLANK_RATIO * vblank_ratio_factor + vsyncstart
+    htotal     = round(htotal)
+    vtotal     = round(vtotal)
+    hsyncstart = round(hsyncstart)
+    vsyncstart = round(vsyncstart)
+    hsyncend   = round(hsyncend)
+    vsyncend   = round(vsyncend)
+
+    #print("(h,v)_total={},{}".format(htotal,vtotal))
+    #print("(h,v)_syncstart={},{}".format(hsyncstart,vsyncstart))
+    #print("(h,v)_syncend={},{}".format(hsyncend,vsyncend))
+    clock = min( htotal * hfreq, max_dotclock )
+    vfreq = clock / vtotal / htotal
+    hfreq = clock / htotal
+    clock = round(clock)
+    #vfreq = round(vfreq)
+    #hfreq = round(hfreq)
+    print("vfreq = {:.2f}".format(vfreq))
+    print("hfreq = {:.2f}".format(hfreq))
+    return modeline( name, clock, hdisp, hsyncstart, hsyncend, htotal, vdisp, vsyncstart, vsyncend, vtotal, flags=flags )
+    
+def parse_args():
+    from argparse import ArgumentParser
+    ap=ArgumentParser()
+    ap.add_argument(dest="x",type=int)
+    ap.add_argument(dest="y",type=int)
+    ap.add_argument(dest="hfreq",type=float)
+    ap.add_argument(dest="vfreq",type=float)
+    ap.add_argument(dest="max_dotclock",type=float)
+    ap.add_argument(dest="flags",type=int)
+    ap.add_argument("-hf",  type=float,default=1,help="horizontal sync ratio factor")
+    ap.add_argument("-vf",  type=float,default=1,help="vertical sync ratio factor")
+    ap.add_argument("-hbf", type=float,default=1,help="horizontal blank ratio factor")
+    ap.add_argument("-vbf", type=float,default=1,help="vertical blank ratio factor")
+    ap.add_argument("-hssf",type=float,default=1,help="horizontal sync start position factor")
+    ap.add_argument("-vssf",type=float,default=1,help="vertical sync start position factor")
+    global args
+    args=ap.parse_args()
+
+
+def main():
+    parse_args()
+    modeline = gen_modeline(    
+                            args.x,
+                            args.y,
+                            args.hfreq,
+                            args.vfreq,
+                            flags=args.flags,
+                            hsync_ratio_factor=args.hf,
+                            vsync_ratio_factor=args.vf,
+                            hblank_ratio_factor=args.hbf,
+                            vblank_ratio_factor=args.vbf,
+                            hstart_ratio_factor=args.hssf,
+                            vstart_ratio_factor=args.vssf,
+                            )
+    print(modeline)
+    
+
+if __name__=="__main__":
+    main()

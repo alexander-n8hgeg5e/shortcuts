@@ -6,6 +6,9 @@ from argparse import ArgumentParser
 from os import stat,major,minor
 from os.path import exists
 from stat import S_ISCHR
+from subprocess import check_output,DEVNULL,PIPE
+from os import listdir,walk
+from re import match
 ap=ArgumentParser()
 ap.add_argument("-b","--brightness",type=int,default=None)
 ap.add_argument("-s","--sharpness",type=int,default=None)
@@ -24,9 +27,69 @@ ap.add_argument("--menu-hpos",type=int,default=None)
 ap.add_argument("--menu-vpos",type=int,default=None)
 ap.add_argument("--magicb",type=int,default=None)
 args=ap.parse_args()
-b=SMBus(0)
+b=SMBus(5)
 sleeptime=0.4
 did_reset=False
+
+"""
+Scanning all VCP feature codes for display [i2c: fd=3, busno=5]
+removed unsupported ones
+
+VCP code 0x02 (New control value             ): No new control values (0x01)
+VCP code 0x0e (Clock                         ): current value =    80, max value =   160
+VCP code 0x10 (Brightness                    ): current value =   100, max value =   100
+VCP code 0x12 (Contrast                      ): current value =   100, max value =   100
+VCP code 0x14 (Select color preset           ): Display Native (sl=0x02)
+VCP code 0x16 (Video gain: Red               ): current value =    32, max value =    64
+VCP code 0x18 (Video gain: Green             ): current value =    32, max value =    64
+VCP code 0x1a (Video gain: Blue              ): current value =    32, max value =    64
+VCP code 0x1e (Auto setup                    ): Auto setup not active (sl=0x00)
+VCP code 0x20 (Horizontal Position           ): current value =    57, max value =   100
+VCP code 0x30 (Vertical Position             ): current value =    22, max value =    40
+VCP code 0x3e (Clock phase                   ): current value =    27, max value =    31
+VCP code 0x54 (Performance Preservation      ): mh=0x00, ml=0x02, sh=0x00, sl=0x00
+VCP code 0x60 (Input Source                  ): DVI-1 (sl=0x03)
+VCP code 0x62 (Audio speaker volume          ): current value =    50, max value =   100
+VCP code 0x6c (Video black level: Red        ): current value =   128, max value =   255
+VCP code 0x6e (Video black level: Green      ): current value =   128, max value =   255
+VCP code 0x70 (Video black level: Blue       ): current value =   128, max value =   255
+VCP code 0x73 (LUT Size                      ): Maximum retries exceeded
+VCP code 0x74 (Single point LUT operation    ): Maximum retries exceeded
+VCP code 0x75 (Block LUT operation           ): Maximum retries exceeded
+VCP code 0x78 (EDID operation                ): Maximum retries exceeded
+VCP code 0x87 (Sharpness                     ): Invalid value (sl=0x0f)
+VCP code 0xaa (Screen Orientation            ): Invalid value (sl=0x00)
+VCP code 0xb6 (Display technology type       ): LCD (active matrix) (sl=0x03)
+VCP code 0xc3 (Transmit display descriptor   ): Maximum retries exceeded
+VCP code 0xc6 (Application enable key        ): 0x0001
+VCP code 0xc8 (Display controller type       ): Mfg: Mstar (sl=0x05), controller number: mh=0x00, ml=0x10, sh=0x00
+VCP code 0xc9 (Display firmware level        ): 0.1
+VCP code 0xca (OSD                           ): OSD Enabled (sl=0x02)
+VCP code 0xcc (OSD Language                  ): English (sl=0x02)
+VCP code 0xd2 (Asset Tag                     ): Maximum retries exceeded
+VCP code 0xd6 (Power mode                    ): DPM: On,  DPMS: Off (sl=0x01)
+VCP code 0xdb (Image Mode                    ): Variable (sl=0x04)
+VCP code 0xdc (Display Mode                  ): Sports (sl=0x06)
+VCP code 0xdf (VCP Version                   ): 2.0
+VCP code 0xe0 (Manufacturer Specific         ): mh=0x02, ml=0x03, sh=0x00, sl=0x03
+VCP code 0xe1 (Manufacturer Specific         ): mh=0x00, ml=0x01, sh=0x00, sl=0x01
+VCP code 0xe2 (Manufacturer Specific         ): mh=0x00, ml=0x01, sh=0x00, sl=0x00
+VCP code 0xe4 (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x00
+VCP code 0xe5 (Manufacturer Specific         ): mh=0x00, ml=0x01, sh=0x00, sl=0x00
+VCP code 0xe8 (Manufacturer Specific         ): mh=0x00, ml=0x07, sh=0x00, sl=0x00
+VCP code 0xe9 (Manufacturer Specific         ): mh=0x00, ml=0x01, sh=0x00, sl=0x00
+VCP code 0xea (Manufacturer Specific         ): mh=0x00, ml=0x04, sh=0x00, sl=0x00
+VCP code 0xeb (Manufacturer Specific         ): mh=0x00, ml=0x09, sh=0x00, sl=0xfd
+VCP code 0xed (Manufacturer Specific         ): mh=0x00, ml=0xff, sh=0x00, sl=0x66
+VCP code 0xee (Manufacturer Specific         ): mh=0x00, ml=0xff, sh=0x00, sl=0x64
+VCP code 0xef (Manufacturer Specific         ): mh=0x00, ml=0xff, sh=0x00, sl=0x64
+VCP code 0xf0 (Manufacturer Specific         ): mh=0x00, ml=0x03, sh=0x00, sl=0x00
+VCP code 0xf2 (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x00
+VCP code 0xf3 (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x01
+VCP code 0xf5 (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x00
+VCP code 0xf6 (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x01
+VCP code 0xfe (Manufacturer Specific         ): mh=0x00, ml=0x02, sh=0x00, sl=0x02
+"""
 
 def menu():
     sleep(sleeptime)
@@ -132,15 +195,78 @@ def adj_menu_hpos(inc):
 def adj_menu_vpos(inc):
     go_menu_adj(2,2,inc)
 
-def check_i2p_dev():
-    i2c_sysdev_path='/sys/class/graphics/fb0/device/i2c-0/i2c-dev/i2c-0'
-    with open(i2c_sysdev_path+'/dev') as f:
-        dev_major_minor=f.read().strip()
-    with open(i2c_sysdev_path+'/name') as f:
-        i2p_dev_name=f.read().strip()
-    if not i2p_dev_name=="nvkm-0000:01:00.0-bus-0000":
+EDID = bytes(   
+                [
+                0, 255, 255, 255, 255, 255, 255, 0, 76, 45, 137, 5, 52,
+                50, 73, 75, 8, 20, 1, 3, 128, 52, 29, 120, 42, 96, 65,
+                166, 86, 74, 156, 37, 18, 80, 84, 35, 8, 0, 129, 0, 129,
+                64, 129, 128, 149, 0, 169, 64, 179, 0, 1, 1, 1, 1, 2, 58,
+                128, 24, 113, 56, 45, 64, 88, 44, 69, 0, 9, 37, 33, 0, 0,
+                30, 0, 0, 0, 253, 0, 56, 60, 30, 81, 17, 0, 10, 32, 32, 32,
+                32, 32, 32, 0, 0, 0, 252, 0, 83, 121, 110, 99, 77, 97, 115,
+                116, 101, 114, 10, 32, 32, 0, 0, 0, 255, 0, 72, 57, 88, 90,
+                50, 50, 48, 55, 48, 54, 10, 32, 32, 1, 153, 2, 1, 4, 0, 2,
+                58, 128, 208, 114, 56, 45, 64, 16, 44, 69, 128, 9, 37, 33,
+                0, 0, 30, 1, 29, 0, 114, 81, 208, 30, 32, 110, 40, 85, 0,
+                9, 37, 33, 0, 0, 30, 1, 29, 0, 188, 82, 208, 30, 32, 184,
+                40, 85, 64, 9, 37, 33, 0, 0, 30, 140, 10, 208, 144, 32,
+                64, 49, 32, 12, 64, 85, 0, 9, 37, 33, 0, 0, 24, 140, 10,
+                208, 138, 32, 224, 45, 16, 16, 62, 150, 0, 9, 37, 33, 0,
+                0, 24, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 94
+                ]
+             )
+
+def find_i2p_dev(edid):
+    outp=check_output(["ddcutil","detect"])
+
+def _check_i2p_dev(edid=EDID,i2c_dev_nr=5):
+    "/sys/bus/i2c/devices/i2c-5/device/drm/card0/card0-HDMI-A-1/i2c-5"
+    "/sys/bus/i2c/devices/i2c-5/device/drm/card0/card0-HDMI-A-1/edid"
+    si=str(i2c_dev_nr)
+    basepath="/sys/bus/i2c/devices/i2c-"+si+"/device/drm"
+    gen = walk(basepath)
+    card=None
+    while card is None:
+        d,dirlist,files = next(gen)
+        for thing in files+dirlist:
+            if thing[:4]=="card":
+                if match("[0-9]+",thing[4:]):
+                    # got card
+                    card_path = d+"/"+thing
+                    card=thing
+                    break
+
+    gen = walk(card_path)
+    subcard=None
+    d,dirlist,files = next(gen)
+    subcards = [ ]
+    lc=len(card)
+    for thing in dirlist + files:
+        if thing[0:lc] == card:
+            subcards.append(thing)
+
+    # check subcards
+    for subcard in subcards:
+        subcard_path=card_path+"/"+subcard
+        gen = walk(subcard_path)
+        d,dirlist,files = next(gen)
+        if "i2c-"+si in dirlist+files:
+            if "edid" in files:
+                with open(d+"/edid",mode="rb") as f:
+                    data=f.read()
+                if data==edid:
+                    return True
+    return False
+        
+def check_i2p_dev(edid=EDID,i2c_dev_nr=5):
+    if not _check_i2p_dev(edid=edid,i2c_dev_nr=i2c_dev_nr):
         return False
-    i2c_dev_path = '/dev/i2c-0'
+    si=str(i2c_dev_nr)
+    i2c_sysdev_path="/sys/bus/i2c/devices/i2c-"+si+"/i2c-dev/i2c-"+si+"/dev"
+    with open(i2c_sysdev_path) as f:
+        dev_major_minor=f.read().strip()
+    i2c_dev_path = '/dev/i2c-'+si
     st=stat(i2c_dev_path)
     if not exists(i2c_dev_path) or not S_ISCHR(stat(i2c_dev_path).st_mode):
         return False

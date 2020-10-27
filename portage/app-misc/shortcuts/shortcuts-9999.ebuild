@@ -15,16 +15,16 @@ IUSE="rind neovim github pyopen X"
 
 DEPEND=""
 RDEPEND="${DEPEND} dev-python/pexpect
-                   >=dev-python/columnize-0.3.9
-				   x11-misc/wmctrl
-                   rind? ( app-misc/rind )
-                   neovim? ( app-editors/neovim
-				             app-misc/tmux
-						   )
-                   github? ( dev-python/github3 )
-                   pyopen? ( app-misc/pyopen )
-				   X? ( x11-apps/xset dev-python/psutil dev-util/scons )
-				   "
+					>=dev-python/columnize-0.3.9
+					x11-misc/wmctrl
+					rind? ( app-misc/rind )
+					neovim? (   app-editors/neovim
+								app-misc/tmux
+							)
+					github? ( dev-python/github3 )
+					pyopen? ( app-misc/pyopen )
+					X? ( x11-apps/xset dev-python/psutil dev-util/scons )
+					"
 src_configure(){
 	true;
 }

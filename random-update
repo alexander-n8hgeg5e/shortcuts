@@ -103,6 +103,12 @@ def get_aligned_end( msg, end , space_right_of_end=2):
         end = " " * add_space + end
     return end
 
+def print_pos_aligned_end(msg,end):
+    try:
+        print(get_aligned_end(msg,end))
+    except OSError:
+        print(msg,end)
+
 def update(pkg):
     try:
         if args.verbose:
@@ -116,10 +122,10 @@ def update(pkg):
             if random_choice([True,False]):
                 raise CalledProcessError(-1,"failed_test_cmd")
         if args.verbose:
-            print(get_aligned_end(msg,SUCCESSFULL_END))
+            print_pos_aligned_end(msg,SUCCESSFULL_END)
     except CalledProcessError:
         if args.verbose:
-            print(get_aligned_end(msg,FAILED_END))
+            print_pos_aligned_end(msg,FAILED_END)
         raise UpdateFailed(pkg)
 
 def clear_failed_list():

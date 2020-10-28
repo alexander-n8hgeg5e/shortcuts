@@ -2,8 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
-PYTHON_COMPAT=( python3_6 python3_7 python3_8 )
-inherit git-r3 eutils scons-utils
+PYTHON_COMPAT=( python3_{6,7,8} )
+inherit git-r3 eutils scons-utils python-r1
 DESCRIPTION="shortcuts"
 HOMEPAGE=""
 EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shortcuts.git"
@@ -23,7 +23,10 @@ RDEPEND="${DEPEND} dev-python/pexpect
 							)
 					github? ( dev-python/github3 )
 					pyopen? ( app-misc/pyopen )
-					X? ( x11-apps/xset dev-python/psutil dev-util/scons )
+					X?  (   x11-apps/xset
+							dev-python/psutil[${PYTHON_USEDEP}]
+							dev-util/scons[${PYTHON_USEDEP}]
+						)
 					"
 src_configure(){
 	true;
@@ -415,4 +418,5 @@ dobin pyxd
 dobin git-unpack-packs
 dobin git-fetch-objects
 dobin show_dirtytime
+dobin random-update
 }

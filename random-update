@@ -33,7 +33,7 @@ def parse_args():
     a=ArgumentParser()
     a.add_argument("-v","--verbose",action="store_true")
     a.add_argument("--simulated-test-run",action="store_true")
-    a.add_argument(dest = "eix_expressions", default=["--system"],nargs="*")
+    a.add_argument(dest = "eix_expressions", default=[''],nargs="*")
     global args
     args=a.parse_args()
     if args.verbose:

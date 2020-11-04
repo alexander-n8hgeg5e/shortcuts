@@ -419,4 +419,5 @@ dobin git-unpack-packs
 dobin git-fetch-objects
 dobin show_dirtytime
 dobin random-update
+dobin f0
 }

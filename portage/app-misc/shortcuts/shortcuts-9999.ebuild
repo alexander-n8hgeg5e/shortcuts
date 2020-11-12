@@ -33,8 +33,9 @@ src_configure(){
 }
 src_compile(){
 	if use X;then
-    	escons
+    	escons menu
 	fi
+	escons skyscraper_activate_monitor_onoff_button
 }
 
 

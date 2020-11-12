@@ -25,7 +25,7 @@ try:
     else:
         env=environ
     
-    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--keyev', '--', environ['HOME']+'/.xserverrc_skyscraper' ],env=env, shell=False, close_fds=False,start_new_session=False,stdout=PIPE,stderr=PIPE)
+    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--keyev', '--', environ['HOME']+'/.xserverrc_skyscraper','--loglevel',str(loglevel) ],env=env, shell=False, close_fds=False,start_new_session=False,stdout=PIPE,stderr=PIPE)
     alr_o=AsyncLineReader(p.stdout)
     alr_e=AsyncLineReader(p.stderr)
     nothing=0

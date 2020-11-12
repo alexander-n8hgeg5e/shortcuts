@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+
+from os import walk
+from os.path import sep as psep,exists
+from argparse import ArgumentParser
+ap=ArgumentParser()
+ap.add_argument("-m","--mtime-based",action="store_true" ,help="only check hash if mtime is wrong")
+ap.add_argument("-e","--add-etc",action="store_true" ,help="include files inside the etc dir")
+ap.add_argument("-E","--eprefix", default="" ,help="change eprefix to non default=\"\"")
+ap.add_argument("-v","--verbose",action="store_true")
+
+args=ap.parse_args()
+
+pkg_db_path = args.eprefix+"/var/db/pkg"
+etc_path = args.eprefix+"/etc"
+len_etc_path = len(etc_path)
+always_check_hash=not args.mtime_based
+
+w=walk(pkg_db_path)
+dirpath, dirnames, filenames = next(w)
+
+cat_dirs = dirnames
+
+
+# get per package db pathes
+rel_pkg_pathes = []
+for d in cat_dirs:
+    w=walk(pkg_db_path+psep+d)
+    dirpath, dirnames, filenames = next(w)
+    for p in dirnames:
+        if not p[:9]=="-MERGING-":
+            rel_path =  d + psep + p
+            abs_path =  pkg_db_path + psep + rel_path
+            if exists( abs_path + psep + "CONTENTS"):
+                if exists(abs_path+psep+p+".ebuild"):
+                    rel_pkg_pathes.append(rel_path)
+                else:
+                    print("ERROR:",rel_path)
+
+
+print("found "+str(len(rel_pkg_pathes)) +" packages")
+
+# get list of files to check while
+# storing additional information 
+# with each file (md5sum,mtime,package,...)
+files=[]
+dirs=[]
+for p in rel_pkg_pathes:
+    pp = pkg_db_path + psep + p
+    with open(pp+psep+"CONTENTS") as f:
+        datalines=f.read().strip().split("\n")
+    for line in datalines:
+        words=line.strip().split(" ")
+        # some file pathes have whitespace...
+        if words[0] == "obj":
+            mtime = words[-1]
+            md5sum = words[-2]
+            path = " ".join(words[1:-2])
+            if not path[:len_etc_path]==etc_path:
+                files.append((p,path,md5sum,mtime))
+
+print("with  "+str(len(files)) +" files")
+
+from os import stat
+from hashlib import md5
+
+pkg_printed  =""
+file_printed =""
+def print_msg( pkg, filepath , msg ):
+    global pkg_printed
+    global file_printed
+    if not pkg_printed == pkg:
+        if not pkg_printed == "":
+            print()
+        print('pkg: {}\n    file: "{}\n        {}'.format(pkg,file_path,msg))
+        pkg_printed = pkg
+    else:
+        if not file_printed == file_path:
+            print('    file: "{}\n        {}'.format(file_path,msg))
+            file_printed=file_path
+        else:
+            print('        {}'.format(msg))
+
+# do the checking
+for f in files:
+    pkg=f[0]
+    file_path=f[1]
+    db_md5sum=f[2]
+    db_mtime=f[3]
+    try:
+        mtime=stat(file_path).st_mtime
+        db_mtime=int(db_mtime)    # no loss of information here
+        check_hash = True if always_check_hash else False
+        if int(mtime) != db_mtime:
+            if args.verbose:
+                print_msg(pkg,file_path,'MTIME WRONG, diff={:.3f} [s]'.format(mtime-db_mtime))
+            check_hash=True
+        if check_hash:
+            with open(file_path,"rb") as ff:
+                md5sum=md5(ff.read()).hexdigest()
+            if not md5sum==db_md5sum:
+                print_msg(pkg,file_path,'WRONG HASH')
+
+    except FileNotFoundError:
+        print_msg(pkg,file_path,'file is MISSING')
+

@@ -421,4 +421,5 @@ dobin git-fetch-objects
 dobin show_dirtytime
 dobin random-update
 dobin f0
+dobin check_pkg_hashes
 }

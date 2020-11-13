@@ -40,7 +40,8 @@ try:
                 warn(line)
             if match(b"^.*X[ ]connection[ ]to[ ].*[ ]broken",line):
                 done=True
-            debug(line.decode())
+            if args.debug >= DEBUG:
+                debug(line.decode())
         sleep(0.1)
     if not done and loglevel <= DEBUG:
         debug("TIMEOUT: stdout,stderr reading aborted")

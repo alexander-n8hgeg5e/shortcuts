@@ -36,6 +36,8 @@ try:
         if len(lines) == 0:
             nothing+=1
         for line in lines:
+            if match(b"^.*command[ ]not[ ]found",line):
+                warn(line)
             if match(b"^.*X[ ]connection[ ]to[ ].*[ ]broken",line):
                 done=True
             debug(line.decode())

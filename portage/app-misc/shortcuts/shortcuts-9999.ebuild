@@ -1,9 +1,9 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=6
+EAPI=7
 PYTHON_COMPAT=( python3_{6,7,8} )
-inherit git-r3 eutils scons-utils python-r1
+inherit git-r3 python-r1 scons-utils toolchain-funcs
 DESCRIPTION="shortcuts"
 HOMEPAGE=""
 EGIT_REPO_URI="${CODEDIR}""/shortcuts https://github.com/alexander-n8hgeg5e/shortcuts.git"
@@ -13,25 +13,28 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE="rind neovim github pyopen X"
 
-DEPEND=""
-RDEPEND="${DEPEND} dev-python/pexpect
-					>=dev-python/columnize-0.3.9
-					x11-misc/wmctrl
-					rind? ( app-misc/rind )
-					neovim? (   app-editors/neovim
-								app-misc/tmux
-							)
-					github? ( dev-python/github3 )
-					pyopen? ( app-misc/pyopen )
-					X?  (   x11-apps/xset
-							dev-python/psutil[${PYTHON_USEDEP}]
-							dev-util/scons[${PYTHON_USEDEP}]
-						)
-					"
-src_configure(){
-	true;
-}
+RDEPEND="dev-python/pexpect
+		  >=dev-python/columnize-0.3.9
+		  x11-misc/wmctrl
+		  rind? ( app-misc/rind )
+		  neovim? 	(   app-editors/neovim
+		  				app-misc/tmux
+		  			)
+		  github? ( dev-python/github3 )
+		  pyopen? ( app-misc/pyopen )
+		  X?	(	x11-apps/xset
+		  			dev-python/psutil[${PYTHON_USEDEP}]
+		  		)
+		  "
+
+BDEPEND="dev-util/scons[${PYTHON_USEDEP}]"
+
+#src_configure(){
+#	true;
+#}
+
 src_compile(){
+	python_setup
 	if use X;then
     	escons menu
 	fi
@@ -422,4 +425,5 @@ dobin show_dirtytime
 dobin random-update
 dobin f0
 dobin check_pkg_hashes
+dobin get_fetch_failed_list
 }

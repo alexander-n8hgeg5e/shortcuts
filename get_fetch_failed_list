@@ -1,0 +1,4 @@
+#!/bin/fish
+cat  /node/skyscraper/var/log/portage/elog/* \
+| grep -iE 'fetch failed for [\'].*[\'][,] ' \
+|sed -E 's/Fetch failed for [\'](.*)[\'][,][ ].*$/\1/;s/^([^/]+[/].*)[-][0-9].*$/\1/'

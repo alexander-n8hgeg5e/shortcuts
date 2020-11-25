@@ -6,8 +6,6 @@ sudo chown :firefox            /tmp/pulseaudio.cookie
 xhost SI:localuser:firefox
 export PULSE_COOKIE="/tmp/pulseaudio.cookie"
 
-# args look like this:
-# -axy -b -cxyz profile_name followed by more args ...
 
 
 declare -A args
@@ -16,7 +14,15 @@ args["-vgl"]=0
 args["-h"]=0
 
 
-echo "${!args[@]}"
+#echo "${!args[@]}"
+
+# gen usage help
+args_string=""
+for thing in "${!args[@]}" ; do
+    args_string="$args_string [${thing}]"
+done
+usage_help="usage:
+${args_string[@]} [PROFILE_NAME | PROFILE_NAME followed by more args ]"
 
 last=0
 count=0
@@ -30,16 +36,21 @@ for i in "${@}"; do
         fi
     done
 done
-echo "${args[@]}"
+#echo "${args[@]}"
+
+if [[ "${args["-h"]}" -eq 1 ]] ; then
+    echo $usage_help
+    exit
+fi
 
 # extract positional args "profile" followed by "other args"
-echo "all args=$@"
-echo "last=$last"
+#echo "all args=$@"
+#echo "last=$last"
 read -a pargs -r <<< "${@}"
 read -a pargs -r <<< "${pargs[@]:$last}"
 lpargs="${#pargs[@]}"
-echo "pargs = ${pargs[@]}"
-echo len pargs = $lpargs
+#echo "pargs = ${pargs[@]}"
+#echo len pargs = $lpargs
 
 if [[ $lpargs -gt 0 ]];then
     profile="${pargs[0]}"
@@ -59,11 +70,11 @@ cmd0="rind sudo -iu firefox env PULSE_COOKIE=$PULSE_COOKIE env PULSE_SERVER=$PUL
 cmd1="firefox -P ${profile} ${more_args}"
 
 
-if [[ $vglrun -eq 1 ]] ; then
+if [[ ${args["-vgl"]} -eq 1 ]] ; then
     cmd="${cmd0} vglrun ${cmd1}"
 else
     cmd="${cmd0} ${cmd1}"
 fi
 
 echo "${cmd}"
-#eval "${cmd}"
+eval "${cmd}"

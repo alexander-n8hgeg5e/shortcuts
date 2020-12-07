@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+from subprocess import call,Popen,PIPE
+from pathlib2 import Path
+from os import utime
+from argparse import ArgumentParser
+ap=ArgumentParser(prefix_chars="_")
+ap.add_argument(dest="newer",nargs="?")
+from re import match,I,sub
+from time import time
+from os.path import dirname
+from os import makedirs,stat,unlink
+
+args=ap.parse_args()
+
+def make_ref_file(p,t):
+    makedirs(dirname(p),exist_ok=True)
+    Path(p).touch()
+    utime(p,times=(t,t))
+
+if not args.newer is None and len(args.newer) > 0:
+    if match("[-][0-9]+[.]?[0-9]*[mhdw]",args.newer,flags=I):
+        lc=args.newer[-1]
+        if lc in 'mhdw':
+            if lc == 'm':
+                f=60
+            elif lc=='h':
+                f=3600
+            elif lc=='d':
+                f=24*3600
+            elif lc=='w':
+                f=24*3600*7
+            else:
+                raise Exception("wrong arg")
+        else:
+            f=1
+        newer =  f * float(args.newer.strip("mhdw"))
+else:
+    newer=0
+
+
+t = time() + newer
+p=Popen(['tnftp', '-i', 'ftp://blackbox'],stdin=PIPE,stdout=PIPE)
+outp=p.communicate(b"ls scan\n")
+lines=outp[0].split(b"\n")
+filenames=[]
+for line in lines:
+    line=line.split(b" ")[-1]
+    if len(line) > 0:
+        filenames.append(line.decode())
+
+#from pprint import pprint
+#pprint(lines)
+
+for filename in filenames:
+    path = "scan/"+filename
+    make_ref_file(path,t)
+    cmd=['tnftp', 'ftp://blackbox']
+    p=Popen(cmd,stdin=PIPE)
+    p.communicate(" ".join(["newer",path,path,"\n"]).encode())
+    size = stat(path).st_size
+    if size == 0:
+        unlink(path)
+
+

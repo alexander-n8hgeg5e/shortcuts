@@ -426,4 +426,5 @@ dobin random-update
 dobin f0
 dobin check_pkg_hashes
 dobin get_fetch_failed_list
+dobin get_scans
 }

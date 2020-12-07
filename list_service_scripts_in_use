@@ -1,0 +1,6 @@
+#!/bin/fish
+for node in esadc skyscraper tc;
+    for p in (find /node/$node/var/run/openrc/started -type l -exec readlink "{}" \;)
+        readlink -e /node/$node$p
+    end
+end | sort -u

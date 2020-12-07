@@ -1,0 +1,4 @@
+#!/bin/sh
+# my favorite dm tree view options
+
+dmsetup ls --tree -o nodevice,blkdevname,inverted,compact

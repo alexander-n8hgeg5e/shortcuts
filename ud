@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ssh -tp5000 root@dn d

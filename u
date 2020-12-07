@@ -2,6 +2,7 @@
 from sys import argv
 from subprocess import call
 import argparse
+from sys import exit
 
 cmd_base = ['ionice', '-c3', 'nice', '-n19', 'sudo']
 
@@ -163,9 +164,10 @@ def parse_args():
 
 def c(cmdlist):
     print(cmdlist)
-    call(cmdlist,shell=False)
+    return call(cmdlist,shell=False)
 
 if __name__=='__main__':
+    ecs=[]
     args=parse_args()
     zz=args.__dict__
 
@@ -177,11 +179,13 @@ if __name__=='__main__':
     
     if args.sync:
         cmd_sync      = gen_cmd_sync(**zz)
-        c(cmd_sync)
+        ecs.append(c(cmd_sync))
        
     cmd = gen_cmd_emerge_world_update(**zz)
-    c(cmd)
+    ecs.append(c(cmd))
     if args.full or args.insane or args.preserved_rebuild:
           cmd_pr = gen_cmd_emerge_preserved_rebuild(**zz)
-          c(cmd_pr)
+          ecs.append(c(cmd_pr))
+    print(ecs)
+    exit(sum(ecs))
 # vim: set syntax=python

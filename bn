@@ -10,3 +10,4 @@ p1.wait()
 if p1.poll() == 0:
     p0.send_signal(SIGCONT)
     p0.wait()
+exit(p0.returncode)

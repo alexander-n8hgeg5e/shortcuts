@@ -72,11 +72,11 @@ def print_msg( pkg, filepath , msg ):
     if not pkg_printed == pkg:
         if not pkg_printed == "":
             print()
-        print('pkg: {}\n    file: "{}\n        {}'.format(pkg,file_path,msg))
+        print('pkg: {}\n    file: "{}"\n        {}'.format(pkg,file_path,msg))
         pkg_printed = pkg
     else:
         if not file_printed == file_path:
-            print('    file: "{}\n        {}'.format(file_path,msg))
+            print('    file: "{}"\n        {}'.format(file_path,msg))
             file_printed=file_path
         else:
             print('        {}'.format(msg))

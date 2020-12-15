@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+ap=ArgumentParser()
+ap.add_argument(dest="regex",help="regex to select files to include,otherwise all files are included",nargs="?",default='.*')
+ap.add_argument("--nostrip",help="don't strip data after reading with python strip()",action="store_true")
+ap.add_argument("--noconv",help="don't convert int/float convertable data after reading to int/float",action="store_true")
+ap.add_argument("--write","-w",help="eval python code from stdin and write resulting dict to files. the filenames correspond to the dict keys",action="store_true")
+ap.add_argument("--format-file","-f",default=None)
+ap.add_argument("--max","-m",type=int,default=64,help="max amount of data in byte per file. if the limit is exceeded the program will exit with failure status")
+ap.add_argument("--silent-skip","-S", help="if data limit is reached , do not fail but skip the exceed of data",action="store_true")
+
+
+
+def main():
+    global args
+    args=ap.parse_args()
+    if args.write:
+        write()
+    else:
+        read()
+
+def read():
+    from os import listdir
+    from os.path import isfile
+    from re import match
+    from pprint import pprint
+    from collections import OrderedDict as Od
+    dirlist=listdir()
+    l=[]
+    for thing in dirlist:
+        if isfile(thing) and match(args.regex,thing):
+            l.append(thing)
+    l.sort()
+    data=Od()
+    for k in l:
+        with open(k) as f:
+            d=f.read(args.max+1)
+            if len(d) > args.max and not args.silent_skip:
+                raise Exception("ERROR: data len limit reached. file is too big. \n file=\"{}\"".format(k))
+            d=d[:args.max]
+            if not args.nostrip:
+                d = d.strip()
+            if not args.noconv:
+                if match("^[0-9]+$",d):
+                    d = int(d)
+                elif match("^[0-9]*[.][0-9]*$",d):
+                    d = float(d)
+            data.update({k:d})
+    if args.format_file is None:
+        pprint(dict([(v,type(v)) for v in data.values()]))
+    else:
+        import sys
+        sys.path.insert(1,"/var/src/pylib")
+        from pylib.dict_utils import format as format_dict
+        with open(args.format_file) as ff:
+            print("\n".join(format_dict(dict(data),ff.read())),end="")
+
+def write():
+    from sys import stdin
+    d=eval(stdin.read())
+    for k,v in d.items():
+        data=str(v).encode()
+        if len(data) > args.max and not args.silent_skip:
+            raise Exception("ERROR: data len limit reached. file is too big. \n file=\"{}\"".format(k))
+        with open(k,mode="wb") as f:
+            f.write(data[:args.max])
+
+if __name__=="__main__":
+    main()

@@ -1,0 +1,47 @@
+#!/usr/bin/env python3
+
+def parse_args():
+    from argparse import ArgumentParser
+    ap=ArgumentParser()
+    ap.add_argument(dest="search_string")
+    ap.add_argument("--tag","-t",action="store_true",help="search by tag")
+    ap.add_argument("--name","-n",action="store_true",help="search by name")
+    return ap.parse_args()
+
+if __name__ == "__main__":
+    from subprocess import call
+    import sys
+    sys.path.insert(1,"/var/src/pyradios")
+    import pyradios
+    rb=pyradios.RadioBrowser()
+    args=parse_args()
+    if any((args.tag,args.name)):
+        a=[]
+        if args.tag:
+            a += rb.stations_by_tag(args.search_string)
+        if args.name:
+            a += rb.stations_by_name(args.search_string)
+    else:
+        a=[]
+        a += rb.stations_by_tag(args.search_string)
+        a += rb.stations_by_tag(args.search_string)
+
+    from sys import stdin
+    from random import choice as random_choice
+    from random import randrange
+    print("found {} stations".format(len(a)))
+    print("randomizing...",end="")
+    b=[]
+    while len(a) > 0:
+        b.append(a.pop(randrange(len(a))))
+    a=b
+    print("done")
+    for i in a:
+        print(i['name'])
+        print(i['tags'])
+        print(i["url"])
+        print("listen to station y/n ? :",end="")
+        key = stdin.buffer.raw.read(1)
+        
+        if key == b"y" :
+            call(["vlc","-I","ncurses",i["url"]])

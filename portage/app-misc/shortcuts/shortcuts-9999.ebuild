@@ -430,4 +430,5 @@ dobin get_scans
 dobin dmo
 dobin list_service_scripts_in_use
 dobin sf
+dobin radios
 }

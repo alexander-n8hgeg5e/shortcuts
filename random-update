@@ -3,7 +3,9 @@
 FAILED_FILE_PATH = "/tmp/update_failed_list"
 SUCCESSFULL_FILE_PATH = "/tmp/update_successfull_list"
 GET_UPGRADEABLE_CMD_PREFIX  = [ 'eix', '-I']
+GET_ANY_INSTALLED_CMD_PREFIX = GET_UPGRADEABLE_CMD_PREFIX
 GET_UPGRADEABLE_CMD_POSTFIX = [ '--format', '{upgrade=1}<category>/<name>\n{}' ]
+GET_ANY_INSTALLED_CMD_POSTFIX = [ '--format', '{installed=1}<category>/<name>\n{}' ]
 SUCCESSFULL_END="successfull"
 FAILED_END="failed"
 
@@ -32,6 +34,7 @@ from os.path import exists
 def parse_args():
     a=ArgumentParser()
     a.add_argument("-v","--verbose",action="store_true")
+    a.add_argument("-r","--rebuild",action="store_true",help="rebuild all eix-expr-matching packages that are installed")
     a.add_argument("--simulated-test-run",action="store_true")
     a.add_argument(dest = "eix_expressions", default=[''],nargs="*")
     global args
@@ -47,10 +50,15 @@ def get_random_pkg  (   eix_expression,
                         boost={'dev-libs': 5,'.*-libs':4},
                     ):
     exclude_successfull=get_successfull_list()
-    get_upgradeable_cmd = GET_UPGRADEABLE_CMD_PREFIX \
+    if not args.rebuild:
+        get_packages_to_build_cmd = GET_UPGRADEABLE_CMD_PREFIX \
                           + eix_expression.split(" ") \
                           + GET_UPGRADEABLE_CMD_POSTFIX
-    outp = check_output(get_upgradeable_cmd)
+    else:
+        get_packages_to_build_cmd = GET_ANY_INSTALLED_CMD_PREFIX \
+                          + eix_expression.split(" ") \
+                          + GET_ANY_INSTALLED_CMD_POSTFIX
+    outp = check_output(get_packages_to_build_cmd)
     _pkgs = outp.decode().strip().split("\n")
     pkgs=[]
     for p in _pkgs:

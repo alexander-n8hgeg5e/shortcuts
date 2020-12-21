@@ -1,11 +1,6 @@
 #!/bin/bash
 
-sudo cp --preserve=ownership  ~/.config/pulse/cookie /tmp/pulseaudio.cookie
-sudo chmod g=r,o=              /tmp/pulseaudio.cookie
-sudo chown :firefox            /tmp/pulseaudio.cookie
 xhost SI:localuser:firefox
-export PULSE_COOKIE="/tmp/pulseaudio.cookie"
-
 
 
 declare -A args
@@ -66,7 +61,7 @@ fi
 
 
 
-cmd0="rind sudo -iu firefox env PULSE_COOKIE=$PULSE_COOKIE env PULSE_SERVER=$PULSE_SERVER"
+cmd0="rind sudo -iu firefox"
 cmd1="firefox -P ${profile} ${more_args}"
 
 

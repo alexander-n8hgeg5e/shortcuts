@@ -124,7 +124,7 @@ def update(pkg):
             print(msg, end="")
             stdout.flush()
         if not args.simulated_test_run:
-            check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
+            check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--oneshot', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
             add_to_successfull_list(pkg)
         else:
             if random_choice([True,False]):

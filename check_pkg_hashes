@@ -8,6 +8,7 @@ ap.add_argument("-m","--mtime-based",action="store_true" ,help="only check hash 
 ap.add_argument("-e","--add-etc",action="store_true" ,help="include files inside the etc dir")
 ap.add_argument("-E","--eprefix", default="" ,help="change eprefix to non default=\"\"")
 ap.add_argument("-v","--verbose",action="store_true")
+ap.add_argument("-o","--check-list-for-orphans",default=None,help="Supply list of files to check for orphaness. If the file is not known to the package management database it is printed out at the end of the run.")
 
 args=ap.parse_args()
 
@@ -81,6 +82,17 @@ def print_msg( pkg, filepath , msg ):
         else:
             print('        {}'.format(msg))
 
+# if available read list to check for orphans
+if args.check_list_for_orphans:
+    with open(args.check_list_for_orphans) as f:
+        check_orphan = [line.strip() for line in f.read().split("\n")]
+    from os.path import abspath
+    # sort the lists to shorten the search times
+    files.sort()
+    check_orphan.sort()
+else:
+    check_orphan=None
+
 # do the checking
 for f in files:
     pkg=f[0]
@@ -100,7 +112,17 @@ for f in files:
                 md5sum=md5(ff.read()).hexdigest()
             if not md5sum==db_md5sum:
                 print_msg(pkg,file_path,'WRONG HASH')
+        if not check_orphan is None:
+            for i in range(len(check_orphan)):
+                if abspath(check_orphan[i]) == abspath(file_path):
+                    check_orphan.pop(i)
+                    break
 
     except FileNotFoundError:
         print_msg(pkg,file_path,'file is MISSING')
+
+if not check_orphan is None and type(check_orphan) is list and len(check_orphan) != 0:
+    print("THESE FILES ARE UNKNOWN:")
+    for f in check_orphan:
+        print(f)
 

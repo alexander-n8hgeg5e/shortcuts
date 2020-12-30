@@ -96,9 +96,9 @@ def gen_screens():
     global generated_screens   #{{{
     global screens
     global screen_layout
-    if generated_screens and mode is 0:
+    if generated_screens and mode == 0:
         return
-    if generated_screens and mode is 1:
+    if generated_screens and mode == 1:
         return
     global screen_utils
     from pylib.screen_utils.env import parse_screen_layout_env_var_v3
@@ -143,9 +143,9 @@ def gen_xservers_dict_and_sock2xserver_list(mode=0):
     global generated_xservers_dict_and_sock2xserver_list
     global xservers
     global sock2server_list
-    if generated_xservers_dict_and_sock2xserver_list and mode is 0:
+    if generated_xservers_dict_and_sock2xserver_list and mode == 0:
         return
-    if generated_xservers_dict_and_sock2xserver_list and mode is 1:
+    if generated_xservers_dict_and_sock2xserver_list and mode == 1:
         return
     gen_screens()
     gen_win_id_list_by_socket_index()
@@ -165,9 +165,9 @@ def gen_x_display_list(mode=0):
     global generated_x_display_list
     global x_display_list
     gen_screens()
-    if generated_x_display_list and mode is 0:
+    if generated_x_display_list and mode == 0:
         return
-    if generated_x_display_list and mode is 1:
+    if generated_x_display_list and mode == 1:
         return
     x_display_list=[]
     for screen in screen_layout:
@@ -179,9 +179,9 @@ def gen_win_id_to_geom_dict(mode=0):
     """   #{{{
     """
     global generated_win_id_to_geom_dict
-    if generated_win_id_to_geom_dict and mode is 0:
+    if generated_win_id_to_geom_dict and mode == 0:
         return
-    if generated_win_id_to_geom_dict and mode is 1:
+    if generated_win_id_to_geom_dict and mode == 1:
         return
     gen_screens()
     gen_win_id_list_by_socket_index()
@@ -193,9 +193,9 @@ def gen_win_id_to_geom_dict(mode=0):
 
 def gen_nvims_visible_state_by_socket(mode=0):
     global generated_nvims_visible_state_by_socket   #{{{
-    if generated_nvims_visible_state_by_socket and mode is 0:
+    if generated_nvims_visible_state_by_socket and mode == 0:
         return
-    if generated_nvims_visible_state_by_socket and mode is 1:
+    if generated_nvims_visible_state_by_socket and mode == 1:
         return
     global nvims_visible_state_by_socket
     nvims_visible_state_by_socket=[]
@@ -742,7 +742,7 @@ def makedir(path):
 
 def autowait(first_file_arg):
     # don't wait for pass prog. It don't like it, or so.   #{{{
-    if (not first_file_arg.find("pass") is -1) and (not first_file_arg.find("shm") is -1):
+    if (not first_file_arg.find("pass") == -1) and (not first_file_arg.find("shm") == -1):
         wait()   #}}} 
 
 def wait():
@@ -767,7 +767,7 @@ def gen_target_desktop():
             while len(hex_string) < 10:
                 hex_string = hex_string[0:2]+'0'+hex_string[2:]
             f = line.find( hex_string )
-            if f is not -1:
+            if f != -1:
                 ##l.debug("found line: "+line)
                 target_desktop = line.split()[1]
     except KeyboardInterrupt: raise

@@ -24,7 +24,7 @@ def main():
 
 def read(path="."):
     from pprint import pprint
-    data=_read(path=path,regex=args.regex,max_data_len=args.max,silent_skip=args.silent_skip,noconv=args.noconv,nostrip=args.nostrip)
+    data=_read(path=path,regex=args.regex,max_data_len=args.max,silent_skip=args.silent_skip,noconv=args.noconv,nostrip=args.nostrip,recursive=False)
     if args.format_file is None:
         pprint(data)
     else:
@@ -43,7 +43,7 @@ def write(path="."):
     _write(d,path=path,max_data_len=args.max,silent_skip=args.silent_skip)
 
 import sys
-sys.path.insert(1,"/var/src/pylib")
+#sys.path.insert(1,"/var/src/pylib")
 from pylib.file_utils.dictfiles import write as _write
 from pylib.file_utils.dictfiles import read as _read
 

@@ -32,7 +32,7 @@ def read(path="."):
         sys.path.insert(1,"/var/src/pylib")
         from pylib.dict_utils import format as format_dict
         with open(args.format_file) as ff:
-            for line in format_dict(dict(data),ff.read()).split("\n"):
+            for line in format_dict(dict(data),ff.read()):
                 print(line)
 
 def write(path="."):

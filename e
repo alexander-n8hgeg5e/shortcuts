@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 waitmsg='>> waiting for ANYKEY <<'
 from logging import INFO, DEBUG, WARNING
 LOGLEVEL=WARNING

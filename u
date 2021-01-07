@@ -11,7 +11,7 @@ def gen_cmd_emerge_preserved_rebuild(*z,**zz):
     return gen_cmd_emerge( *z,**zz,pkg_set='@preserved-rebuild')
 
 def gen_cmd_emerge_world_update(*z,**zz):
-    return gen_cmd_emerge( *z,**zz, pkg_set='@world')
+    return gen_cmd_emerge( *z,**zz, pkg_set='@world', bdeps=False )
 
 class Include(int):
     def __init__(self,*z):
@@ -42,7 +42,7 @@ def argdict2args(d):
         l+=argdict_tuple2arglist(k,v)
     return l
         
-def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], bdeps=True, backtrack=100 ,pkg_set='@world', light=True ,insane=False,**zz):
+def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_args=None, pump=False,  some_args=[], bdeps=True, backtrack=100 ,pkg_set='@world', light=True ,insane=False, update=True, **zz):
     include=Include(True)
     not_include=Include(False)
 
@@ -50,7 +50,7 @@ def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_arg
     cmd_emerge     = ['emerge']
     args_common       = {
                             '--verbose':include ,
-                            '--update':include,
+                            '--update': Include(update) ,
                             '--keep-going':include,
                             '--backtrack':backtrack
                         }
@@ -92,7 +92,7 @@ def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_arg
                 l+=argdict2args(args_bdeps)
     elif light:
         pass
-    else:
+    elif update:
         l+=argdict2args(args_default)
 
     if ask:
@@ -145,8 +145,8 @@ def parse_args():
             help=str(gen_cmd_sync()))
     parser.add_argument('-e', '--emptytree', action="store_true",
             help=str(gen_cmd_emerge_world_update(emptytree=True)))
-    parser.add_argument('-pr', '--preserved-rebuild', action="store_true",default=True,
-            help=str(gen_cmd_emerge_preserved_rebuild()))
+    parser.add_argument('-pr', '--preserved-rebuild', action="store_true",default=True)
+    parser.add_argument('-nu', '--no-update', action="store_true", default=False,help=str(gen_cmd_emerge_preserved_rebuild()))
     parser.add_argument('-p', '--pump', action="store_true",
             help=str("enable distcc pump mode"))
     parser.add_argument('-a', '--ask', action="store_true",
@@ -176,15 +176,15 @@ if __name__=='__main__':
     else:
         some_args=[]
     
-    
     if args.sync:
         cmd_sync      = gen_cmd_sync(**zz)
         ecs.append(c(cmd_sync))
-       
-    cmd = gen_cmd_emerge_world_update(**zz)
-    ecs.append(c(cmd))
+    
+    if not args.no_update:
+        cmd = gen_cmd_emerge_world_update(**zz)
+        ecs.append(c(cmd))
     if args.full or args.insane or args.preserved_rebuild:
-          cmd_pr = gen_cmd_emerge_preserved_rebuild(**zz)
+          cmd_pr = gen_cmd_emerge_preserved_rebuild(update=False,**zz)
           ecs.append(c(cmd_pr))
     print(ecs)
     exit(sum(ecs))

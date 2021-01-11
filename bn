@@ -1,13 +1,25 @@
 #!/usr/bin/python3
 from sys import argv
-from subprocess import Popen,DEVNULL,PIPE
+from subprocess import Popen,DEVNULL,PIPE,check_call
 from signal import SIGSTOP,SIGCONT
-p0 = Popen(argv[1:])
-p0.send_signal(SIGSTOP)
-p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/unified/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
-p1.communicate(input=str(p0.pid).encode())
-p1.wait()
-if p1.poll() == 0:
-    p0.send_signal(SIGCONT)
-    p0.wait()
+from os import getpid,nice
+
+def setup():
+    try:
+        pid = getpid()
+
+        # add to cgroup
+        p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/unified/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
+        p1.communicate(input=str(pid).encode())
+        p1.wait()
+        n=nice(40)
+        check_call([ 'ionice' , '-c3', '-p', str(pid) ])
+    except Exception as e:
+        print(e)
+        raise
+
+
+# start
+p0 = Popen(argv[1:],preexec_fn=setup)
+print(p0.pid)
 exit(p0.returncode)

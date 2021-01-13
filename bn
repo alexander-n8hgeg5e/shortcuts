@@ -22,4 +22,5 @@ def setup():
 # start
 p0 = Popen(argv[1:],preexec_fn=setup)
 print(p0.pid)
+p0.wait()
 exit(p0.returncode)

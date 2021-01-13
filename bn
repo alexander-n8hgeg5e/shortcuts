@@ -9,7 +9,7 @@ def setup():
         pid = getpid()
 
         # add to cgroup
-        p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/unified/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
+        p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
         p1.communicate(input=str(pid).encode())
         p1.wait()
         n=nice(40)

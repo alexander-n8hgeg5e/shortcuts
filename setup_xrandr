@@ -15,17 +15,12 @@ if len(argv) > 1 :
     xrandr_conf_file_path = environ["HOME"] + "/.xrandr.conf_"+argv[1]
     modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]
 else:
-    display=environ["DISPLAY"].split(":")
-    if display[0]=='':
-            display.pop(0)
+    from sys import path
+    path.insert(0,'/var/src/pylib')
+    from pylib.screen_utils.env import parse_display_var_v2
+    display = parse_display_var_v2()
     print(display)
-    if len(display) == 1 :
-        postfix=environ["hostnamE"]+":"+display[0]
-    elif len(display) >= 2:
-        postfix=environ["DISPLAY"]
-    else:
-        # no display, so no xrandr
-        exit(1)
+    postfix = ":".join(display.values())
     xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + postfix
     if not exists( xrandr_conf_file_path ):
         postfix=environ["hostnamE"]

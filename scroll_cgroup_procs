@@ -1,0 +1,49 @@
+set stepsize 2
+trap "tput cnorm" SIGINT
+clear
+tput civis
+for j in (seq 1)
+    set cols (math $COLUMNS - 0)
+    set lins (math $LINES - 0)
+    tput home
+    set outp (ps --no-headers -o pcpu,pmem,stat,cmd -p (cat /sys/fs/cgroup/cg_bg/cgroup.procs))
+    set max_ll 0
+    for line in $outp
+        set ll (string length -- "$line")
+        if test $ll -gt $max_ll
+        set max_ll $ll
+        end
+    end
+    set steps (math -s0 "($max_ll - $c )" / $stepsize)
+    if test $steps -lt 0
+        set steps 0
+    end
+    for step in (seq $steps)
+        tput home
+        set linecount 0
+        for line in $outp
+            set linecount (math $linecount +1)
+            if test $linecount -ge $lins
+                break
+            end
+            set outpl (echo $line|cut -c$step-(math $step + $c ))
+            set loutpl (string length -- "$outpl")
+            if test $loutpl -lt $c
+                set addl (math $c - $loutpl +2)
+                set add (string repeat " " -n $addl)
+            else
+                set add ""
+            end
+            echo $outpl$add
+        end
+        if test $step -eq 1
+            sleep 1
+        else 
+            if test $step -eq $steps
+                sleep 1
+            else
+                sleep 0
+            end
+        end
+    end
+end

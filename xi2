@@ -1,51 +1,22 @@
 #!/usr/bin/python3
 
-# logging stuff first
-from pylib.syslog_utils import warn,err,info,log,WARN,ERR,INFO,warn_exp,debug,DEBUG
+__doc__="""
+This script initializes the 2nd X-server.
+"""
 
-from pylib.ioutils import AsyncLineReader
+from subprocess import call,check_call,DEVNULL
 from time import sleep
-from re import match
-from argparse import ArgumentParser
-ap=ArgumentParser("xi2 runs xinit for the second xserver")
-ap.add_argument( "-d","--debug", type=int , default=WARN)
-args=ap.parse_args()
-loglevel=args.debug
+from os import environ
 
+def main():
+    xhost_env=environ.copy()
+    xhost_env['DISPLAY']='skyscraper:0'
+    if not 0 == call(['xhost'],env=xhost_env,stderr=DEVNULL,stdout=DEVNULL):
+        check_call(['ssh','root@skyscraper','rind','rc-service','xserver','restart'])
+    sleep(1.5)
+    check_call([environ['HOME']+'/.xinitrc_skyscraper'])
 
-try:
-    from subprocess import check_call,Popen,DEVNULL,PIPE
-    from os import environ
+if __name__ == "__main__":
+    main()
     
-    # remove NVIM_LISTEN_ADDRESS because xservers cannot be nested inside nvim
-    remove_var="NVIM_LISTEN_ADDRESS"
-    if remove_var in environ.keys():
-        env=environ.copy()
-        env.pop(remove_var)
-    else:
-        env=environ
-    
-    p=Popen( [ 'xinit', environ['HOME']+'/.xinitrc_skyscraper', '--', environ['HOME']+'/.xserverrc_skyscraper','--loglevel',str(loglevel) ],env=env, shell=False, close_fds=False,start_new_session=False,stdout=PIPE,stderr=PIPE)
-    alr_o=AsyncLineReader(p.stdout)
-    alr_e=AsyncLineReader(p.stderr)
-    nothing=0
-    done=False
-    while nothing<5000 and not done:
-        lines=alr_o.read()
-        lines+=alr_e.read()
-        if len(lines) == 0:
-            nothing+=1
-        for line in lines:
-            if match(b"^.*command[ ]not[ ]found",line):
-                warn(line)
-            if match(b"^.*X[ ]connection[ ]to[ ].*[ ]broken",line):
-                done=True
-            if args.debug >= DEBUG:
-                debug(line.decode())
-        sleep(0.1)
-    if not done and loglevel <= DEBUG:
-        debug("TIMEOUT: stdout,stderr reading aborted")
-except Exception as e:
-    warn_exp(e,with_traceback=True)
-
 # vim: set nowrap foldlevel=0 foldnestmax=0 foldmethod=indent :

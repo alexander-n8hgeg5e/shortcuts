@@ -1,8 +1,8 @@
 #!/bin/bash
 
-xhost SI:localuser:firefox
+#xhost SI:localuser:firefox
 
-
+RUNAS_USER=firefox
 declare -A args
 
 args["-vgl"]=0
@@ -65,11 +65,26 @@ cmd0="rind sudo -iu firefox"
 cmd1="firefox -P ${profile} ${more_args}"
 
 
-if [[ ${args["-vgl"]} -eq 1 ]] ; then
-    cmd="${cmd0} vglrun ${cmd1}"
+###############
+## authorize ##
+###############
+if [[ -n "${XAUTHORITY}" ]];then
+    auth_file_path="${XAUTHORITY}"
 else
-    cmd="${cmd0} ${cmd1}"
+    auth_file_path="~/.Xauthority"
+fi
+runas_user_auth_file_path="/tmp/.Xauthority_${RUNAS_USER}_${DISPLAY}"
+sudo cp "${auth_file_path}" "${runas_user_auth_file_path}"
+sudo chown ":${RUNAS_USER}" "${runas_user_auth_file_path}"
+sudo chmod g+r "${runas_user_auth_file_path}"
+
+env_args="XAUTHORITY=${runas_user_auth_file_path}"
+
+if [[ ${args["-vgl"]} -eq 1 ]] ; then
+    cmd0="${cmd0} vglrun"
 fi
 
-echo "${cmd}"
+cmd="${cmd0} env ${env_args} ${cmd1}"
+
+echo "evaluating cmd: \"${cmd}\" ..."
 eval "${cmd}"

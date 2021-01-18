@@ -1,3 +1,7 @@
 #!/bin/bash
 
-monitor_samsung_control --switch-on-off
+if [[ $(hostname) = tc ]];then
+    monitor_samsung_control --switch-on-off
+else
+    ssh tc monitor_samsung_control --switch-on-off
+fi

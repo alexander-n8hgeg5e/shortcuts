@@ -90,7 +90,7 @@ def gen_log_cmd():
     else:
         cmd = ['git_reverse_graph_color',]
 
-    cmd = cmd +  ['--date=format:' + "%y_%m_%d|%H:%M"]
+    cmd = cmd +  ['--date=format:' + "%y%m%d|%H%M"]
     cmd = cmd + prepared_args
     
     if not args.not_filter_old_branches:

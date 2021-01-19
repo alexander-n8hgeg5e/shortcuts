@@ -55,7 +55,7 @@ def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_arg
                             '--backtrack':backtrack
                         }
     pgk_set        = [ pkg_set ]
-    args_default   = {'--deep':include , '--newuse':include}
+    args_default   = {'--deep':include , '--newuse':include, '--with-bdeps':'y'}
     args_full      =    {
                             '--deep':include,
                             '--newuse':include,

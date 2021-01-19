@@ -80,6 +80,17 @@ sudo chmod g+r "${runas_user_auth_file_path}"
 
 env_args="XAUTHORITY=${runas_user_auth_file_path}"
 
+#####################
+## setup cache dir ##
+#####################
+browser_cache_dir="/tmp/firefox/.cache"
+browser_tmp_dir="/tmp/firefox"
+if ! sudo stat -t "${browser_cache_dir}" > /dev/null ;then
+    sudo mkdir -p "${browser_cache_dir}"
+    sudo chown "${RUNAS_USER}:${RUNAS_USER}" "${browser_cache_dir}"
+    sudo chown "${RUNAS_USER}:${RUNAS_USER}" "${browser_tmp_dir}"
+fi
+
 if [[ ${args["-vgl"]} -eq 1 ]] ; then
     cmd0="${cmd0} vglrun"
 fi

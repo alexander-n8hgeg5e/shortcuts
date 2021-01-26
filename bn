@@ -1,21 +1,27 @@
 #!/usr/bin/python3
 from sys import argv
-from subprocess import Popen,DEVNULL,PIPE,check_call
+from subprocess import Popen,DEVNULL,PIPE,check_call,call
 from signal import SIGSTOP,SIGCONT
-from os import getpid,nice
+from os import getpid,nice,getuid
+from pylib.du import ptb
 
 def setup():
     try:
         pid = getpid()
+        cgpcsf="/sys/fs/cgroup/cg_bg/cgroup.procs"
+
+        # TODO: add code somewhere else and remove next 2 line
+        # calling subprocesses is much slower than opening files
+        if getuid() == 1000:
+            call(['sudo','chmod','og+rw',cgpcsf])
 
         # add to cgroup
-        p1 = Popen(['sudo','dd','of=/sys/fs/cgroup/cg_bg/cgroup.procs','status=none'],stdin=PIPE)
-        p1.communicate(input=str(pid).encode())
-        p1.wait()
-        n=nice(40)
+        with open(cgpcsf,'wb') as f:
+            f.write(str(pid).encode(encoding='ascii'))
+        nice(40)
         check_call([ 'ionice' , '-c3', '-p', str(pid) ])
     except Exception as e:
-        print(e)
+        ptb(e)
         raise
 
 

@@ -8,6 +8,17 @@ from time import sleep
 from termios import tcsetattr,tcgetattr,TCSADRAIN
 from tty import setraw
 from pylib.syslog_utils import debug
+
+from argparse import ArgumentParser
+def parse_args():
+    global args
+    ap=ArgumentParser()
+    ap.add_argument("-r",help="add -r option to preserve branches together with interactive rebase",action="store_true")
+    args=ap.parse_args()
+
+parse_args()
+
+
 CTRL_C = bytes([0x03])
 BS     = bytes([0x08])
 DEL    = bytes([0x7f])
@@ -141,6 +152,8 @@ check_call(cmd)
 try:
     print(cmd)
     cmd=[ "git","rebase","-i" ]
+    if args.r:
+        cmd.append('-r')
     check_call(cmd)
 except CalledProcessError:
     print(cmd)

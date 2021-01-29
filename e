@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-waitmsg='>> waiting for ANYKEY <<'
+waitmsg='>> waiting for 0x0A <<'
 from logging import INFO, DEBUG, WARNING
 LOGLEVEL=WARNING
 EWMH_SUPPORT=True
@@ -746,12 +746,17 @@ def autowait(first_file_arg):
         wait()   #}}} 
 
 def wait():
-    from sys import stdin   #{{{
+    from sys import stdin,stdout   #{{{
     from tty import setcbreak,tcsetattr,TCSADRAIN,tcgetattr
     old=tcgetattr(stdin)
     setcbreak(stdin)
     print(waitmsg)
     a=stdin.read(1)
+    while not a == '\x0a':
+        print(hex(a.encode()[0])+',',end="")
+        stdout.flush()
+        a=stdin.read(1)
+        continue
     tcsetattr(stdin, TCSADRAIN, old)   #}}} 
     
 def gen_target_desktop():

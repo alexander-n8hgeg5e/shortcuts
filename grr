@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+
+from sys import stdin,argv,stderr
+from re import sub
+from subprocess import check_output
+from hashlib import sha1
+from time import time
+
+uniq_file_ids={}
+
+
+def shorten(f,l=8):
+    global uniq_file_ids
+    #print(f"\"{f}\" : ",end="")
+    if f in uniq_file_ids.keys():
+        #print(f"\"{uniq_file_ids[f]}\"")
+        return uniq_file_ids[f]
+    if len(f) > l:
+        sf=f[-l:]
+        loopcount=0
+        while sf in uniq_file_ids.values() and l > loopcount:
+            loopcount+=1
+            sf = sha1(f.encode()).hexdigest()[:loopcount] + f[ -l+loopcount:]
+        if sf in uniq_file_ids.values():
+            raise Exception(f"Could not find uniq file id for file :\n{f}")
+    else:
+        sf=f
+    uniq_file_ids.update({f:sf})
+    #print(f"\"{sf}\"")
+    return sf
+
+lines = [ l.strip() for l in stdin.read().strip().split("\n")]
+for line in lines:
+    files=[]
+    id =   sub('^[ ]*[A-Za-z0-9_-]+[ ]+([a-f0-9]{4,})[ ].*$','\\1', line )
+    if len(id) > 0:
+        if len(id) < len(line):
+            files = [f.strip() for f in check_output([ 'git', 'log','-n1', '--pretty=', '--name-only','--stat', id ],cwd=argv[-1] ).decode().strip().split('\n')]
+    files=[shorten(f) for f in files]
+    if len(files) > 0:
+        pattern='^([ ]*[A-Za-z0-9_-]+[ ]+[a-f0-9]{4,}[ ])(.*)$'
+        sub_pattern=f'\\1[{",".join(files)}] \\2'
+        line = sub(pattern,sub_pattern, line )
+    print(line)

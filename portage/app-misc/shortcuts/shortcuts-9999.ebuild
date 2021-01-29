@@ -432,4 +432,5 @@ dobin list_service_scripts_in_use
 dobin sf
 dobin radios
 dobin git-rm-unverifiable-refs
+dobin grr
 }

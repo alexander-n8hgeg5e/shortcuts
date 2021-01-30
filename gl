@@ -12,6 +12,9 @@ from pprint import pprint
 from math import ceil
 from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass,Action_enable
 debug=False
+##
+##TODO: detect if stdout is no terminal and disable output limit
+##
 
 n = 1.02
 columns,rows=get_terminal_size()

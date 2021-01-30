@@ -434,4 +434,6 @@ dobin radios
 dobin git-rm-unverifiable-refs
 dobin grr
 dobin grsp
+dobin gds1
+dobin gd1
 }

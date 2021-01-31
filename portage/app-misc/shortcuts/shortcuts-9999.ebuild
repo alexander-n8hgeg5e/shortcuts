@@ -436,4 +436,5 @@ dobin grr
 dobin grsp
 dobin gds1
 dobin gd1
+dobin get_mounted_nfs
 }

@@ -1,0 +1,4 @@
+#!/bin/sh
+for mountpoint in $( ssh tc mount | grep -E ' nfs4? ' | sed -E 's/^.* on (\S+).*$/\1/' ) ; do
+echo "${mountpoint}"
+done

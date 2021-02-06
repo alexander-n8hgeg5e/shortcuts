@@ -36,6 +36,7 @@ def parse_args():
     a.add_argument("-v","--verbose",action="store_true")
     a.add_argument("-r","--rebuild",action="store_true",help="rebuild all eix-expr-matching packages that are installed")
     a.add_argument("--simulated-test-run",action="store_true")
+    a.add_argument("-N","--omit-nodeps",action="store_true")
     a.add_argument(dest = "eix_expressions", default=[''],nargs="*")
     global args
     args=a.parse_args()
@@ -123,8 +124,12 @@ def update(pkg):
             msg="updating "+pkg+" ... "
             print(msg, end="")
             stdout.flush()
+        if args.omit_nodeps:
+            nodeps=[]
+        else:
+            nodeps=['--nodeps']
         if not args.simulated_test_run:
-            check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--oneshot', '--ask', 'n', '--nodeps', pkg ],stdout=DEVNULL,stderr=DEVNULL)
+            check_call(['ionice', '-c3', 'nice', '-n19', 'sudo', 'emerge', '--oneshot', '--ask', 'n'] + nodeps + [ pkg ],stdout=DEVNULL,stderr=DEVNULL)
             add_to_successfull_list(pkg)
         else:
             if random_choice([True,False]):

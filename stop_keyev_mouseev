@@ -1,2 +1,2 @@
 #!/bin/sh
-kill $(ps -A -o pid,cmd|grep -E 'python3[ ]+/usr/bin/(mouseev|keyev)'|cut -d' ' -f1)
+kill $(ps -A -o pid,cmd|grep -E 'python3[ ]+.*(mouseev|keyev)($|[ ])'|cut -d' ' -f1)

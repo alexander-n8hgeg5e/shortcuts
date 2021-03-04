@@ -26,6 +26,7 @@ ap.add_argument("--auto-off-time",type=int,default=None)
 ap.add_argument("--menu-hpos",type=int,default=None)
 ap.add_argument("--menu-vpos",type=int,default=None)
 ap.add_argument("--magicb",type=int,default=None)
+ap.add_argument("--disable-part-of-i2c-dev-check",action="store_true",default=True)
 args=ap.parse_args()
 b=SMBus(5)
 sleeptime=0.4
@@ -217,8 +218,31 @@ EDID = bytes(
                 ]
              )
 
-def find_i2p_dev(edid):
-    outp=check_output(["ddcutil","detect"])
+def find_i2p_dev(Model='Samsung'):
+    #outp=check_output(["ddcutil","detect"])
+	from sys import path
+	path.insert(0,'/var/src/pylib')
+	
+	from pylib.parsers import IndentationParser as P
+	from subprocess import check_output
+	data = check_output([ 'ddcutil', 'detect' ]).decode().strip()
+	p=P(data)
+	p.parse()
+	#from pprint import pprint
+	#pprint(p.data)
+	data=p.data
+	
+	for thing in data:
+		if thing[0][:8]=='I2C bus:':
+			for thingy in thing:
+				if type(thingy) is list:
+					for thingyty in thingy:
+						#print(f"thingyty={thingyty[:6]}")
+						#print(f"thingyty={thingyty[-10:]}")
+						if thingyty[:6] == "Model:":
+							if thingyty[-10:] == "SyncMaster" :
+								return(thing[0].split(" ")[-1])
+	return None
 
 def _check_i2p_dev(edid=EDID,i2c_dev_nr=5):
     "/sys/bus/i2c/devices/i2c-5/device/drm/card0/card0-HDMI-A-1/i2c-5"
@@ -260,7 +284,7 @@ def _check_i2p_dev(edid=EDID,i2c_dev_nr=5):
     return False
         
 def check_i2p_dev(edid=EDID,i2c_dev_nr=5):
-    if not _check_i2p_dev(edid=edid,i2c_dev_nr=i2c_dev_nr):
+    if not args.disable_part_of_i2c_dev_check and not _check_i2p_dev(edid=edid,i2c_dev_nr=i2c_dev_nr):
         return False
     si=str(i2c_dev_nr)
     i2c_sysdev_path="/sys/bus/i2c/devices/i2c-"+si+"/i2c-dev/i2c-"+si+"/dev"
@@ -275,9 +299,10 @@ def check_i2p_dev(edid=EDID,i2c_dev_nr=5):
         return False
     return True
 
-
 def main():
-    if not check_i2p_dev():
+    i2c_dev = find_i2p_dev()
+    i2c_dev_nr = int(i2c_dev.split('-')[-1])
+    if not check_i2p_dev(i2c_dev_nr=i2c_dev_nr):
         raise Exception("ERROR: could not find i2p device")
     if args.switch_on_off:
         b.write_byte(0x8,0x03)

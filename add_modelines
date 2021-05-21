@@ -23,7 +23,7 @@ for m in modelines:
     print(mm)
     modelinedupe = make_modeline( mm )
 
-    display = check_output(['hostname']).decode().strip() + ':'+environ['DISPLAY'].split(':')[-1]
+    display = environ['DISPLAY']
     print(display)
 
     rm0 = [['xrandr','--delmode', m['displays'][display]['outputname'], m['mode_name'] ]]

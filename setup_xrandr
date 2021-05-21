@@ -10,8 +10,7 @@ def xrandr_it(filename):
            if len(cmdline.strip()) > 0:
                 call(cmdline.split(" "))
 
-
-if len(argv) > 1 :
+if len(argv) > 1:
     xrandr_conf_file_path = environ["HOME"] + "/.xrandr.conf_"+argv[1]
     modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]
 else:
@@ -28,6 +27,7 @@ else:
     if not exists( xrandr_conf_file_path ):
         exit(1)
     modelinefile = environ['HOME']+psep+'.modelines_'+postfix
+print(modelinefile)
 
 if exists(modelinefile):
     check_call( ['add_modelines', modelinefile] )

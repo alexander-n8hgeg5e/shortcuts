@@ -71,8 +71,9 @@ cmd1="firefox -P ${profile} ${more_args}"
 if [[ -n "${XAUTHORITY}" ]];then
     auth_file_path="${XAUTHORITY}"
 else
-    auth_file_path="~/.Xauthority"
+    auth_file_path="${HOME}/.Xauthority"
 fi
+[[ -e "${auth_file_path}" ]] || touch "${auth_file_path}"
 runas_user_auth_file_path="/tmp/.Xauthority_${RUNAS_USER}_${DISPLAY}"
 sudo cp "${auth_file_path}" "${runas_user_auth_file_path}"
 sudo chown ":${RUNAS_USER}" "${runas_user_auth_file_path}"

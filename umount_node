@@ -1,0 +1,6 @@
+#!/bin/sh
+node="${1}"
+for thing in $(get_mounted_nfs "${node}" );do
+    umount "${thing}"
+done
+

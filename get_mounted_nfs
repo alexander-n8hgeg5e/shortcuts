@@ -1,4 +1,5 @@
 #!/bin/sh
-for mountpoint in $( ssh tc mount | grep -E ' nfs4? ' | sed -E 's/^.* on (\S+).*$/\1/' ) ; do
+node="${1}"
+for mountpoint in $( mount | grep -E ' nfs4? ' | grep "${node}" | sed -E 's/^.* on (\S+).*$/\1/' ); do
 echo "${mountpoint}"
 done

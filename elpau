@@ -2,7 +2,7 @@
 from sys import argv
 import pexpect
 from shlex import split as splitcmd
-cmd1=splitcmd('ionice -c3 nice -n19 sudo emerge')
+cmd1=splitcmd('bn sudo emerge')
 cmd2=splitcmd('--ask -v')
 cmd3=argv[1:]
 

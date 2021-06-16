@@ -4,7 +4,7 @@ from subprocess import call
 import argparse
 from sys import exit
 
-cmd_base = ['ionice', '-c3', 'nice', '-n19', 'sudo']
+cmd_base = ['bn', 'sudo']
 
 
 def gen_cmd_emerge_preserved_rebuild(*z,**zz):

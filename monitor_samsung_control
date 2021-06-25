@@ -28,7 +28,6 @@ ap.add_argument("--menu-vpos",type=int,default=None)
 ap.add_argument("--magicb",type=int,default=None)
 ap.add_argument("--disable-part-of-i2c-dev-check",action="store_true",default=True)
 args=ap.parse_args()
-b=SMBus(5)
 sleeptime=0.4
 did_reset=False
 
@@ -300,10 +299,12 @@ def check_i2p_dev(edid=EDID,i2c_dev_nr=5):
     return True
 
 def main():
+    global b
     i2c_dev = find_i2p_dev()
     i2c_dev_nr = int(i2c_dev.split('-')[-1])
     if not check_i2p_dev(i2c_dev_nr=i2c_dev_nr):
         raise Exception("ERROR: could not find i2p device")
+    b=SMBus(i2c_dev_nr)
     if args.switch_on_off:
         b.write_byte(0x8,0x03)
     if args.reset:

@@ -15,7 +15,6 @@ IUSE="rind neovim github pyopen X"
 
 RDEPEND="dev-python/pexpect
 		  >=dev-python/columnize-0.3.9
-		  x11-misc/wmctrl
 		  rind? ( app-misc/rind )
 		  neovim? 	(   app-editors/neovim
 		  				app-misc/tmux
@@ -23,6 +22,7 @@ RDEPEND="dev-python/pexpect
 		  github? ( dev-python/github3 )
 		  pyopen? ( app-misc/pyopen )
 		  X?	(	x11-apps/xset
+		  			x11-misc/wmctrl
 		  			dev-python/psutil[${PYTHON_USEDEP}]
 		  		)
 		  "

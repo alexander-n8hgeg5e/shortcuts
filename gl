@@ -88,7 +88,7 @@ def gen_log_cmd():
     if not args.reverse_graph:
         cmd = ['git', 'log', '--reverse']
         prettystart = "--pretty=format:"
-        pretty = prettystart + hash + S + date + S + refnames + subject
+        pretty = prettystart + hash + S + date + S + '%cN' + S + refnames + subject
         cmd = cmd + [pretty]
     else:
         cmd = ['git_reverse_graph_color',]

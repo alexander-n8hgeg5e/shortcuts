@@ -64,9 +64,13 @@ if args.region_index is None:
         w,h= layout[layout_index]['size']
 else:
     region_layout=env_screen_layout_2_region_layout()
-    x=layout2xpos(region_layout,args.region_index-1)
-    y=0
-    w,h=region_layout[args.region_index-1]["size"]
+    if len(region_layout) != 0:
+        x=layout2xpos(region_layout,args.region_index-1)
+        y=0
+        w,h=region_layout[args.region_index-1]["size"]
+    else:
+        w,h=400,400
+        x,y=0,0
     
 
 

@@ -26,6 +26,7 @@ RDEPEND="dev-python/pexpect
 					x11-misc/wmctrl
 					dev-python/psutil[${PYTHON_USEDEP}]
 				)
+			dev-python/deprecation[${PYTHON_USEDEP}]
 		"
 
 BDEPEND="dev-util/scons[${PYTHON_USEDEP}]"

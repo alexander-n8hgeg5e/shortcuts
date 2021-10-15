@@ -12,25 +12,21 @@ def xrandr_it(filename):
 
 if len(argv) > 1:
     xrandr_conf_file_path = environ["HOME"] + "/.xrandr.conf_"+argv[1]
-    modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]
+    #modelinefile     = environ['HOME'] + psep +'.modelines_'+argv[1]
 else:
     from sys import path
-    path.insert(0,'/var/src/pylib')
-    from pylib.screen_utils.env import parse_display_var_v2
-    display = parse_display_var_v2()
+    #path.insert(0,'/var/src/pylib')
+    from pylib.screen_utils.env import parse_display_var_v3
+    display = parse_display_var_v3()
     print(display)
-    postfix = ":".join(display.values())
-    xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + postfix
-    if not exists( xrandr_conf_file_path ):
-        postfix=environ["hostnamE"]
-    xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + postfix
+    xrandr_conf_file_path=environ["HOME"] + "/.xrandr.conf_" + display
     if not exists( xrandr_conf_file_path ):
         exit(1)
-    modelinefile = environ['HOME']+psep+'.modelines_'+postfix
-print(modelinefile)
+    #modelinefile = environ['HOME']+psep+'.modelines_'+postfix
 
-if exists(modelinefile):
-    check_call( ['add_modelines', modelinefile] )
+print(f"xrandr conf file path = {xrandr_conf_file_path}")
+#if exists(modelinefile):
+#    check_call( ['add_modelines', modelinefile] )
 
 xrandr_it( xrandr_conf_file_path )
 

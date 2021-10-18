@@ -34,6 +34,10 @@ if not args.newer is None and len(args.newer) > 0:
         else:
             f=1
         newer =  f * float(args.newer.strip("mhdw"))
+    else:
+        from sys import stderr
+        print("ERROR: \"newer\" value has to be negative (I forgot why,... maybe to be consistent with the \"find\" program)",file=stderr)
+        exit(1)
 else:
     newer=0
 

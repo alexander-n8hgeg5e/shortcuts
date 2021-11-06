@@ -1,0 +1,2 @@
+#!/bin/sh
+sed -i -E 's/\s*gtk-application-prefer-dark-theme [=] false/gtk-application-prefer-dark-theme = true/' ~/.config/gtk-3.0/settings.ini

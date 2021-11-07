@@ -4,6 +4,10 @@ set fkwds (cat ~/.filterkwds)
 for j in $fkwds
 	for i in (git ls-files)
         test -d $i;
+        or begin
+                test -L $i;
+                and test (git ls-tree --abbrev=1 HEAD -- $i|cut -c-6) = 120000
+                end
 		or grep -H -n -i "$j" "$i"
 	end
 	read

@@ -1,0 +1,2 @@
+#!/bin/fish
+for i in (cat ~/.gitpacks/github-code) ;git clone https://github.com/alexander-n8hgeg5e/(basename $i".git") $i;end

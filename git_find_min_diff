@@ -1,0 +1,43 @@
+#!/usr/bin/env python3
+
+from subprocess import check_output
+from math import inf
+from argparse import ArgumentParser
+
+
+
+def prep0(out):
+    out=[i for i in out.split(' ')]
+    out=[i.strip(',)+-(') for i in out]
+    out=[out[0],out[3],out[5]]
+    return [int(i) for i in out]
+
+if __name__=="__main__":
+    ap=ArgumentParser   (   'Finds min diff in a refs history to another constant ref.'
+                            'Supply one of the refs with "{}" brackets.'
+                            'They will get substituted a number.'
+                        )
+    ap.add_argument('ref',nargs=2)
+    ap.add_argument('count',nargs=1)
+    args=ap.parse_args()
+    refs=[sub('[{][}]','{i}',i) for i in args.ref]
+    print(refs)
+    from sys import exit
+    exit()
+    min=inf
+    min_i=None
+    for i in range(500,1000):
+        try:
+            out=check_output(['gd','--shortstat','d319916', f'origin/master~{i}']).decode().strip()
+            out=prep0(out)
+            s=sum(out[1:])
+            if s < min:
+                min=s
+                min_i=i
+        except Exception as e:
+            print(e)
+            break
+
+    print(f'min_i = {min_i}\nminimum = {min}')
+    
+    

@@ -442,4 +442,6 @@ dobin get_mounted_nfs
 dobin umount_node
 dobin get_mounted_nfs
 dobin git_clone_github-code-pack
+dobin vv
+dobin vs
 }

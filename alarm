@@ -1,0 +1,32 @@
+#!/bin/bash
+alarmtime="$@"
+low=350
+high=1500
+periode=4
+hightime_0="0.2"
+hightime_1="0.4"
+lowtime="0.1"
+sweep_char="-"
+high_beep_char=":"
+alarmtime_sec=$(date --date "${alarmtime}" '+%s') || exit
+while [[ $(date '+%s') -lt $(date --date "@${alarmtime_sec}" '+%s') ]]; do
+    echo $(( - $(date '+%s') + ${alarmtime_sec} ))" seconds remaining until Alarm at $( date -R --date @${alarmtime_sec} )"
+    sleep 10
+    tput el1
+    tput cuu1
+    tput cr
+done
+echo "Alarm! alarmtime = $(( - $(date '+%s') + ${alarmtime_sec} ))s. No time remaining, alarm at $( date -R --date @${alarmtime_sec} )"
+sox -n -p \
+gain -1 synth "${periode}"  sine "${low}:${high}" synth "${periode}" 0 0 sine amod $(( 1/"${periode}"/4 )) \
+synth "${periode}" 0 0 sawtooth mix $(( "${low}" / 8 )):$(( "${high}" / 1 )) 10 : \
+synth "${hightime_0}" sine "${high}" : \
+synth "${hightime_1}" sine "${high}" synth "${hightime_1}" 0 0 90 \
+square amod $(python3 -c 'print( 20 / '"$hightime_1"' )')${high_beep_char}$(python3 -c 'print( 2 / '"$hightime_1"' )') : \
+gain -1 synth "${periode}"  sine "${high}${sweep_char}${low}" synth "${periode}" 0 25 sine amod $(( 1/"${periode}"/4 ))  \
+synth "${periode}" 0 0 sawtooth mix $(( "${high}" / 1 )):$(( "${low}" / 8 )) 10 \
+| sox - -p tremolo 60 80 \
+| sox - -p overdrive 20 20 \
+| play -p repeat -
+
+# vim: set foldlevel=99 :

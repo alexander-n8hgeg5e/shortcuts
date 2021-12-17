@@ -1,0 +1,27 @@
+#!/usr/bin/env python3
+
+import sys
+import fcntl
+import termios
+from argparse import ArgumentParser
+ap = ArgumentParser()
+ap.add_argument("-d","--device")
+ap.add_argument("-r","--append-return",action="store_true" , help="appends return (0x0d) to the send data")
+ap.add_argument("-n","--dry-run",action="store_true" )
+ap.add_argument("-v","--verbose",action="store_true" )
+ap.add_argument(dest="cmdline", nargs='*' )
+args=ap.parse_args()
+if len(args.cmdline) > 0:
+    data=" ".join(args.cmdline).encode()
+else:
+    data=sys.stdin.read().encode()
+if args.append_return:
+    data += 0x0d.to_bytes(1,sys.byteorder)
+if args.verbose or args.dry_run:
+    print(data)
+if args.dry_run:
+    sys.exit()
+with open(args.device,"wb") as f:
+    for i in range(len(data)):
+        c=data[i:i+1]
+        fcntl.ioctl(f.fileno(), termios.TIOCSTI,c)    

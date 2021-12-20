@@ -5,10 +5,11 @@ from os import environ
 from os.path import exists,sep as psep
 
 def xrandr_it(filename):
-     cmdlines=check_output(['parse_xrandr_conf', filename ]).decode().split("\n")
-     for cmdline in cmdlines:
-           if len(cmdline.strip()) > 0:
-                call(cmdline.split(" "))
+     check_call([filename])
+     #cmdlines=check_output(['parse_xrandr_conf', filename ]).decode().split("\n")
+     #for cmdline in cmdlines:
+     #      if len(cmdline.strip()) > 0:
+     #           call(cmdline.split(" "))
 
 if len(argv) > 1:
     xrandr_conf_file_path = environ["HOME"] + "/.xrandr.conf_"+argv[1]

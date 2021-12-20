@@ -350,7 +350,7 @@ def _get_active_win_pos_str( x_pos, right_border , max_count_x_distance_from_boa
         width is the list that has all the horizontal screen widths in it.
         x_pos the position in pixel
         """
-        for i in range(max_count_x_distance_from_boarder): 
+        for i in range(max_count_x_distance_from_boarder+1): 
             if x_pos > right_border - sum_of_list( monitor_widths[-(i + 1):]):
                  # is the ( i + 1 ) rightmost one  # first: i=0 , so pos is -(i+1) = -1 means last element 
                  ##l.debug("right")
@@ -928,12 +928,12 @@ if __name__=="__main__":
     
     if args.debug:
         enable_debug()
+        from pylib.du import dd,d0,d1
     
     if args.scan:
+        dd("scan..")
         scan_for_sockets()
     decide_witch_nvim_sock_to_use_for_edit()
-    from pylib.du import dd,d0,d1
-    dd(socket_index_to_connect)
     attach_nvims()
     
     if args.verbose:

@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/bin/ccze -A | /usr/bin/less

@@ -24,13 +24,24 @@ from os.path import sep as psep
 from pprint import pprint
 from argparse import ArgumentParser
 ap=ArgumentParser()
-ap.add_argument(dest='devname',nargs=1)
-ap.add_argument(dest='fields',nargs="+",type=int,help="interger indices")
-ap.add_argument("-u","--unit",choices=["M","G","K","k","g","m","b","B","T","t"],help="if not specified sectors are unit as listed with -i",default=None)
-ap.add_argument("-s","--sector-size",type=float,help="sector size in bytes required if unit specified")
-ap.add_argument('-l',action="store_true",help="print available device names")
+ap.add_argument("-d","--devnames",nargs='+',type=str)
+ap.add_argument('-f','--fields',nargs="+",type=int,help="interger indices",default=[5,9])
+ap.add_argument("-u","--unit",choices=["M","G","K","k","g","m","b","B","T","t"],help="if not specified sectors are unit as listed with -i",default='m')
+ap.add_argument("-s","--sector-size",type=float,help="sector size in bytes required if unit specified",default=512)
+ap.add_argument('-l',"--list",action="store_true",help="print available device names")
 ap.add_argument('-i',action="store_true",help="print available field indices")
+ap.add_argument('-w','--watch',action="store_true",help="watch",default=True)
+ap.add_argument('-r','--rate',action="store_true",help="show rate only",default=True)
+ap.add_argument('-n','--repeat-time',type=float,help="watch",default=2)
 args=ap.parse_args()
+if args.watch:
+    from time import time
+    from sys import stdout
+    delete_line=0x1b5b314b.to_bytes(4,'big')
+    one_line_up=0x1b4d.to_bytes(2,'big')
+    cr=0x0d.to_bytes(1,'big')
+    from re import sub
+
 
 def print_field_indices():
     for i in range(len(field_desc)):
@@ -44,69 +55,137 @@ def print_available_dev_names():
     for k in name2_major_minor.keys():
         print(k)
 
-with open("/proc/diskstats") as f:
-    lines=f.read().strip().split("\n")
-
 datadict={}
 name2_major_minor={}
-for line in lines:
-    fields=line.split()
-    major=fields[0]
-    minor=fields[1]
-    name=fields[2]
-    if not major in datadict.keys():
-        datadict.update({major:{}})
-    if not minor in datadict[major].keys():
-        datadict[major].update({minor:{}})
-    names=field_desc
-    values=fields
-    d=dict([(i,j) for i,j in zip(names,values)])
-    name2_major_minor.update({name:(major,minor)})
-    datadict[major][minor].update(d)
+first_run=True
+pos=0
+maxlen=0
 
-if args.l:
-    print("available dev names")
-    print_available_dev_names()
-    exit()
+while True:
+    with open("/proc/diskstats") as f:
+        lines=f.read().strip().split("\n")
+    for line in lines:
+        fields=line.split()
+        major=fields[0]
+        minor=fields[1]
+        name=fields[2]
+        name2_major_minor.update({name:(major,minor)})
+        if not args.list:
+            if not name in args.devnames:
+                continue
+        if not major in datadict.keys():
+            datadict.update({major:{}})
+        if not minor in datadict[major].keys():
+            datadict[major].update({minor:{}})
+        names=field_desc
+        values=fields
+        d={}
+        i=0
+        for i in range(len(names)):
+            if i in args.fields:
+                val=int(values[i])
+                d.update({names[i]:val})
+                if args.watch:
+                    ir=f'{names[i]} rate'
+                    t=time()
+                    dmm = datadict[major][minor]
+                    if not first_run:
+                        rd=dmm[ir]
+                        rate = (val-rd['last'])/(t-rd['t0'])
+                    else:
+                        rate=None
+                    d.update({ir:{'t0':t,'last': val ,'rate':rate}})
+        datadict[major][minor].update(d)
+    #pprint(datadict)
+    first_run=False
+    
+    if args.list:
+        print("available dev names")
+        print_available_dev_names()
+        exit()
 
-from sys import exit
+    printstuff=[]
+    for devname in args.devnames:
+        try:
+            major,minor = name2_major_minor[devname]
+        except KeyError:
+            print("KeyError, available keys:")
+            print_available_dev_names()
+            exit(1)
+        maxkeylen=0
+        for i in args.fields:
+            try:
+                k=field_desc[i]
+                if args.watch:
+                    kr = f"{k} rate"
+                maxkeylen=max(len(k),maxkeylen)
+                if args.watch:
+                    vr=datadict[major][minor][kr]['rate']
+                v=datadict[major][minor][k]
+            except IndexError:
+                print("IndexError, available indices:")
+                print_field_indices()
+                exit(1)
+            if args.watch:
+                printstuff.append((f"{devname}: "+kr,vr))
+            if not args.rate:
+                printstuff.append((f"{devname}: "+k,v))
 
-try:
-    major,minor = name2_major_minor[args.devname[0]]
-except KeyError:
-    print("KeyError, available keys:")
-    print_available_dev_names()
-    exit(1)
-maxkeylen=0
-printstuff=[]
-for i in args.fields:
-    try:
-        k=field_desc[i]
-        maxkeylen=max(len(k),maxkeylen)
-        v=datadict[major][minor][k]
-    except IndexError:
-        print("IndexError, available indices:")
-        print_field_indices()
-        exit(1)
-    printstuff.append((k,v))
-for k,v in printstuff:
-    postfix=""
-    if not args.unit is None and k.lower().find("sectors") != -1:
-        v=int(v)*args.sector_size
-        if args.unit.upper() == "T":
-            v=v/1024/1024/1024/1024
-            postfix="Tb"
-        elif args.unit.upper() == "G":
-            v=v/1024/1024/1024
-            postfix="Gb"
-        elif args.unit.upper() == "M":
-            v=v/1024/1024
-            postfix="Mb"
-        elif args.unit.upper() == "K":
-            v=v/1024
-            postfix="Kb"
-        elif args.unit.upper() == "B":
-            postfix="B"
+    lpi=0
+    for k,v in printstuff:
+        postfix=""
+        if not args.unit is None\
+        and k.lower().find("sectors") and not v is None != -1:
+            v=int(v)*args.sector_size
+            if args.unit.upper() == "T":
+                v=v/1024/1024/1024/1024
+                postfix="Tb"
+            elif args.unit.upper() == "G":
+                v=v/1024/1024/1024
+                postfix="Gb"
+            elif args.unit.upper() == "M":
+                v=v/1024/1024
+                postfix="Mb"
+            elif args.unit.upper() == "K":
+                v=v/1024
+                postfix="Kb"
+            elif args.unit.upper() == "B":
+                postfix="B"
+            else:
+                postfix="error"
+        if k[-4:]=='rate':
+            postfix+="/s"
+            k=sub(r'[#][ ]of[ ]sectors',r'',k)
+
+        from time import sleep
+        while pos > lpi:
+            from time import sleep
+            stdout.buffer.raw.write(one_line_up)
+            pos -= 1
+        while pos < lpi:
+            stdout.buffer.raw.write(0x0a.to_bytes(1,'big'))
+            pos+=1
+
+        valueformat="{}"
+        if not v is None:
+            valueformat="{:4.4f}"
+        v=valueformat.format(v)
+        k=f"{{:{maxkeylen}}}".format(k)
+        if k.find('written') != -1:
+            data2write=f"{k} =                {v} {postfix}"
         else:
-            postfix="error"
-    print(("{:"+str(maxkeylen)+"} = {} {}").format(k,v,postfix))
+            data2write=f"{k} = {v} {postfix}"
+
+        ld2w=len(data2write)
+        if ld2w > maxlen:
+            maxlen=ld2w
+        else:
+            data2write+=" "*(maxlen-ld2w)
+        data2write=data2write.encode()
+        stdout.buffer.raw.write(delete_line)
+        stdout.buffer.raw.write(cr)
+        stdout.buffer.raw.write(data2write)
+        lpi+=1
+    if not args.watch:
+        break
+    sleep(args.repeat_time)

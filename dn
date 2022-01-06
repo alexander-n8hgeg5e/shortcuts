@@ -1,0 +1,7 @@
+#!/bin/sh
+
+minutes=$1
+
+[[ -n $1 ]] || minutes=5
+
+sudo dmesg -e --since "$minutes minutes ago" | ccze -C -A

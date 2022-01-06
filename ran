@@ -57,15 +57,16 @@ for node in nodes_ok:
     if args.header:
         header=f"# {node} #"
         header+="#"*(cols-len(node)-4)
-        print(header)
+        print(header,file=stdout)
+        stdout.flush()
     try:
         check_call(['ssh',node]+args.cmdline)
         exitcodes.append((node,0))
     except CalledProcessError as e:
-        print(e)
+        print(e,file=stderr)
         exitcodes.append((node,e.returncode))
 if args.show_exitcodes:
-    print(f"exitcodes: {exitcodes}")
+    print(f"exitcodes: {exitcodes}",stdout)
 exit(sum(i[-1] for i in exitcodes))
         
 

@@ -22,10 +22,6 @@ def parse_args():
                    metavar="rangestart", help="",
                    )
     ap.add_argument(
-                   dest="pass_throug_arg1", type=str, nargs="?",
-                   help="", default=None
-                   )
-    ap.add_argument(
                    dest="pass_throug_args", type=str, nargs="*",
                    help="",
                    )
@@ -33,7 +29,8 @@ def parse_args():
     r0=args.range0[0]
     rl=args.range_len
     #TODO: use pass-through arg parser
-    args.pass_throug_arg1=args.pass_throug_arg1 if not args.pass_throug_arg1 in [None,"--"] else []
+    if len(args.pass_throug_args) > 0:
+        args.pass_throug_args[0]=args.pass_throug_args[0] if not args.pass_throug_args[0] in [None,"--"] else []
     args.range=range(r0, r0 + rl )
     print(args)
     return args
@@ -63,7 +60,9 @@ def do_print_tail(i,back):
 def do(i):
     back="^"*i
     do_print_head(i,back)
-    cmd=["git", "diff"] + [args.pass_throug_arg1] + ["HEAD^"+back,"HEAD"+back] + args.pass_throug_args
+    a0 = [args.pass_throug_args[0]] if len(args.pass_throug_args) > 0 else []
+    a1 =  args.pass_throug_args[1:] if len(args.pass_throug_args) > 1 else []
+    cmd=["git", "diff"] + a0 + ["HEAD^"+back,"HEAD"+back] + a1
     call(cmd)
     do_print_tail(i,back)
 

@@ -1,0 +1,68 @@
+#!/usr/bin/env python3
+
+
+from argparse import ArgumentParser
+
+
+
+
+a=ArgumentParser()
+a.add_argument("cmdline",nargs="+")
+a.add_argument("-v","--verbose",action="store_true")
+a.add_argument("-H","--header",action="store_true")
+a.add_argument("-n","--nodes",nargs='+')
+a.add_argument("-e","--show-exitcodes",action="store_true")
+args=a.parse_args()
+
+
+NODESLISTFILE = "/etc/nodelist"
+
+from sys import path
+from subprocess import check_call,CalledProcessError,DEVNULL,STDOUT
+
+if args.nodes is None or len(args.nodes) == 0:
+    with open(NODESLISTFILE) as f:
+        nodes=f.read().splitlines()
+        nodes=[i.strip() for i in nodes]
+        nodes=filter(lambda x: x.strip != '' ,nodes)
+else:
+    nodes=args.nodes
+if args.header:
+    from os import get_terminal_size
+    cols=get_terminal_size().columns
+
+nodes_ok=[]
+for node in nodes:
+    try:
+        if args.verbose:
+            add_to_args={}
+        else:
+            add_to_args={'stdout':DEVNULL,'stderr':DEVNULL}
+        check_call(['ssh',node,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
+    except CalledProcessError:
+        pass
+    nodes_ok.append(node)
+
+exitcodes=[]
+for node in nodes_ok:
+    if args.header:
+        header=f"# {node} #"
+        header+="#"*(cols-len(node)-4)
+        print(header)
+    try:
+        check_call(['ssh',node]+args.cmdline)
+        exitcodes.append((node,0))
+    except CalledProcessError as e:
+        print(e)
+        exitcodes.append((node,e.returncode))
+if args.show_exitcodes:
+    print(f"exitcodes: {exitcodes}")
+exit(sum(i[-1] for i in exitcodes))
+        
+
+    
+
+
+
+
+

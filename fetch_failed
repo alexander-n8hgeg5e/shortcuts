@@ -1,0 +1,66 @@
+#!/usr/bin/env python3
+#elpau!! --fetchonly \
+#(\
+LOGFILE = "/node/ec/var/log/syslog.warning"
+#|grep 'Fetch failed for'\
+#|sed -E 's/^.*Fetch failed for [\']([^\']+)[\'].*$/=\\1/'\
+#)
+from re import sub
+counter=0
+BREAKCOUNT=3
+atoms=[]
+with open(LOGFILE) as f:
+    while True:
+        try:
+            line=f.readline()
+        except UnicodeDecodeError:
+            pass
+        if line.find("Fetch failed for ") != -1:
+            pkgname = sub('^.*Fetch failed for [\']([^\']+)[\'].*$','=\\1',line.strip())
+            #print(f"found: \"{pkgname}\"")
+            atoms.append(pkgname)
+        ll=len(line.strip())
+        if counter < BREAKCOUNT:
+            if ll == 0:
+                counter+=1
+            continue
+        else:
+            break
+
+
+from pylib.list_utils import uniq
+atoms=uniq(atoms)
+print(f"Found {len(atoms)} atoms ...",end="")
+
+done=[]
+with open("/tmp/fetch_failed_fetched_list","rt") as f:
+    done_=f.read().strip().split("\n")
+    for d in done_:
+        dd=d.strip()
+        if len(dd) > 0:
+            done.append(dd)
+
+
+done=uniq(done)
+
+#print(done)
+print(f" of which {len(done)} atoms had been already fetched.")
+
+
+idxes=[]
+with open("/tmp/fetch_failed_fetched_list","at") as f:
+    start= f.tell() == 0 
+    from subprocess import check_call,CalledProcessError
+    for atom in atoms:
+        if not atom in done:
+            try:
+                check_call(['elpau!!','--fetchonly',atom])
+                if not atom in done:
+                    if start:
+                        f.write(atom)
+                        start=False
+                    else:
+                        f.write("\n"+atom)
+                    f.flush()
+            except CalledProcessError as e:
+                pass

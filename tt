@@ -1,12 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-if [[ -n "${hostnamE}" ]];then
-    host="${hostnamE}"
-elif [[ -n "${hostname}" ]];then
-    host="${hostname}"
-else
-    host="$(hostname)"
-fi
+socket_name="$(hostname)"
 
 if [[ -v DISPLAY ]] && [[ -n "${DISPLAY}" ]] ; then
     p0="$(echo ${DISPLAY}|cut -d":" -f1)"
@@ -19,12 +13,13 @@ fi
 echo $display
 
 xpos="$(xdotool getactivewindow getwindowgeometry | grep Position: |cut -d: -f2 | sed -r 's/\s*(\w*)\s*/\1/'| cut -d, -f1)"
-
-xpos=$(( ${xpos}  -  ( ${xpos} % 10 ) ))
-
+if [[ -n $xpos ]];then
+    xpos=$(( ${xpos}  -  ( ${xpos} % 10 ) ))
+else
+    xpos="none"
+fi
 session_name="${display}_${xpos}"
 
-socket_name="${host}"
 echo socket name: $socket_name
 
 if [[ -e "/tmp/tmux-$(id -u)" ]];then

@@ -11,7 +11,7 @@ color_off=b'\x1b[0m'
 
 def parse_args():
     from pylib.argparse_utils import PassThroughArgumentParser,Action_disable,Action_set,Action_store_true_no_pass
-    ap=ArgumentParser(description="")
+    ap=PassThroughArgumentParser(description="")
     ap.add_argument("-v", action="count", help="increase verbosity" )
     ap.add_argument(
                    "-l", "--range-len", type=int, default=1,
@@ -63,7 +63,7 @@ def do_print_tail(i,back):
 def do(i):
     back="^"*i
     do_print_head(i,back)
-    cmd=["git", "diff"] + args.pass_throug_arg1 + ["HEAD^"+back,"HEAD"+back] + args.pass_throug_args
+    cmd=["git", "diff"] + [args.pass_throug_arg1] + ["HEAD^"+back,"HEAD"+back] + args.pass_throug_args
     call(cmd)
     do_print_tail(i,back)
 

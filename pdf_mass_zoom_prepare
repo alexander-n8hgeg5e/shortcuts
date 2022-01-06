@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+from subprocess import check_output,check_call
+from sys import exit
+from sys import stdout
+from time import sleep
+ids=check_output(['xdotool','search','--name','.*[.]pdf'])
+ids=ids.splitlines()
+ids=[id.strip() for id in ids]
+def out(z):
+    stdout.buffer.raw.write(z)
+def countdown_warning(t):
+    for i in range(t,0,-1):
+        print(f"switch 2 screen manually, time left {i} seconds")
+        sleep(1)
+print(ids)
+print("ok? (y/n):",end="")
+if not input() == 'y':
+    exit()
+keystrokes= []
+#keystrokes +=[ ('ctrl+f', 0 )]
+#keystrokes += [('Down', 0 )]
+#keystrokes += [('minus', 0 )]
+#keystrokes += [('Down', 15,0 )]
+keystrokes += [('Left', 30,0 )]
+#keystrokes *= 3
+print(keystrokes)
+
+if not input("after you tell you are ready you will have\n"
+             "4 seconds to switch to the\n"
+             "screen with the windows. Every window will get the \n"
+             "first keystroke send and then the time specified after\n"
+             "the keystroke will be wait.\n"
+             "After this it will be continued with the remaining\n"
+             "(keystroke,time) tuples\n"
+             "are you ready(y/n)"
+            )=='y':
+    exit()
+countdown_warning(4)
+print("sending keystrokes...")
+for keystroke in keystrokes:
+    for id in ids:
+        check_call(['xdotool','windowactivate','--sync',id])
+        cmd=['xdotool','key','--window',id]
+        repeat=keystroke[-2]
+        if repeat > 0:
+            cmd+=['--repeat',str(repeat)]
+        cmd+=[keystroke[0]]
+        check_call(cmd)
+    sleep(keystroke[-1])
+
+

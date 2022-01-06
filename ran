@@ -28,8 +28,17 @@ if args.nodes is None or len(args.nodes) == 0:
 else:
     nodes=args.nodes
 if args.header:
-    from os import get_terminal_size
-    cols=get_terminal_size().columns
+    from sys import stderr,stdout
+    found=False
+    for tty in [stdout,stderr]:
+        found=tty.isatty()
+        if found:
+            break
+    if found:
+        from os import get_terminal_size
+        cols=get_terminal_size(tty.fileno()).columns
+    else:
+        cols=20
 
 nodes_ok=[]
 for node in nodes:

@@ -446,4 +446,5 @@ dobin vv
 dobin vs
 dobin feedpts
 dobin pager
+dobin ordsortuniq
 }

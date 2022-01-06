@@ -1,0 +1,72 @@
+#!/bin/sh
+# Copyright 2022 Alexander Wilhelmi
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Dieses Programm ist Freie Software: Sie können es unter den Bedingungen
+# der GNU General Public License, wie von der Free Software Foundation,
+# Version 3 der Lizenz oder (nach Ihrer Wahl) jeder neueren
+# veröffentlichten Version, weiter verteilen und/oder modifizieren.
+#
+# Dieses Programm wird in der Hoffnung bereitgestellt, dass es nützlich sein wird, jedoch
+# OHNE JEDE GEWÄHR,; sogar ohne die implizite
+# Gewähr der MARKTFÄHIGKEIT oder EIGNUNG FÜR EINEN BESTIMMTEN ZWECK.
+# Siehe die GNU General Public License für weitere Einzelheiten.
+#
+# Sie sollten eine Kopie der GNU General Public License zusammen mit diesem
+# Programm erhalten haben. Wenn nicht, siehe <https://www.gnu.org/licenses/>.
+
+
+# stream behavior
+# because lenght of stream is not known, need to reserve space in befor
+MAX_LINES_EXP=10 # characters used for decimal line number
+# sed numbers the lines starting with 1,
+# because this need to subtract 1
+TO_MUCH_LINES_EXP=$(( $MAX_LINES_EXP +1 )) # +1 would be to much
+MAX_LINES=$(( 10**$MAX_LINES_EXP - 1 ))
+SPACE=$(printf '%'"${MAX_LINES_EXP}"'.'"${MAX_LINES_EXP}"'s' ' ' )
+TO_IGNORE_COUNT=$(( $MAX_LINES_EXP + 1 ))
+TO_REMOVE_COUNT=$(( $TO_IGNORE_COUNT + 1 ))
+NUM_CPUS=$(cat /proc/cpuinfo|grep ^processor | wc -l)
+
+
+sed '=' |\
+    sed -En "
+    2~2beven
+    /.{${TO_MUCH_LINES_EXP}}/q1
+    h;
+    z;
+    s/^/${SPACE}/;
+    x
+    G
+    s/\x0a//
+    s/(.{${MAX_LINES_EXP}}).*$/\1/
+    h
+    d
+    :even
+    H;
+    g;
+    s/\x0a/:/
+    p
+    "                     \
+|sort -t: -s -k2.1 --parallel="${NUM_CPUS}"           \
+|uniq -s $TO_IGNORE_COUNT \
+|sort -nk1                \
+|cut -c$TO_REMOVE_COUNT-
+pipestatus=("${PIPESTATUS[@]}")
+IFS='+'
+exitcode=$(( "${pipestatus[*]}" ))
+if [ $exitcode -ne 0 ];then
+    echo ERROR: something FAILED in the pipe, output is UNDETERMINED.
+    exit $exitcode
+fi

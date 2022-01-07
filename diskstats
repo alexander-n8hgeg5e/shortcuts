@@ -168,7 +168,7 @@ while True:
 
         valueformat="{}"
         if not v is None:
-            valueformat="{:4.4f}"
+            valueformat="{:4.2f}"
         v=valueformat.format(v)
         k=f"{{:{maxkeylen}}}".format(k)
         if k.find('written') != -1:

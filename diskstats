@@ -1,24 +1,24 @@
 #!/usr/bin/python3
 
 field_desc= [
-            "major",
-            "minor",
-            "name",
-            "# of reads completed",
-            "# of reads merged",
-            "# of sectors read",
-            "# of milliseconds spent reading",
-            "# of writes completed",
-            "# of writes merged",
-            "# of sectors written",
-            "# of milliseconds spent writing",
-            "# of I/Os currently in progress",
-            "# of milliseconds or jiffies spent doing I/Os",
-            "weighted # of milliseconds spent doing I/Os",
-            "# of discards completed",
-            "# of discards merged",
-            "# of sectors discarded",
-            "# of milliseconds spent discarding",
+           ( "major            ", "") ,
+           ( "minor            ", "") ,
+           ( "name             ", "") ,
+           ( "reads comp       ", "#") ,
+           ( "reads merged     ", "#") ,
+           ( "sectors read     ", "#") ,
+           ( "read time        ", "msec") ,
+           ( "writes comp      ", "#") ,
+           ( "writes merged    ", "#") ,
+           ( "sectors written  ", "#") ,
+           ( "write time       ", "msec") ,
+           ( "iops             ", "#") ,
+           ( "iops time        ", "j") ,
+           ( "iops time wght   ", "msec") ,
+           ( "discards comp    ", "#") ,
+           ( "discards merged  ", "#") ,
+           ( "sectors discarded", "#") ,
+           ( "discarding time  ", "msec") ,
             ]
 from os.path import sep as psep
 from pprint import pprint
@@ -77,7 +77,7 @@ while True:
             datadict.update({major:{}})
         if not minor in datadict[major].keys():
             datadict[major].update({minor:{}})
-        names=field_desc
+        names=[i[0] for i in field_desc]
         values=fields
         d={}
         i=0
@@ -115,7 +115,7 @@ while True:
         maxkeylen=0
         for i in args.fields:
             try:
-                k=field_desc[i]
+                k=field_desc[i][0]
                 if args.watch:
                     kr = f"{k} rate"
                 maxkeylen=max(len(k),maxkeylen)

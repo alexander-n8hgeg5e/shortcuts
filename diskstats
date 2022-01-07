@@ -135,7 +135,7 @@ while True:
     for k,v in printstuff:
         postfix=""
         if not args.unit is None\
-        and k.lower().find("sectors") and not v is None != -1:
+        and k.lower().find("sectors") != -1 and not v is None:
             v=int(v)*args.sector_size
             if args.unit.upper() == "T":
                 v=v/1024/1024/1024/1024

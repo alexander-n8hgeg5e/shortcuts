@@ -447,4 +447,6 @@ dobin vs
 dobin feedpts
 dobin pager
 dobin ordsortuniq
+dobin m10
+dobin m11
 }

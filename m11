@@ -1,0 +1,2 @@
+#!/bin/bash
+ssh tc ddcutil -b 7 setvcp 0xd6 0x01

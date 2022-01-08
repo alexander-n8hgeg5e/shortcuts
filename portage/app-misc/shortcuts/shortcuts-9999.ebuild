@@ -13,14 +13,14 @@ SLOT="0"
 KEYWORDS="~amd64"
 IUSE="rind neovim github pyopen X"
 
-RDEPEND="dev-python/pexpect
-			dev-python/pylib
-			>=dev-python/columnize-0.3.9
+RDEPEND="dev-python/pexpect[${PYTHON_USEDEP}]
+			dev-python/pylib[${PYTHON_USEDEP}]
+			>=dev-python/columnize-0.3.9[${PYTHON_USEDEP}]
 			rind? ( app-misc/rind )
 			neovim?	(   app-editors/neovim
 			app-misc/tmux
 					)
-			github? ( dev-python/github3 )
+			github? ( dev-python/github3[${PYTHON_USEDEP}] )
 			pyopen? ( app-misc/pyopen )
 			X?	(	x11-apps/xset
 					x11-misc/wmctrl

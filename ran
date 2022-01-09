@@ -17,6 +17,8 @@ args=a.parse_args()
 
 NODESLISTFILE = "/etc/nodelist"
 
+from sys import stderr
+from sys import stdout
 from sys import path
 from subprocess import check_call,CalledProcessError,DEVNULL,STDOUT
 
@@ -28,7 +30,6 @@ if args.nodes is None or len(args.nodes) == 0:
 else:
     nodes=args.nodes
 if args.header:
-    from sys import stderr,stdout
     found=False
     for tty in [stdout,stderr]:
         found=tty.isatty()

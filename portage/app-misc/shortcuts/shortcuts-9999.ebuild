@@ -49,21 +49,21 @@ dobin c
 dobin convert_all_mp4_2_aac
 dobin disk_smart_report
 dobin dotf
-dobin e
-dobin edit_nvim_win_back
-dobin edit_nvim_tag_browser
-dobin elp
-dobin elpau
-dobin elpau!
-dobin elpau!!
+python_foreach_impl python_doscript e
+python_foreach_impl python_doscript edit_nvim_win_back
+python_foreach_impl python_doscript edit_nvim_tag_browser
+python_foreach_impl python_doscript elp
+python_foreach_impl python_doscript elpau
+python_foreach_impl python_doscript elpau!
+python_foreach_impl python_doscript elpau!!
 dobin extra_disk_einbinden
 dobin g
 dobin g.c
 dobin ga
 dobin gi
 dobin git_commit_nvim
-dobin github_create_repo
-dobin gl
+python_foreach_impl python_doscript github_create_repo
+python_foreach_impl python_doscript gl
 dobin goo
 dobin gpc
 dobin guc
@@ -71,9 +71,9 @@ dobin img_comp_all_here
 dobin keyblayout_set
 dobin l
 dobin m
-dobin mail_attach_mutt_nvim
+python_foreach_impl python_doscript mail_attach_mutt_nvim
 dobin mailstart
-dobin manif
+python_foreach_impl python_doscript manif
 dobin maup
 dobin mount-notmuchfs
 dobin mutt-notmuch
@@ -97,14 +97,14 @@ dobin rguc
 dobin sd
 dobin speech-wrapper
 dobin gi
-dobin github_create_repo
+python_foreach_impl python_doscript github_create_repo
 dobin nvim_commit_git_history
 dobin nvim_git_history
 dobin c
-dobin gl
-dobin print_foldable
+python_foreach_impl python_doscript gl
+python_foreach_impl python_doscript print_foldable
 dobin sus
-dobin u
+python_foreach_impl python_doscript u
 dobin umount-notmuchfs
 dobin de_st_nvim
 dobin st_nvim
@@ -159,15 +159,15 @@ dobin cgl
 dobin cgpc
 dobin cgu
 dobin cguc
-dobin r
-dobin set_nvim_var
-dobin rub
-dobin nvim_call
-dobin nvim_command
+python_foreach_impl python_doscript r
+python_foreach_impl python_doscript set_nvim_var
+python_foreach_impl python_doscript rub
+python_foreach_impl python_doscript nvim_call
+python_foreach_impl python_doscript nvim_command
 insinto /usr/share/applications
 doins w3m.desktop
-dobin br
-dobin bh
+python_foreach_impl python_doscript br
+python_foreach_impl python_doscript bh
 dobin l0
 dobin l1
 dobin ic
@@ -177,15 +177,15 @@ dobin tmux_nvim_session
 dobin tmux_nvim_new_session
 dobin mknewappuser
 dobin saau
-dobin ba
-dobin ne
+python_foreach_impl python_doscript ba
+python_foreach_impl python_doscript ne
 dobin dg
 dobin haw
 dobin preloadwins
 dobin i
 dobin compile_in_kernel_loaded_modules
 dobin realtime
-dobin nvim_open_browsertab
+python_foreach_impl python_doscript nvim_open_browsertab
 dobin synergy_tmrl_esadc_client
 dobin synergy_tmrl_esadc_server
 dobin tmux_nvim_update_nvim_listen_addr
@@ -204,19 +204,19 @@ if use X ; then
 	dobin menu/l_menuwin
 	dobin menu/menuwin
 	dobin menu/menu_run
-	dobin menu/menu_search
+	python_foreach_impl python_doscript menu/menu_search
 fi
 dobin qb
 dobin ginf
 dobin pcfs
 dobin gip
-dobin gb
+python_foreach_impl python_doscript gb
 dobin set_portage_access_to_code
 dobin unabsorb_git_dirs
 dobin random_seq
 dobin get_free_nodes
 dobin check_node
-dobin check_nodes
+python_foreach_impl python_doscript check_nodes
 dobin get_nodes_load
 dobin get_node_load
 dobin list_my_procs_on_nodes
@@ -233,14 +233,14 @@ dobin gcb
 dobin get_dotf_gitdirs
 dobin get_root_gitdirs
 dobin get_home_gitdirs
-dobin pp
+python_foreach_impl python_doscript pp
 dobin gh
 dobin ds
 dobin gsu
 dobin gsd
 dobin guno
 dobin kernel_update
-dobin github
+python_foreach_impl python_doscript github
 dobin gsbrd
 dobin gisfor
 dobin gcb
@@ -251,7 +251,7 @@ dobin gscb
 dobin checkout_failed
 dobin conky_all
 dobin parse_xrandr_conf
-dobin setup_xrandr
+python_foreach_impl python_doscript setup_xrandr
 dobin set_max_cpu_f
 dobin maups
 dobin gsb
@@ -260,16 +260,16 @@ dobin git_change_commit_date
 dobin datef
 dobin git_del_all_worktree_conf
 dobin ghb
-dobin elpauc!
-dobin elpauc
-dobin elpauc!!
+python_foreach_impl python_doscript elpauc!
+python_foreach_impl python_doscript elpauc
+python_foreach_impl python_doscript elpauc!!
 dobin gcmb
 dobin gbrod
 dobin gbro
 dobin git_update_process
 dobin get_latest_portage_build_logs
 dobin write_latest_portage_build_logs_to_shm
-dobin sc
+python_foreach_impl python_doscript sc
 dobin xauth_push
 dobin ovpn
 dobin invert_and_darken_screen
@@ -317,7 +317,7 @@ dobin uerc
 dobin uerc!
 dobin uerc!!
 dobin xauth_pull
-dobin xis
+python_foreach_impl python_doscript xis
 dobin tmrlso
 dobin youtube
 dobin xi
@@ -328,33 +328,33 @@ dobin n
 dobin screen_on_control_1
 dobin screen_on_control
 dobin colorfade
-dobin mm
+python_foreach_impl python_doscript mm
 dobin .gdcs
 dobin .gds
 dobin gds
 dobin gdcs
-dobin gidb
+python_foreach_impl python_doscript gidb
 dobin mirrorlink
 dobin homelink
 dobin run_env_eprefix_shebang
-dobin timewatch
+python_foreach_impl python_doscript timewatch
 dobin old
-dobin feedkeys_screen
-dobin wm_conf_adj
-dobin add_modelines
-dobin pav
-dobin k
-dobin pyprep
+python_foreach_impl python_doscript feedkeys_screen
+python_foreach_impl python_doscript wm_conf_adj
+python_foreach_impl python_doscript add_modelines
+python_foreach_impl python_doscript pav
+python_foreach_impl python_doscript k
+python_foreach_impl python_doscript pyprep
 dobin webserv
 dobin tt
-dobin I
+python_foreach_impl python_doscript I
 dosym gur /usr/bin/git-unpack-refs    # alias
 dobin git-unpack-refs
 dobin gco
-dobin synergy_skyscraper
-dobin pw
+python_foreach_impl python_doscript synergy_skyscraper
+python_foreach_impl python_doscript pw
 dobin lf
-dobin pf
+python_foreach_impl python_doscript pf
 dobin iit
 dobin iit2
 dobin iit3
@@ -364,77 +364,77 @@ dobin it1
 dobin it2
 dobin it3
 dobin it4
-dobin py
+python_foreach_impl python_doscript py
 dobin cl
-dobin p2c
-dobin pw2handy
-dobin G
-dobin group_access
+python_foreach_impl python_doscript p2c
+python_foreach_impl python_doscript pw2handy
+python_foreach_impl python_doscript G
+python_foreach_impl python_doscript group_access
 dobin check_git
 dobin pip3_source_download
-dobin wl
-dobin dms
+python_foreach_impl python_doscript wl
+python_foreach_impl python_doscript dms
 dobin stripcolors
 dobin gl1
-dobin cmdowner
+python_foreach_impl python_doscript cmdowner
 dobin iptables_log_rejected
 dobin w3mimgdisplay
-dobin ssnd
-dobin stnd
-dobin srnd
-dobin bn
-dobin msky
+python_foreach_impl python_doscript ssnd
+python_foreach_impl python_doscript stnd
+python_foreach_impl python_doscript srnd
+python_foreach_impl python_doscript bn
+python_foreach_impl python_doscript msky
 dobin skyscraper_activate_monitor_onoff_button
-dobin monitor_samsung_control
+python_foreach_impl python_doscript monitor_samsung_control
 dobin mec
 dobin git_reverse_graph_color
-dobin fgd
-dobin ff
-dobin datesort
-dobin snap2
-dobin check_userids_groupids
+python_foreach_impl python_doscript fgd
+python_foreach_impl python_doscript ff
+python_foreach_impl python_doscript datesort
+python_foreach_impl python_doscript snap2
+python_foreach_impl python_doscript check_userids_groupids
 dobin eixv
-dobin fname_clean
+python_foreach_impl python_doscript fname_clean
 dobin defrag
 dobin eixc
-dobin get_room_temp
-dobin get_outside_temp
-dobin mti
+python_foreach_impl python_doscript get_room_temp
+python_foreach_impl python_doscript get_outside_temp
+python_foreach_impl python_doscript mti
 dobin gitpack_remote_up2date_check
 dobin ssh-akl
-dobin logfilter_old
+python_foreach_impl python_doscript logfilter_old
 dobin tox
 dobin mecl
-dobin xi2
-dobin gr
-dobin statm
-dobin find-git-objects
+python_foreach_impl python_doscript xi2
+python_foreach_impl python_doscript gr
+python_foreach_impl python_doscript statm
+python_foreach_impl python_doscript find-git-objects
 dobin df-GMK
 dobin n2s
 dobin sed_align4
-dobin diskstats
+python_foreach_impl python_doscript diskstats
 dobin stop_keyev_mouseev
 dobin b
 dobin random_file_read
 dobin show_cg_io_latency_stats
 dobin ch
 dobin ct
-dobin set_cpu_governor
-dobin pyxd
-dobin git-unpack-packs
-dobin git-fetch-objects
+python_foreach_impl python_doscript set_cpu_governor
+python_foreach_impl python_doscript pyxd
+python_foreach_impl python_doscript git-unpack-packs
+python_foreach_impl python_doscript git-fetch-objects
 dobin show_dirtytime
-dobin random-update
+python_foreach_impl python_doscript random-update
 dobin f0
-dobin check_pkg_hashes
+python_foreach_impl python_doscript check_pkg_hashes
 dobin get_fetch_failed_list
-dobin get_scans
+python_foreach_impl python_doscript get_scans
 dobin dmo
 dobin list_service_scripts_in_use
-dobin sf
-dobin radios
+python_foreach_impl python_doscript sf
+python_foreach_impl python_doscript radios
 dobin git-rm-unverifiable-refs
-dobin grr
+python_foreach_impl python_doscript grr
 dobin grsp
 dobin gds1
 dobin gd1
@@ -444,7 +444,7 @@ dobin get_mounted_nfs
 dobin git_clone_github-code-pack
 dobin vv
 dobin vs
-dobin feedpts
+python_foreach_impl python_doscript feedpts
 dobin pager
 dobin ordsortuniq
 dobin m10

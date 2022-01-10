@@ -1,3 +1,12 @@
 #!/bin/fish
-eval sed -i  \'':$!N;N;s/\('\'\'$argv[1]\'\''\n\)\('\'\'$argv[3]\'\''\)/\1'\'\'$argv[2]\'\''\n\2/;P;D'\' \'$argv[4]\'
+
+# inserts $argv[2] as new line
+# in between $argv[1] and $argv[3]
+# "inplace" in file $argv[4]
+sed -E -i '
+$!N
+s@('$argv[1]'\n)('$argv[3]')@\1'$argv[2]'\n\2@
+P;D
+' \
+$argv[4]      # <- filepath to operate on
 

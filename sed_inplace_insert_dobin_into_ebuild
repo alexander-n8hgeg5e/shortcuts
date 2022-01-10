@@ -18,4 +18,6 @@ if not git diff --exit-code -- "$ebuild_path"
     exit 1
 end
 
-sed_inplace_insert_between_lines 'dobin.*' "dobin $argv[1]" '}' $ebuild_path
+$s/sed_inplace_insert_between_lines \
+' *(python_foreach_impl python_doscript|dobin) +.*' "dobin $argv[1]" '}.*' \
+$ebuild_path

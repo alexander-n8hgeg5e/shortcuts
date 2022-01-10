@@ -3,10 +3,60 @@
 # inserts $argv[2] as new line
 # in between $argv[1] and $argv[3]
 # "inplace" in file $argv[4]
+
+#   Do "()" counting to allow
+#   any count of () in input.
+#   Later the sed subst indices must
+#   take account of the count of "()".
+
+function count_sed -a thing
+	echo $thing | sed -En '
+	:r
+	s/[(](.*)[)]/\1/;Tj     # if subst
+	x;s/^/a/;x  # do: store "(...)" by prepending 1 to holdspace
+	tc;:c   # clear conditionl register
+	br   # while subst, redo subst
+	:j   # if not subst
+	# convert to decimal
+	x
+	# now code from manual
+	/aaaaaaaaaa/! bx;   s/aaaaaaaaaa/b/g
+	/bbbbbbbbbb/! bx;   s/bbbbbbbbbb/c/g
+	/cccccccccc/! bx;   s/cccccccccc/d/g
+	/dddddddddd/! bx;   s/dddddddddd/e/g
+	/eeeeeeeeee/! bx;   s/eeeeeeeeee/f/g
+	/ffffffffff/! bx;   s/ffffffffff/g/g
+	/gggggggggg/! bx;   s/gggggggggg/h/g
+	s/hhhhhhhhhh//g
+	:x
+	$! { h; b; }
+	:y
+	/a/! s/[b-h]*/&0/
+	s/aaaaaaaaa/9/
+	s/aaaaaaaa/8/
+	s/aaaaaaa/7/
+	s/aaaaaa/6/
+	s/aaaaa/5/
+	s/aaaa/4/
+	s/aaa/3/
+	s/aa/2/
+	s/a/1/
+	y/bcdefgh/abcdefg/
+	/[a-h]/ by
+	p
+	'
+end
+
+set la1 (count_sed $argv[1])
+set i2  (math $la1 + 2)
+
+
 sed -E -i '
 $!N
-s@('$argv[1]'\n)('$argv[3]')@\1'$argv[2]'\n\2@
+s@('$argv[1]'\n)('$argv[3]')@\1'$argv[2]'\n\\'$i2'@
+tx
 P;D
+:x
+n;bx
 ' \
 $argv[4]      # <- filepath to operate on
-

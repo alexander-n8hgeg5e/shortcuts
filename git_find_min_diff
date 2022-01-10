@@ -3,6 +3,7 @@
 from subprocess import check_output
 from math import inf
 from argparse import ArgumentParser
+from re import sub
 
 
 
@@ -15,20 +16,19 @@ def prep0(out):
 if __name__=="__main__":
     ap=ArgumentParser   (   'Finds min diff in a refs history to another constant ref.'
                             'Supply one of the refs with "{}" brackets.'
-                            'They will get substituted a number.'
+                            'They will get substituted by a number.'
+                            'like this \'foo/bar~{}\''
+                            'will become foo/bar~0, foo/bar~1, ... till count'
                         )
-    ap.add_argument('ref',nargs=2)
-    ap.add_argument('count',nargs=1)
+    ap.add_argument(dest='const_ref')
+    ap.add_argument(dest='ref')
+    ap.add_argument('count',type=int)
     args=ap.parse_args()
-    refs=[sub('[{][}]','{i}',i) for i in args.ref]
-    print(refs)
-    from sys import exit
-    exit()
     min=inf
     min_i=None
-    for i in range(500,1000):
+    for i in range(args.count):
         try:
-            out=check_output(['gd','--shortstat','d319916', f'origin/master~{i}']).decode().strip()
+            out=check_output(['gd','--shortstat', args.const_ref, sub('[{].*[}]',f'{i}',args.ref)]).decode().strip()
             out=prep0(out)
             s=sum(out[1:])
             if s < min:

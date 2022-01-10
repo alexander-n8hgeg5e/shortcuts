@@ -1,0 +1,23 @@
+#!/bin/fish
+if test (count argv) -gt 1
+  echo read the code bro
+end
+
+
+set f (find -name '*-'"$ebuild_edit_version"'.ebuild')
+
+set ebuild_path (echo $f|head -n1)
+
+git diff --exit-code -- \'$ebuild_path\'
+if not git diff --exit-code -- "$ebuild_path"
+    echo
+    echo git is not clean. aborting.
+    echo
+	echo file: $ebuild_path
+	echo
+    exit 1
+end
+
+$s/sed_inplace_insert_between_lines \
+' *(dobin|python_foreach_impl python_doscript) +.*' 'python_foreach_impl python_doscript '$argv[1] ' *[}] *' \
+$ebuild_path

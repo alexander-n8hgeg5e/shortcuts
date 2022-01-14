@@ -1,25 +1,60 @@
 #!/usr/bin/python3
 
-field_desc= [
-           ( "major            ", "") ,
-           ( "minor            ", "") ,
-           ( "name             ", "") ,
-           ( "reads comp       ", "#") ,
-           ( "reads merged     ", "#") ,
-           ( "sectors read     ", "#") ,
-           ( "read time        ", "msec") ,
-           ( "writes comp      ", "#") ,
-           ( "writes merged    ", "#") ,
-           ( "sectors written  ", "#") ,
-           ( "write time       ", "msec") ,
-           ( "iops             ", "#") ,
-           ( "iops time        ", "j") ,
-           ( "iops time wght   ", "msec") ,
-           ( "discards comp    ", "#") ,
-           ( "discards merged  ", "#") ,
-           ( "sectors discarded", "#") ,
-           ( "discarding time  ", "msec") ,
-            ]
+def sectors_rw(d,rw):
+    if 'rate' in d and not d['rate'] is None:
+        v,u=unitconv(d['rate'])
+        r=f"{d['devname']} {rw} {v:8.2f} {u}/s"
+        return r
+    elif 'value' in d and not d['value'] is None:
+        v,u=unitconv(d['value'])
+        r=f"{d['devname']} {rw} {v:8.2f} {u}"
+        return r
+
+
+
+format_desc =   [
+                 ( "major            ",         lambda x :  f'{x}                ')  ,
+                 ( "minor            ",         lambda x :  f'{x}                ')  ,
+                 ( "name             ",         lambda x :  f'{x}                ')  ,
+                 ( "reads comp       ",         lambda x :  f'{x}                ')  ,
+                 ( "reads merged     ",         lambda x :  f'{x}                ')  ,
+                 ( "sectors read     ",         lambda x :  f'{sectors_rw(x,"r")}')  ,
+                 ( "read time        ",         lambda x :  f'{x}                ')  ,
+                 ( "writes comp      ",         lambda x :  f'{x}                ')  ,
+                 ( "writes merged    ",         lambda x :  f'{x}                ')  ,
+                 ( "sectors written  ",         lambda x :  f'{sectors_rw(x,"w")}')  ,
+                 ( "write time       ",         lambda x :  f'{x}                ')  ,
+                 ( "iops             ",         lambda x :  f'{x}                ')  ,
+                 ( "iops time        ",         lambda x :  f'{x}                ')  ,
+                 ( "iops time wght   ",         lambda x :  f'{x}                ')  ,
+                 ( "discards comp    ",         lambda x :  f'{x}                ')  ,
+                 ( "discards merged  ",         lambda x :  f'{x}                ')  ,
+                 ( "sectors discarded",         lambda x :  f'{x}                ')  ,
+                 ( "discarding time  ",         lambda x :  f'{x}                ')  ,
+                ]
+
+field_desc=[i[0] for i in format_desc]
+
+def unitconv(v):
+    v=int(v)*args.sector_size
+    if args.unit.upper() == "T":
+        v=v/1024/1024/1024/1024
+        postfix="Tb"
+    elif args.unit.upper() == "G":
+        v=v/1024/1024/1024
+        postfix="Gb"
+    elif args.unit.upper() == "M":
+        v=v/1024/1024
+        postfix="Mb"
+    elif args.unit.upper() == "K":
+        v=v/1024
+        postfix="Kb"
+    elif args.unit.upper() == "B":
+        postfix="B"
+    else:
+        postfix="error"
+    return v,postfix
+
 from os.path import sep as psep
 from pprint import pprint
 from argparse import ArgumentParser
@@ -77,28 +112,27 @@ while True:
             datadict.update({major:{}})
         if not minor in datadict[major].keys():
             datadict[major].update({minor:{}})
-        names=[i[0] for i in field_desc]
+        names=[i for i in field_desc]
         values=fields
         d={}
         i=0
         for i in range(len(names)):
             if i in args.fields:
                 val=int(values[i])
-                d.update({names[i]:val})
+                d.update({str(i):val})
                 if args.watch:
-                    ir=f'{names[i]} rate'
                     t=time()
                     dmm = datadict[major][minor]
                     if not first_run:
-                        rd=dmm[ir]
+                        rd=dmm[str(i)]
                         rate = (val-rd['last'])/(t-rd['t0'])
                     else:
                         rate=None
-                    d.update({ir:{'t0':t,'last': val ,'rate':rate}})
+                    d.update({str(i):{'t0':t,'last': val ,'rate':rate}})
         datadict[major][minor].update(d)
     #pprint(datadict)
     first_run=False
-    
+
     if args.list:
         print("available dev names")
         print_available_dev_names()
@@ -112,51 +146,21 @@ while True:
             print("KeyError, available keys:")
             print_available_dev_names()
             exit(1)
-        maxkeylen=0
         for i in args.fields:
             try:
-                k=field_desc[i][0]
-                if args.watch:
-                    kr = f"{k} rate"
-                maxkeylen=max(len(k),maxkeylen)
-                if args.watch:
-                    vr=datadict[major][minor][kr]['rate']
-                v=datadict[major][minor][k]
+                vr=datadict[major][minor][str(i)]['rate']
+                v=datadict[major][minor][str(i)]
             except IndexError:
                 print("IndexError, available indices:")
                 print_field_indices()
                 exit(1)
             if args.watch:
-                printstuff.append((f"{devname}: "+kr,vr))
+                printstuff.append({'fi':i,'devname':devname,'rate':vr})
             if not args.rate:
-                printstuff.append((f"{devname}: "+k,v))
+                printstuff.append({'fi':i,'devname':devname,'value':v})
 
     lpi=0
-    for k,v in printstuff:
-        postfix=""
-        if not args.unit is None\
-        and k.lower().find("sectors") != -1 and not v is None:
-            v=int(v)*args.sector_size
-            if args.unit.upper() == "T":
-                v=v/1024/1024/1024/1024
-                postfix="Tb"
-            elif args.unit.upper() == "G":
-                v=v/1024/1024/1024
-                postfix="Gb"
-            elif args.unit.upper() == "M":
-                v=v/1024/1024
-                postfix="Mb"
-            elif args.unit.upper() == "K":
-                v=v/1024
-                postfix="Kb"
-            elif args.unit.upper() == "B":
-                postfix="B"
-            else:
-                postfix="error"
-        if k[-4:]=='rate':
-            postfix+="/s"
-            k=sub(r'[#][ ]of[ ]sectors',r'',k)
-
+    for p in printstuff:
         from time import sleep
         while pos > lpi:
             from time import sleep
@@ -165,22 +169,7 @@ while True:
         while pos < lpi:
             stdout.buffer.raw.write(0x0a.to_bytes(1,'big'))
             pos+=1
-
-        valueformat="{}"
-        if not v is None:
-            valueformat="{:4.2f}"
-        v=valueformat.format(v)
-        k=f"{{:{maxkeylen}}}".format(k)
-        if lpi % 2 != 0 :
-            data2write=f"{k} =                {v} {postfix}"
-        else:
-            data2write=f"{k} = {v} {postfix}"
-
-        ld2w=len(data2write)
-        if ld2w > maxlen:
-            maxlen=ld2w
-        else:
-            data2write+=" "*(maxlen-ld2w)
+        data2write=format_desc[p['fi']][1](p)
         data2write=data2write.encode()
         stdout.buffer.raw.write(delete_line)
         stdout.buffer.raw.write(cr)

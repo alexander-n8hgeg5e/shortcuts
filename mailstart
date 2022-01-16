@@ -1,7 +1,7 @@
 #!/bin/fish
 
 # restart if status is crashed
-rallnodes 'rc-status -c|grep -o offlineimap;and sudo rc-service offlineimap restart'
+rc-status -c|grep -o offlineimap;and sudo rc-service offlineimap restart
 
 notmuch new
 if test (cat /proc/mounts|grep notmuchfs|grep -c $HOME/.my_notmuchfs) -lt 1

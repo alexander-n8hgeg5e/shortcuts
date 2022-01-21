@@ -4,21 +4,6 @@ from subprocess import Popen,DEVNULL,PIPE,check_call,call
 from signal import SIGSTOP,SIGCONT
 from os import getpid,nice,getuid
 from pylib.du import ptb
-from sys import argv
-from sys import exit
-
-
-# parse args
-from argparse import ArgumentParser
-a=ArgumentParser()
-a.add_argument("-v","--print-pid",action="store_true",help="print pid of spawned process to stderr")
-a.add_argument(dest="cmd2run",nargs=1)
-a.add_argument(dest="args",nargs="*")
-args=a.parse_args()
-#if a.long_help:
-#    with open(__file__) as f:
-#        print(f.read())
-#    exit()
 
 def setup():
     try:
@@ -39,10 +24,10 @@ def setup():
         ptb(e)
         raise
 
+
 # start
-p0 = Popen(args.cmd2run + args.args,preexec_fn=setup)
-if args.print_pid:
-    from sys import stderr
-    print(p0.pid,file=stderr)
+p0 = Popen(argv[1:],preexec_fn=setup)
+from sys import stderr
+print(p0.pid,file=stderr)
 p0.wait()
 exit(p0.returncode)

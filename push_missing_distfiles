@@ -1,0 +1,29 @@
+#!/bin/fish
+
+set ssh_target $argv[1]
+set src_distdir (portageq distdir)
+test -z $ssh_target; and echo error 1>&2 ; and exit 1
+set dst_distdir (ssh $ssh_target portageq distdir)
+#echo $ssh_target
+#echo $src_distdir
+#echo $dst_distdir
+#
+# to get the fetch_request file use something like this for FETCHCOMMAND
+# on the remotehost
+#
+#FETCHCOMMAND="bash -c \"echo \${FILE} | sed s/.__download__\\\$// >> \${DISTDIR}/fetch_request ;echo \${URI};exit 1\""
+#
+
+set cmd rsync -lptgoDiv \
+$src_distdir/{(string join , (ssh root@wb cat $dst_distdir'/fetch_request'|sort -u))} \
+root@wb:$dst_distdir/
+
+echo CMD:
+# python prints it how it gets passed
+# check by uncommenting the first one
+#exec python -c "from sys import argv;print(argv)" $cmd
+python -c "from sys import argv;from pprint import pprint;pprint(argv)" $cmd
+read -P "exec cmd ? y/n:" a
+if test $a = y
+    exec $cmd
+end

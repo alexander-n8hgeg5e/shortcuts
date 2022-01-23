@@ -452,4 +452,12 @@ dobin m11
 python_foreach_impl python_doscript git_find_min_diff
 dobin mountpp
 dobin push_missing_distfiles
+dobin show_python_not_in_ebuild
+python_foreach_impl python_doscript pdf_mass_zoom_prepare
+python_foreach_impl python_doscript py_io_control
+python_foreach_impl python_doscript ran
+python_foreach_impl python_doscript serve_http
+python_foreach_impl python_doscript set-dark_kicad
+python_foreach_impl python_doscript sharg
+python_foreach_impl python_doscript fetch_failed
 }

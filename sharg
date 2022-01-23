@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+
+"""
+This tool shows all the args
+it has been called with
+nicely separated in a python list.
+"""
+from sys import argv
+print(argv[1:])

@@ -451,4 +451,5 @@ dobin m10
 dobin m11
 python_foreach_impl python_doscript git_find_min_diff
 dobin mountpp
+dobin push_missing_distfiles
 }

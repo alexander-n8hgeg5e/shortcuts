@@ -13,7 +13,7 @@ a.add_argument("-H","--no-header",action="store_true")
 a.add_argument("-n","--nodes",nargs='+')
 a.add_argument("-E","--no-exitcodes",action="store_true")
 a.add_argument("-u","--sudo-user",default="root",help="default is root, what means prepending \"sudo\". otherwise: sudo -u {value}")
-a.add_argument("-S","--no-syslog",help="default is prepending \"ril\",on the remote, which is a syslog logging new independent session spawning python tool",action="store_true")
+a.add_argument("-r","--ril",help="prepend \"ril\",on the remote, which is a syslog logging new independent session spawning python tool",action="store_true")
 
 args=a.parse_args()
 
@@ -59,7 +59,7 @@ for node in nodes:
 
 def gen_cmdline_prefixes(node):
     cmds = []
-    if not args.no_syslog:
+    if args.ril:
         cmds.append("ril")
     # keep cmdline short for readablity in logs
     try:

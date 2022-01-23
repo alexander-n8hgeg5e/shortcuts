@@ -1,0 +1,21 @@
+#!/bin/fish
+#
+# filenames to stdout
+# shebang to stderr
+#
+set f (find -name '*-'"$ebuild_edit_version"'.ebuild')
+set ebuild_path (echo $f|head -n1)
+for i in *;
+	test -x $i
+	and begin grep -Eq $i'$' $ebuild_path
+		or begin test -f $i
+			and grep -Eq '^[#][!][/a-zA-Z_0-9-]+ python' $i
+			and begin echo $i
+				and begin
+					head -n1 $i 1>&2
+					echo        1>&2
+				end
+			end
+		end
+	end 
+end

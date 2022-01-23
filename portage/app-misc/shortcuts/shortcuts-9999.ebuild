@@ -460,4 +460,50 @@ python_foreach_impl python_doscript serve_http
 python_foreach_impl python_doscript set-dark_kicad
 python_foreach_impl python_doscript sharg
 python_foreach_impl python_doscript fetch_failed
+dobin alarm
+dobin check_nodes_old
+dobin cuc
+dobin cz
+dobin dn
+dobin forward_clipster_socket
+dobin forward_nvim_socket
+dobin gen_fish_completions
+dobin get_sub_git_dirs
+dobin glsi_git_ls_index
+dobin go_mirror
+dobin go_prefix
+dobin gsu!
+dobin http-serv
+dobin iit1
+dobin iit1n
+dobin iit2n
+dobin iit3n
+dobin iit4n
+dobin iitn
+dobin it1n
+dobin it2n
+dobin it3n
+dobin it4n
+dobin itn
+dobin klima_off
+dobin list_elf_with_dynlibs
+dobin m1t
+dobin m20
+dobin m21
+dobin portage_repo_git_fix
+dobin power_dusteater_off
+dobin power_dusteater_on
+dobin rambuffer
+dobin read_clipboard
+dobin sed_inplace_insert_python_script_into_ebuild
+dobin set-dark_gtk3
+dobin set-light_gtk3
+dobin sgits
+dobin show_shell_script_not_in_ebuild
+dobin smc
+dobin ud
+dobin uercd
+dobin uercd!
+dobin uercd!!
+dobin unabsorb_git_dirs_only_cleanup
 }

@@ -15,8 +15,8 @@ set dst_distdir (ssh $ssh_target portageq distdir)
 #
 
 set cmd rsync -lptgoDiv \
-$src_distdir/{(string join , (ssh root@wb cat $dst_distdir'/fetch_request'|sort -u))} \
-root@wb:$dst_distdir/
+$src_distdir/{(string join , (ssh $ssh_target cat $dst_distdir'/fetch_request'|sort -u))} \
+$ssh_target:$dst_distdir/
 
 echo CMD:
 # python prints it how it gets passed

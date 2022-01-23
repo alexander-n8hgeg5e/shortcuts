@@ -1,18 +1,17 @@
 #!/bin/fish
 
-# prepare
-set args $argv
-test $args[1] = branch
-    and set args $args[2..-1]
-
-# if no branchname supplied use "git head branch"
-if test -z $args
-	set args (ghb)
+if test (count $argv) -gt 0
+	test $argv[1] = branch
+    and set argv $argv[2..-1]
+else
+	# if no branchname supplied use "git head branch"
+	set argv (ghb)
+end
  
 if not test -z (git branch --list old)
     git branch -m old old/old
     or git branch -m old old_(date '+%F')
     or git branch -m old old_(date '+%F-%H-%M')
 end
-git branch -m $args[1] old/$args[1]_(date '+%F')
-or git branch -m $args[1] old/$args[1]_(date '+%F-%H-%M')
+git branch -m $argv[1] old/$argv[1]_(date '+%F')
+or git branch -m $argv[1] old/$argv[1]_(date '+%F-%H-%M')

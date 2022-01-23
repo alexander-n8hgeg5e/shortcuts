@@ -12,6 +12,9 @@ a.add_argument("-v","--verbose",action="store_true")
 a.add_argument("-H","--no-header",action="store_true")
 a.add_argument("-n","--nodes",nargs='+')
 a.add_argument("-E","--no-exitcodes",action="store_true")
+a.add_argument("-u","--sudo-user",default="root",help="default is root, what means prepending \"sudo\". otherwise: sudo -u {value}")
+a.add_argument("-S","--no-syslog",help="default is prepending \"ril\",on the remote, which is a syslog logging new independent session spawning python tool",action="store_true")
+
 args=a.parse_args()
 
 
@@ -21,6 +24,7 @@ from sys import stderr
 from sys import stdout
 from sys import path
 from subprocess import check_call,CalledProcessError,DEVNULL,STDOUT
+from subprocess import check_output
 
 if args.nodes is None or len(args.nodes) == 0:
     with open(NODESLISTFILE) as f:
@@ -53,6 +57,26 @@ for node in nodes:
         pass
     nodes_ok.append(node)
 
+def gen_cmdline_prefixes(node):
+    cmds = []
+    if not args.no_syslog:
+        cmds.append("ril")
+    # keep cmdline short for readablity in logs
+    try:
+        cmd = ["ssh", node ,'id -u']
+        remote_id = check_output(cmd).strip().decode()
+        cmd = ['id','-u', args.sudo_user ]
+        requested_id  = check_output(cmd).strip().decode()
+    except:
+        print(f"failed cmd: {cmd}",file=stderr)
+        raise
+    if remote_id != requested_id:
+        if args.sudo_user == "root":
+            cmds.append("sudo")
+        else:
+            cmds.extend(["sudo",'-u',args.sudo_user])
+    return cmds
+
 exitcodes=[]
 for node in nodes_ok:
     if not args.no_header:
@@ -61,7 +85,10 @@ for node in nodes_ok:
         print(header,file=stdout)
         stdout.flush()
     try:
-        check_call(['ssh',node]+args.cmdline)
+        # TODO: multiprocessing prior to this loop
+        prefixes = gen_cmdline_prefixes(node)
+        cmd = ['ssh',node] + prefixes + args.cmdline
+        check_call(cmd)
         exitcodes.append((node,0))
     except CalledProcessError as e:
         print(e,file=stderr)

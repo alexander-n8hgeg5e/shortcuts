@@ -9,9 +9,9 @@ from argparse import ArgumentParser
 a=ArgumentParser()
 a.add_argument("cmdline",nargs="+")
 a.add_argument("-v","--verbose",action="store_true")
-a.add_argument("-H","--header",action="store_true")
+a.add_argument("-H","--no-header",action="store_true")
 a.add_argument("-n","--nodes",nargs='+')
-a.add_argument("-e","--show-exitcodes",action="store_true")
+a.add_argument("-E","--no-exitcodes",action="store_true")
 args=a.parse_args()
 
 
@@ -29,7 +29,7 @@ if args.nodes is None or len(args.nodes) == 0:
         nodes=filter(lambda x: x.strip != '' ,nodes)
 else:
     nodes=args.nodes
-if args.header:
+if not args.no_header:
     found=False
     for tty in [stdout,stderr]:
         found=tty.isatty()
@@ -55,7 +55,7 @@ for node in nodes:
 
 exitcodes=[]
 for node in nodes_ok:
-    if args.header:
+    if not args.no_header:
         header=f"# {node} #"
         header+="#"*(cols-len(node)-4)
         print(header,file=stdout)
@@ -66,7 +66,7 @@ for node in nodes_ok:
     except CalledProcessError as e:
         print(e,file=stderr)
         exitcodes.append((node,e.returncode))
-if args.show_exitcodes:
+if not args.no_exitcodes:
     print(f"exitcodes: {exitcodes}",file=stdout)
 exit(sum(i[-1] for i in exitcodes))
         

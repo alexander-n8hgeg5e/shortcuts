@@ -15,3 +15,6 @@ cmd=cmd1+cmd2+cmd3
 print(cmd)
 p=pexpect.spawn(cmd[0],cmd[1:])
 p.interact()
+from sys import exit
+p.close()
+exit(p.exitstatus)

@@ -23,7 +23,11 @@ echo CMD:
 # check by uncommenting the first one
 #exec python -c "from sys import argv;print(argv)" $cmd
 python -c "from sys import argv;from pprint import pprint;pprint(argv)" $cmd
-read -P "exec cmd ? y/n:" a
-if test $a = y
-    exec $cmd
+#read -P "exec cmd ? y/n:" a
+#if test $a = y
+for i in (seq 10 -1 0)
+    echo exec in $i seconds
+    sleep 1
 end
+exec $cmd
+#end

@@ -931,7 +931,7 @@ if __name__=="__main__":
         from pylib.du import dd,d0,d1
     
     if args.scan:
-        dd("scan..")
+        #dd("scan..")
         scan_for_sockets()
     decide_witch_nvim_sock_to_use_for_edit()
     attach_nvims()

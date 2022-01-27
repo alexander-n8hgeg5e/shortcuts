@@ -1,20 +1,71 @@
 #!/usr/bin/env python3
 
-from subprocess import Popen,PIPE
+from subprocess import PIPE
+from subprocess import check_output 
 from sys import argv
 from re import search,IGNORECASE
-from pylib.file_utils.split import file2list
+from sys import path
+path.insert(0,"/var/src/pylib")
+from pylib.file_utils.split import file2list_v2
+from pylib.file_utils.split import data2list
+from re import match
+from hashlib import sha1
+from collections import OrderedDict as OD
+from argparse import ArgumentParser
+from pylib.list_utils import uniq
 
-kwds=file2list("~/.filterkwds")
+ap=ArgumentParser()
+ap.add_argument("-i","--ignore",nargs="*")
+ap.add_argument(dest="git_reference", nargs=1)
+zzz = ap.parse_args()
+ref = zzz.git_reference[0]
 
-p=Popen(["git","diff",argv[1]],stdout=PIPE)
+kwds = file2list_v2("~/.filterkwds")
 
-data=p.stdout.read().decode(errors="replace")
+files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
 
-lines=data.split("\n")
+matches2print=OD()
 
-for line in lines:
-    for kwd in kwds:
-        if search(kwd,line,flags=IGNORECASE):
-            print("###   \""+kwd+"\"   ###")
-            print(line)
+for filename in files:
+    cmd = [ "git", "diff", ref , "--", filename ]
+    lines = data2list(check_output(cmd))
+    for line in lines:
+        for kwd in kwds:
+            if search(kwd,line,flags=IGNORECASE):
+                hashval = sha1(b" ".join([filename,line,kwd])).hexdigest()
+                msg=f'### ###   "{kwd}"   ###\n'
+                msg+=str(line)+"\n"
+                msg+=f'### file: "{filename}"'
+                matches2print[hashval]=msg
+
+lm2p = len(matches2print)
+hashes = list(matches2print)
+l = len(hashes[0])
+for i in range(l-1,0,-1):
+    hshs = [ h[:i] for h in hashes ]
+    if len(uniq(hshs)) < lm2p:
+        break
+minlen = i + 1
+
+for k,v in matches2print.items():
+    matches2print_without = matches2print.copy()
+    matches2print_without.pop(k)
+    for i in range(minlen, 0 , -1):
+        if k[:i] in [ m[:i] for m in  matches2print_without]:
+            break
+    here_minlen = i + 1
+
+    if not zzz.ignore is None:
+        do_continue=False
+        for i in zzz.ignore:
+            if k[:here_minlen] == i[:here_minlen]:
+                do_continue=True
+                break
+        if do_continue:
+            continue
+    print(v)
+    print(f'# hash = {k[:here_minlen]}\n')
+
+
+
+

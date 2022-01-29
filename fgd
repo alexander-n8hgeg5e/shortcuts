@@ -24,23 +24,34 @@ def do_file(filename):
         for line in lines:
             for kwd in kwds:
                 if search(kwd,line,flags=IGNORECASE):
-                    hashme = b" ".join([filename,line,kwd])
-                    msg=f'### regex = "{kwd}"   ###\n'
-                    msg+=str(line)+"\n"
-                    msg+=f'### file: "{filename}"'
-                    found.append((hashme,msg))
+                    ignore = False
+                    for ikwd in kwds_ignore:
+                        # Ignore kwds/regexes need to match case.
+                        # Ignoring something unintended would mean
+                        # to miss a match.
+                        if search(ikwd,line):
+                            ignore = True
+                            break
+                    if not ignore:
+                        hashme = b" ".join([filename,line,kwd])
+                        msg=f'### regex = "{kwd}"   ###\n'
+                        msg+=str(line)+"\n"
+                        msg+=f'### file: "{filename}"'
+                        found.append((hashme,msg))
     return found
 
 def main():
     global ref
     global kwds
+    global kwds_ignore
     redundancy = 1
     ap=ArgumentParser()
     ap.add_argument("-i","--ignore",nargs="*")
     ap.add_argument(dest="git_reference", nargs=1)
     zzz = ap.parse_args()
     ref = zzz.git_reference[0]
-    kwds = file2list_v2("~/.filterkwds")
+    kwds  = file2list_v2("~/.filterkwds")
+    kwds_ignore = file2list_v2("~/.filterkwds_ignore")
     files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
     pool = mp.Pool()
     

@@ -14,61 +14,73 @@ from collections import OrderedDict as OD
 from argparse import ArgumentParser
 from pylib.list_utils import uniq
 from pathlib import Path
+import multiprocessing as mp
 
-redundancy = 1
-
-ap=ArgumentParser()
-ap.add_argument("-i","--ignore",nargs="*")
-ap.add_argument(dest="git_reference", nargs=1)
-zzz = ap.parse_args()
-ref = zzz.git_reference[0]
-
-kwds = file2list_v2("~/.filterkwds")
-
-files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
-#files = list(filter(lambda x: not Path(x).is_file,files))
-matches2print=OD()
-for filename in files:
+def do_file(filename):
+    found=[]
     if not Path(str(filename)).is_dir():
         cmd = [ "git", "diff", ref , "--", filename ]
         lines = data2list(check_output(cmd))
         for line in lines:
             for kwd in kwds:
                 if search(kwd,line,flags=IGNORECASE):
-                    hashval = sha1(b" ".join([filename,line,kwd])).hexdigest()
-                    msg=f'### ###   "{kwd}"   ###\n'
+                    hashme = b" ".join([filename,line,kwd])
+                    msg=f'### regex = "{kwd}"   ###\n'
                     msg+=str(line)+"\n"
                     msg+=f'### file: "{filename}"'
-                    matches2print[hashval]=msg
-# TODO:: Fix the above to run faster.
-#        The above eats the time with
-#        all the git calls.
-hashes = list(matches2print)
-l = len(hashes[0])
+                    found.append((hashme,msg))
+    return found
 
-for k,v in matches2print.items():
-    matches2print_without = matches2print.copy()
-    matches2print_without.pop(k)
-    for i in range(l-1, 0 , -1):
-        if k[:i] in [ m[:i] for m in  matches2print_without]:
-            break
-    # actually minimum is i+1
-    # to catch typos add one more
-    # so in case of a typo
-    # most likely nothing will be ignored
-    here_minlen = i + 1 + redundancy
-
-    if not zzz.ignore is None:
-        do_continue=False
-        for i in zzz.ignore:
-            if k[:here_minlen] == i[:here_minlen]:
-                do_continue=True
+def main():
+    global ref
+    global kwds
+    redundancy = 1
+    ap=ArgumentParser()
+    ap.add_argument("-i","--ignore",nargs="*")
+    ap.add_argument(dest="git_reference", nargs=1)
+    zzz = ap.parse_args()
+    ref = zzz.git_reference[0]
+    kwds = file2list_v2("~/.filterkwds")
+    files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
+    pool = mp.Pool()
+    
+    matches2print_l = pool.map(do_file, files)
+    #print(matches2print_l)
+    matches2print = OD()
+    for thing in matches2print_l:
+        for key,val in thing:
+            hashval = sha1(key).hexdigest()
+            msg = val 
+            matches2print[hashval]=msg
+    
+    hashes = list(matches2print)
+    l = len(hashes[0])
+    for k,v in matches2print.items():
+        matches2print_without = matches2print.copy()
+        matches2print_without.pop(k)
+        for i in range(l-1, 0 , -1):
+            if k[:i] in [ m[:i] for m in  matches2print_without]:
                 break
-        if do_continue:
-            continue
-    #print(v)
-    #print(f'# hash = {k[:here_minlen]}\n')
-    print(f'# hash = {k[:here_minlen]}')
+        # actually minimum is i+1
+        # to catch typos add one more
+        # so in case of a typo
+        # most likely nothing will be ignored
+        here_minlen = i + 1 + redundancy
+    
+        if not zzz.ignore is None:
+            do_continue=False
+            for i in zzz.ignore:
+                if k[:here_minlen] == i[:here_minlen]:
+                    do_continue=True
+                    break
+            if do_continue:
+                continue
+        print(v)
+        print(f'# hash = {k[:here_minlen]}\n')
+        #print(f'# hash = {k[:here_minlen]}')
+
+if __name__ == "__main__":
+    main()
 
 
 

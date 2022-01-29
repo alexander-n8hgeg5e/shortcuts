@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+PATTERN_FILENAME =        ".filterpatterns"
+PATTERN_IGNORE_FILENAME = ".filterpatterns_ignore"
+
 from subprocess import PIPE
 from subprocess import check_output 
 from sys import argv
@@ -13,20 +16,91 @@ from hashlib import sha1
 from collections import OrderedDict as OD
 from argparse import ArgumentParser
 from pylib.list_utils import uniq
-from pathlib import Path
+import pathlib
 import multiprocessing as mp
+from os.path import dirname
+from os.path import sep as psep
+from os.path import exists
+from os.path import commonprefix
+from os.path import commonpath
+from os.path import basename
+from os.path import abspath
+from os.path import expanduser
+from os import getcwd
+
+def get_dirpatterns(pathlib_dir):
+    """
+    returns the patterns defined inside one directory without parent dir ones
+    """
+    filepath_patterns_local        = f"{pathlib_dir}/{PATTERN_FILENAME}"
+    filepath_patterns_ignore_local = f"{pathlib_dir}/{PATTERN_IGNORE_FILENAME}"
+    if exists(filepath_patterns_local):
+        #print(f"reading pattern file: \"{filepath_patterns_local}\"")
+        patterns_local        = file2list_v2(filepath_patterns_local)
+    else: 
+        #print(f"no patternfile found: \"{filepath_patterns_local}\"")
+        patterns_local = []
+    if exists(filepath_patterns_ignore_local):
+        #print(f"reading ignorefile: \"{filepath_patterns_ignore_local}\"")
+        patterns_ignore_local = file2list_v2(filepath_patterns_ignore_local)
+    else:
+        #print(f"no ignorefile found: \"{filepath_patterns_ignore_local}\"")
+        patterns_ignore_local = []
+    return patterns_local,patterns_ignore_local
+
+def get_patterns0():
+    # global files inside homedir for patterns
+    a , b = get_dirpatterns(expanduser("~"))
+    patterns        = a
+    patterns_ignore = b
+
+    starting_point_dir = pathlib.Path('.')
+
+    # current dir
+    a,b = get_dirpatterns( starting_point_dir )
+    patterns        += a
+    patterns_ignore += b
+    return patterns, patterns_ignore
+
+def get_patterns1(filename):
+    """
+    get patterns that will be used for file/filename
+
+    These include all defined in parent dirs up to the starting point dir
+    that is the current workdir.
+    """
+    starting_point_dir = pathlib.Path(getcwd())
+    dirpath  = abspath(dirname(filename))
+    parts = pathlib.Path(dirpath).parts
+    commonp = commonpath( (starting_point_dir , dirpath) )
+    lcp = len(pathlib.Path(commonp).parts)
+    parts = parts[ lcp:]
+    patterns = []
+    patterns_ignore = []
+    for i in range(1,len(parts)):
+        a,b = get_dirpatterns(psep.join(parts[:i]))
+        patterns        += a
+        patterns_ignore += b
+    #print(patterns)
+    #print(patterns_ignore)
+    return patterns,patterns_ignore
 
 def do_file(filename):
+    global patterns
+    global patterns_ignore
+    a, b = get_patterns1(filename.decode())
+    patterns        += a
+    patterns_ignore += b
     found=[]
-    if not Path(str(filename)).is_dir():
+    if not pathlib.Path(str(filename)).is_dir():
         cmd = [ "git", "diff", ref , "--", filename ]
         lines = data2list(check_output(cmd))
         for line in lines:
-            for kwd in kwds:
+            for kwd in patterns:
                 if search(kwd,line,flags=IGNORECASE):
                     ignore = False
-                    for ikwd in kwds_ignore:
-                        # Ignore kwds/regexes need to match case.
+                    for ikwd in patterns_ignore:
+                        # Ignore patterns/regexes need to match case.
                         # Ignoring something unintended would mean
                         # to miss a match.
                         if search(ikwd,line):
@@ -34,38 +108,43 @@ def do_file(filename):
                             break
                     if not ignore:
                         hashme = b" ".join([filename,line,kwd])
-                        msg=f'### regex = "{kwd}"   ###\n'
-                        msg+=str(line)+"\n"
-                        msg+=f'### file: "{filename}"'
+                        msg=f'### file: "{filename}"\n'
+                        msg+=f'### regex = "{kwd}"   vvv Check line below vvv\n'
+                        msg+=str(line)
                         found.append((hashme,msg))
     return found
 
 def main():
     global ref
-    global kwds
-    global kwds_ignore
+    global patterns
+    global patterns_ignore
     redundancy = 1
     ap=ArgumentParser()
     ap.add_argument("-i","--ignore",nargs="*")
     ap.add_argument(dest="git_reference", nargs=1)
     zzz = ap.parse_args()
     ref = zzz.git_reference[0]
-    kwds  = file2list_v2("~/.filterkwds")
-    kwds_ignore = file2list_v2("~/.filterkwds_ignore")
+
+
     files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
+
+
+    patterns, patterns_ignore  = get_patterns0()
     pool = mp.Pool()
-    
     matches2print_l = pool.map(do_file, files)
-    #print(matches2print_l)
     matches2print = OD()
     for thing in matches2print_l:
         for key,val in thing:
+            # Hashing need to be done outside of the pool.
+            # (because sha not pickleable it would need some hack)
+            # The time consuming part are the git calls for
+            # every file (made inside the pool)
             hashval = sha1(key).hexdigest()
             msg = val 
             matches2print[hashval]=msg
     
     hashes = list(matches2print)
-    l = len(hashes[0])
+    l = len(sha1(b"something").hexdigest())
     for k,v in matches2print.items():
         matches2print_without = matches2print.copy()
         matches2print_without.pop(k)

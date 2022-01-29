@@ -13,6 +13,9 @@ from hashlib import sha1
 from collections import OrderedDict as OD
 from argparse import ArgumentParser
 from pylib.list_utils import uniq
+from pathlib import Path
+
+redundancy = 1
 
 ap=ArgumentParser()
 ap.add_argument("-i","--ignore",nargs="*")
@@ -23,37 +26,37 @@ ref = zzz.git_reference[0]
 kwds = file2list_v2("~/.filterkwds")
 
 files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
-
+#files = list(filter(lambda x: not Path(x).is_file,files))
 matches2print=OD()
-
 for filename in files:
-    cmd = [ "git", "diff", ref , "--", filename ]
-    lines = data2list(check_output(cmd))
-    for line in lines:
-        for kwd in kwds:
-            if search(kwd,line,flags=IGNORECASE):
-                hashval = sha1(b" ".join([filename,line,kwd])).hexdigest()
-                msg=f'### ###   "{kwd}"   ###\n'
-                msg+=str(line)+"\n"
-                msg+=f'### file: "{filename}"'
-                matches2print[hashval]=msg
-
-lm2p = len(matches2print)
+    if not Path(str(filename)).is_dir():
+        cmd = [ "git", "diff", ref , "--", filename ]
+        lines = data2list(check_output(cmd))
+        for line in lines:
+            for kwd in kwds:
+                if search(kwd,line,flags=IGNORECASE):
+                    hashval = sha1(b" ".join([filename,line,kwd])).hexdigest()
+                    msg=f'### ###   "{kwd}"   ###\n'
+                    msg+=str(line)+"\n"
+                    msg+=f'### file: "{filename}"'
+                    matches2print[hashval]=msg
+# TODO:: Fix the above to run faster.
+#        The above eats the time with
+#        all the git calls.
 hashes = list(matches2print)
 l = len(hashes[0])
-for i in range(l-1,0,-1):
-    hshs = [ h[:i] for h in hashes ]
-    if len(uniq(hshs)) < lm2p:
-        break
-minlen = i + 1
 
 for k,v in matches2print.items():
     matches2print_without = matches2print.copy()
     matches2print_without.pop(k)
-    for i in range(minlen, 0 , -1):
+    for i in range(l-1, 0 , -1):
         if k[:i] in [ m[:i] for m in  matches2print_without]:
             break
-    here_minlen = i + 1
+    # actually minimum is i+1
+    # to catch typos add one more
+    # so in case of a typo
+    # most likely nothing will be ignored
+    here_minlen = i + 1 + redundancy
 
     if not zzz.ignore is None:
         do_continue=False
@@ -63,8 +66,9 @@ for k,v in matches2print.items():
                 break
         if do_continue:
             continue
-    print(v)
-    print(f'# hash = {k[:here_minlen]}\n')
+    #print(v)
+    #print(f'# hash = {k[:here_minlen]}\n')
+    print(f'# hash = {k[:here_minlen]}')
 
 
 

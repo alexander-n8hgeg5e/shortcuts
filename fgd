@@ -151,7 +151,7 @@ def main():
     ref = zzz.git_reference[0]
 
 
-    files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
+    files = data2list(check_output(["git", "diff", "--name-only" ,"--relative", ref ,"--", "."]))
     if zzz.debug & DEBUG_SHOW_ALL_DIFF_FILES:
         from pprint import pprint
         pprint(files)

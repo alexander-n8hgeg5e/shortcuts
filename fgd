@@ -3,6 +3,10 @@
 PATTERN_FILENAME =        ".filterpatterns"
 PATTERN_IGNORE_FILENAME = ".filterpatterns_ignore"
 
+DEBUG_PATTERNFILES_FOUND  = 0b001
+DEBUG_PATTERNFILES_TESTED = 0b010
+DEBUG_SHOW_ALL_DIFF_FILES = 0b100
+
 from subprocess import PIPE
 from subprocess import check_output 
 from sys import argv
@@ -35,16 +39,20 @@ def get_dirpatterns(pathlib_dir):
     filepath_patterns_local        = f"{pathlib_dir}/{PATTERN_FILENAME}"
     filepath_patterns_ignore_local = f"{pathlib_dir}/{PATTERN_IGNORE_FILENAME}"
     if exists(filepath_patterns_local):
-        #print(f"reading pattern file: \"{filepath_patterns_local}\"")
+        if zzz.debug & DEBUG_PATTERNFILES_FOUND:
+            print(f"reading pattern file: \"{filepath_patterns_local}\"")
         patterns_local        = file2list_v2(filepath_patterns_local)
     else: 
-        #print(f"no patternfile found: \"{filepath_patterns_local}\"")
+        if zzz.debug & DEBUG_PATTERNFILES_TESTED:
+            print(f"no patternfile found: \"{filepath_patterns_local}\"")
         patterns_local = []
     if exists(filepath_patterns_ignore_local):
-        #print(f"reading ignorefile: \"{filepath_patterns_ignore_local}\"")
+        if zzz.debug & DEBUG_PATTERNFILES_FOUND:
+            print(f"reading ignorefile: \"{filepath_patterns_ignore_local}\"")
         patterns_ignore_local = file2list_v2(filepath_patterns_ignore_local)
     else:
-        #print(f"no ignorefile found: \"{filepath_patterns_ignore_local}\"")
+        if zzz.debug & DEBUG_PATTERNFILES_TESTED:
+            print(f"no ignorefile found: \"{filepath_patterns_ignore_local}\"")
         patterns_ignore_local = []
     return patterns_local,patterns_ignore_local
 
@@ -118,16 +126,35 @@ def main():
     global ref
     global patterns
     global patterns_ignore
+    global zzz
     redundancy = 1
     ap=ArgumentParser()
-    ap.add_argument("-i","--ignore",nargs="*")
-    ap.add_argument(dest="git_reference", nargs=1)
+    root = ap.add_mutually_exclusive_group()
+    root.add_argument("--print-debug-masks",action="store_true")
+    default_group = root.add_argument_group()
+    default_group.add_argument("-i","--ignore",nargs="*")
+    default_group.add_argument(dest="git_reference", nargs=1)
+    default_group.add_argument("--debug", default=0, type=int ,help="bitmask in decimal enables one debug output per bit")
     zzz = ap.parse_args()
+    if zzz.print_debug_masks:
+        mlk=0
+        ml=0
+        for k in globals().keys():
+            if k[:5]=="DEBUG":
+                mlk=max(len(k),mlk)
+                ml=max(len(str(globals()[k])),ml)
+        for k in globals().keys():
+            if k[:5]=="DEBUG":
+                fs=f"{{:>{mlk}.{mlk}}} : {{:>{ml}}}"
+                print(fs.format(k,globals()[k]))
+        exit()
     ref = zzz.git_reference[0]
 
 
     files = data2list(check_output(["git", "diff", "--name-only" , ref ]))
-
+    if zzz.debug & DEBUG_SHOW_ALL_DIFF_FILES:
+        from pprint import pprint
+        pprint(files)
 
     patterns, patterns_ignore  = get_patterns0()
     pool = mp.Pool()

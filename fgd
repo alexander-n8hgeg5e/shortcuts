@@ -3,9 +3,10 @@
 PATTERN_FILENAME =        ".filterpatterns"
 PATTERN_IGNORE_FILENAME = ".filterpatterns_ignore"
 
-DEBUG_PATTERNFILES_FOUND  = 0b001
-DEBUG_PATTERNFILES_TESTED = 0b010
-DEBUG_SHOW_ALL_DIFF_FILES = 0b100
+DEBUG_PATTERNFILES_FOUND    =   0b0001
+DEBUG_PATTERNFILES_TESTED   =   0b0010
+DEBUG_SHOW_ALL_DIFF_FILES   =   0b0100
+DEBUG_SHOW_PROCESSED_FILES  =   0b1000
 
 from subprocess import PIPE
 from subprocess import check_output 
@@ -94,6 +95,8 @@ def get_patterns1(filename):
     return patterns,patterns_ignore
 
 def do_file(filename):
+    if zzz.debug & DEBUG_SHOW_PROCESSED_FILES:
+        print(f"do_file: \"{filename}\"")
     global patterns
     global patterns_ignore
     a, b = get_patterns1(filename.decode())
@@ -153,8 +156,10 @@ def main():
 
     files = data2list(check_output(["git", "diff", "--name-only" ,"--relative", ref ,"--", "."]))
     if zzz.debug & DEBUG_SHOW_ALL_DIFF_FILES:
+        print("BEGIN: all diff files")
         from pprint import pprint
         pprint(files)
+        print("END: all diff files")
 
     patterns, patterns_ignore  = get_patterns0()
     pool = mp.Pool()

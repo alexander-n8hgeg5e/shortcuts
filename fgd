@@ -3,10 +3,11 @@
 PATTERN_FILENAME =        ".filterpatterns"
 PATTERN_IGNORE_FILENAME = ".filterpatterns_ignore"
 
-DEBUG_PATTERNFILES_FOUND    =   0b0001
-DEBUG_PATTERNFILES_TESTED   =   0b0010
-DEBUG_SHOW_ALL_DIFF_FILES   =   0b0100
-DEBUG_SHOW_PROCESSED_FILES  =   0b1000
+DEBUG_PATTERNFILES_FOUND                        =    0b0001
+DEBUG_PATTERNFILES_TESTED                       =    0b0010
+DEBUG_SHOW_ALL_DIFF_FILES                       =    0b0100
+DEBUG_SHOW_PROCESSED_FILES_ENTER_DO_FILE        =    0b1000
+DEBUG_SHOW_PROCESSED_FILES_ACTUALLY_DO_FILE     =   0b10000
 
 from subprocess import PIPE
 from subprocess import check_output 
@@ -32,6 +33,7 @@ from os.path import basename
 from os.path import abspath
 from os.path import expanduser
 from os import getcwd
+from sys import stderr
 
 def get_dirpatterns(pathlib_dir):
     """
@@ -41,19 +43,19 @@ def get_dirpatterns(pathlib_dir):
     filepath_patterns_ignore_local = f"{pathlib_dir}/{PATTERN_IGNORE_FILENAME}"
     if exists(filepath_patterns_local):
         if zzz.debug & DEBUG_PATTERNFILES_FOUND:
-            print(f"reading pattern file: \"{filepath_patterns_local}\"")
+            print(f"reading pattern file: \"{filepath_patterns_local}\"",file=stderr)
         patterns_local        = file2list_v2(filepath_patterns_local)
     else: 
         if zzz.debug & DEBUG_PATTERNFILES_TESTED:
-            print(f"no patternfile found: \"{filepath_patterns_local}\"")
+            print(f"no patternfile found: \"{filepath_patterns_local}\"",file=stderr)
         patterns_local = []
     if exists(filepath_patterns_ignore_local):
         if zzz.debug & DEBUG_PATTERNFILES_FOUND:
-            print(f"reading ignorefile: \"{filepath_patterns_ignore_local}\"")
+            print(f"reading ignorefile: \"{filepath_patterns_ignore_local}\"",file=stderr)
         patterns_ignore_local = file2list_v2(filepath_patterns_ignore_local)
     else:
         if zzz.debug & DEBUG_PATTERNFILES_TESTED:
-            print(f"no ignorefile found: \"{filepath_patterns_ignore_local}\"")
+            print(f"no ignorefile found: \"{filepath_patterns_ignore_local}\"",file=stderr)
         patterns_ignore_local = []
     return patterns_local,patterns_ignore_local
 
@@ -95,15 +97,17 @@ def get_patterns1(filename):
     return patterns,patterns_ignore
 
 def do_file(filename):
-    if zzz.debug & DEBUG_SHOW_PROCESSED_FILES:
-        print(f"do_file: \"{filename}\"")
+    if zzz.debug & DEBUG_SHOW_PROCESSED_FILES_ENTER_DO_FILE:
+        print(f"do_file_enter: \"{filename.decode()}\"",file=stderr)
     global patterns
     global patterns_ignore
     a, b = get_patterns1(filename.decode())
     patterns        += a
     patterns_ignore += b
     found=[]
-    if not pathlib.Path(str(filename)).is_dir():
+    if not pathlib.Path(filename.decode()).is_dir():
+        if zzz.debug & DEBUG_SHOW_PROCESSED_FILES_ACTUALLY_DO_FILE:
+            print(f"actually do_file: \"{filename.decode()}\"",file=stderr)
         cmd = [ "git", "diff", ref , "--", filename ]
         lines = data2list(check_output(cmd))
         for line in lines:
@@ -119,8 +123,8 @@ def do_file(filename):
                             break
                     if not ignore:
                         hashme = b" ".join([filename,line,kwd])
-                        msg=f'### file: "{filename}"\n'
-                        msg+=f'### regex = "{kwd}"   vvv Check line below vvv\n'
+                        msg=f'### file: "{filename.decode()}"\n'
+                        msg+=f'### regex = "{kwd.decode()}"   vvv Check line below vvv\n'
                         msg+=str(line)
                         found.append((hashme,msg))
     return found
@@ -131,6 +135,7 @@ def main():
     global patterns_ignore
     global zzz
     redundancy = 1
+    #TODO: become python argparse guru
     ap=ArgumentParser(add_help=True)
     root = ap.add_mutually_exclusive_group(required=True)
     root.add_argument("--print-debug-masks",action="store_true")
@@ -149,17 +154,17 @@ def main():
         for k in globals().keys():
             if k[:5]=="DEBUG":
                 fs=f"{{:>{mlk}.{mlk}}} : {{:>{ml}}}"
-                print(fs.format(k,globals()[k]))
+                print(fs.format(k,globals()[k]),file=stderr)
         exit()
     ref = zzz.git_reference
 
 
     files = data2list(check_output(["git", "diff", "--name-only" ,"--relative", ref ,"--", "."]))
     if zzz.debug & DEBUG_SHOW_ALL_DIFF_FILES:
-        print("BEGIN: all diff files")
+        print("BEGIN: all diff files",file=stderr)
         from pprint import pprint
-        pprint(files)
-        print("END: all diff files")
+        pprint(files,stream=stderr)
+        print("END: all diff files",file=stderr)
 
     patterns, patterns_ignore  = get_patterns0()
     pool = mp.Pool()

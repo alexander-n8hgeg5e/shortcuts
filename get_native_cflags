@@ -1,0 +1,2 @@
+#!/bin/sh
+gcc -### -march=native /usr/include/stdlib.h 2>&1|sed -E 's@^.*(-march=.*mtune=[^"]+["]).*$@\1@;Ta;p;:a;d'

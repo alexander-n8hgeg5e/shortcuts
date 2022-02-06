@@ -44,7 +44,7 @@ with open("/tmp/fetch_failed_fetched_list","rt") as f:
 done=uniq(done)
 
 #print(done)
-print(f" of which {len(done)} atoms had been already fetched.")
+print(f" and any {len(done)} atoms had been already fetched.")
 
 
 idxes=[]

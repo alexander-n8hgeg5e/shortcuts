@@ -26,6 +26,9 @@ python -c "from sys import argv;from pprint import pprint;pprint(argv)" $cmd
 #read -P "exec cmd ? y/n:" a
 #if test $a = y
 for i in (seq 10 -1 0)
+    if test "$argv[2]" = "nowait"
+        break
+    end
     echo exec in $i seconds
     sleep 1
 end

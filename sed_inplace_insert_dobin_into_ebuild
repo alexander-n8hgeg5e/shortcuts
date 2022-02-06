@@ -4,7 +4,7 @@ if test (count argv) -gt 1
 end
 
 
-set f (find -name '*-'"$ebuild_edit_version"'.ebuild')
+set f (string trim (find -name '*-'"$ebuild_edit_version"'.ebuild' -exec cat "{}" \;))
 
 set ebuild_path (echo $f|head -n1)
 

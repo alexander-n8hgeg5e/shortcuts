@@ -8,6 +8,7 @@ set f (string trim (find -name '*-'"$ebuild_edit_version"'.ebuild' -exec cat "{}
 
 set ebuild_path (echo $f|head -n1)
 
+cd (dirname $ebuild_path) ; or exit 1
 git diff --exit-code -- \'$ebuild_path\'
 if not git diff --exit-code -- "$ebuild_path"
     echo

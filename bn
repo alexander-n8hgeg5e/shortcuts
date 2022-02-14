@@ -5,10 +5,17 @@ from signal import SIGSTOP,SIGCONT
 from os import getpid,nice,getuid
 from pylib.du import ptb
 
+def cgroup2_find_path():
+    shell_code=". /lib/rc/sh/rc-cgroup.sh \n cgroup2_find_path"
+    p=Popen(["bash"],stdin=PIPE,stdout=PIPE)
+    outp=p.communicate(input=shell_code.encode())
+    return outp[0].decode()
+    
+
 def setup():
     try:
         pid = getpid()
-        cgpcsf="/sys/fs/cgroup/cg_bg/cgroup.procs"
+        cgpcsf=f"{cgroup2_find_path()}/cg_bg/cgroup.procs"
 
         # TODO: add code somewhere else and remove next 2 line
         # calling subprocesses is much slower than opening files

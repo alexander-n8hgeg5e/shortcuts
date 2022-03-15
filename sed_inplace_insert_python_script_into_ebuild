@@ -7,6 +7,14 @@ end
 set f (find -name '*-'"$ebuild_edit_version"'.ebuild')
 
 set ebuild_path (echo $f|head -n1)
+if test (cat $ebuild_path | wc -l ) -eq 1
+    set ebuild_path ( string trim (cat $ebuild_path))
+end
+echo "ebuild_path = \"""$ebuild_path\""
+
+set ebuild_dir (dirname $ebuild_path)
+set remember_workdir (pwd)
+cd $ebuild_dir
 
 git diff --exit-code -- \'$ebuild_path\'
 if not git diff --exit-code -- "$ebuild_path"
@@ -21,3 +29,5 @@ end
 $s/sed_inplace_insert_between_lines \
 ' *(dobin|python_foreach_impl python_doscript) +.*' 'python_foreach_impl python_doscript '$argv[1] ' *[}] *' \
 $ebuild_path
+git status -s 
+cd $remember_workdir

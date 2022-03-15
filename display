@@ -1,7 +1,0 @@
-while true ; python -c '
-from sys import stdout
-outp=[1,2,3,4] # list of floats
-o=[f"{i:4.3f}" for i in outp]
-print(f"{o[0]:8} {o[1]:7}"+" "*24,end="")
-print(f"{o[2]:8} {o[3]:7}"+" "*24,end="")
-#busybox microcom -t 400 -X -s 2400 /dev/ttyS1

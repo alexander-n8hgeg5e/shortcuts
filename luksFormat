@@ -1,0 +1,2 @@
+#!/bin/sh
+echo cryptsetup --use-random --pbkdf=pbkdf2 -c serpent-xts-plain64 -s 512 -h sha512 -i 30000 --use-random luksFormat /dev/the_device

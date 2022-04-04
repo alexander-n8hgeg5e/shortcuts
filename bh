@@ -4,6 +4,7 @@ mac="00:1D:43:A0:0F:CF" # headphone
 
 import pexpect
 from time import sleep
+from subprocess import call
 
 p=pexpect.spawn("bluetoothctl")
 p.sendline("scan on")
@@ -38,6 +39,8 @@ while not connect(mac):
     sleep(3)
 print("connected")
 p.sendline("quit")
+call([ 'sudo', 'hcitool', 'lst', '00:1D:43:A0:0F:CF' , '0'])
+call([ 'sudo', 'hcitool', 'lst', '00:1D:43:A0:0F:CF' ])
 while not p.terminated or tried_to_terminate_n_times > 3:
     if not "tried_to_terminate_n_times" in dir():
         tried_to_terminate_n_times=0

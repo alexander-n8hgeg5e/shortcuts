@@ -1,0 +1,13 @@
+#!/bin/sh
+for i in $(find /sys/devices/system/cpu/cpufreq -name 'scaling_max_freq');do
+    if [[ "${1}" = max ]];then
+        if [[ -r $( dirname "${i}" )/cpuinfo_max_freq ]] ; then
+            cat $( dirname "${i}" )/cpuinfo_max_freq | sudo dd of="${i}" status=none
+        else
+            exit 1
+        fi
+    else
+        echo $(( "${1}" * 10000 )) | sudo dd of="${i}" status=none
+    fi
+    echo "${i}" = $(cat $i)
+done

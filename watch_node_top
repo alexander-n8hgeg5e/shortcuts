@@ -1,0 +1,5 @@
+#!/bin/sh
+while true;do
+    ssh -t "${1}" sudo top
+    sleep 20
+done

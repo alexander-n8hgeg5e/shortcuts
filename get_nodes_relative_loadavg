@@ -1,0 +1,2 @@
+#!/bin/sh
+ran -- printf \''%.2f\n'\' \$\( echo  \$\(cat /proc/loadavg \| cut -d\" \"  -f1  \) / \$\(cat /proc/cpuinfo\|grep cores\|uniq\|cut -d: -f2\|sed -E \''s/^\s*([0-9]+)\s*$/\1/'\'\) \| bc -l \)

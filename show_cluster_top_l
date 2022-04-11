@@ -1,0 +1,8 @@
+#!/bin/sh
+tmux split -h -l 50% -d watch_node_top wb
+tmux split -v -l 50% -d watch_node_top esadc
+tmux split -v -l 50% -t 2 -d watch_node_top dusteater
+watch_node_top tc
+
+
+

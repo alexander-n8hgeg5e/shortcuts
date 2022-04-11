@@ -1,0 +1,5 @@
+tmux split -v -l 75% -d watch_node_top dc
+tmux split -v -l 66% -d -t1 watch_node_top skyscraper
+tmux split -v -l 50% -d -t2 watch_node_top fb
+watch_node_top ac
+

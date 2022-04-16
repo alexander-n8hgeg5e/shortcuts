@@ -1,0 +1,28 @@
+#!/bin/fish
+set host1 $argv[1] 
+set host2 $argv[2]
+begin
+    ssh $host1 cat /proc/cpuinfo \
+    \| sort -u  \| grep flags \| sed -E \''s/flags.*://'\' \| tr -d \\\\012
+    echo
+    ssh $host2 cat /proc/cpuinfo \
+    \| sort -u  \| grep flags \| sed -E \''s/flags.*://'\' \| tr -d \\\\012
+end \
+| sed -E '
+1s/ (\S+)/ \1_cpu1/g;
+2s/ (\S+)/ \1_cpu2/g;
+' \
+| tr \040 \012 \
+| sort -u \
+| sed -E '
+/^\\S+_cpu1/N; s/(^\\S+)_cpu1\\n\\1_cpu2//;Ta;d;:a;P;D' \
+| sed -E '
+s/^(\S+)_(cpu[12])/\2 \1/
+' \
+| sort \
+| sed -E '
+1s/^/cpu1 of host '\""$host1"\"'\n==============='(string repeat -n (string length $host1) "=")'\n/' \
+| sed -E '
+N;N ; s/(cpu1.*)(cpu2.*)$/\1\ncpu2 of host '\""$host2"\"'\n==============='(string repeat -n (string length $host2) "=")'\n\2/
+;Ta; p;d ;:a ;P;D;P;D ' \
+

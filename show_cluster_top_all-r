@@ -1,0 +1,9 @@
+#!/bin/sh
+tmux split -v -l 5  -b -d watch_node_top ac
+tmux split -v -l 6  -b -d watch_node_top dc
+tmux split -v -l 5 -b -d watch_node_top skyscraper
+tmux split -v -l 6 -b -d watch_node_top fb
+tmux split -v -l 6 -b -d watch_node_top esadc
+tmux split -v -l 5 -b -d watch_node_top wb
+tmux split -v -l 5 -b -d watch_node_top tc
+watch_node_top dusteater

@@ -1,0 +1,9 @@
+#!/bin/fish
+for i in \
+        osd.{0,3,4,5,6} \
+        mds.de{(string join , (seq 0 1 8))} \
+        mds.fb{(string join , (seq 0 1 8))} \
+        mon.{fb,wb,tc} \
+        mgr.{fb,de} 
+        echo $i
+end                                                                                             

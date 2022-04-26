@@ -1,32 +1,25 @@
 #!/usr/bin/env python3
 #elpau!! --fetchonly \
 #(\
-LOGFILE = "/node/ec/var/log/syslog.warning"
+GET_LOG_CMD = [ 'ssh', 'tc', 'cat', '/var/log/syslog*' ]
 #|grep 'Fetch failed for'\
 #|sed -E 's/^.*Fetch failed for [\']([^\']+)[\'].*$/=\\1/'\
 #)
+from subprocess import check_output
 from re import sub
+from os import environ as env
+env['ACCEPT_KEYWORDS']='**'
 counter=0
 BREAKCOUNT=3
 atoms=[]
-with open(LOGFILE) as f:
-    while True:
-        try:
-            line=f.readline()
-        except UnicodeDecodeError:
-            pass
-        if line.find("Fetch failed for ") != -1:
-            pkgname = sub('^.*Fetch failed for [\']([^\']+)[\'].*$','=\\1',line.strip())
-            #print(f"found: \"{pkgname}\"")
-            atoms.append(pkgname)
-        ll=len(line.strip())
-        if counter < BREAKCOUNT:
-            if ll == 0:
-                counter+=1
-            continue
-        else:
-            break
-
+data = check_output(GET_LOG_CMD)
+datalines = data.splitlines()
+for line in datalines:
+    line=line.decode(errors="replace")
+    if line.find("Fetch failed for ") != -1:
+        pkgname = sub('^.*Fetch failed for [\']([^\']+)[\'].*$','=\\1',line.strip())
+        #print(f"found: \"{pkgname}\"")
+        atoms.append(pkgname)
 
 from pylib.list_utils import uniq
 atoms=uniq(atoms)
@@ -53,8 +46,8 @@ with open("/tmp/fetch_failed_fetched_list","at") as f:
     from subprocess import check_call,CalledProcessError
     for atom in atoms:
         if not atom in done:
-            try:
-                check_call(['elpau!!','--fetchonly',atom])
+            try: 
+                check_call(['emerge','--nodeps','--verbose','--fetchonly',atom],env=env)
                 if not atom in done:
                     if start:
                         f.write(atom)

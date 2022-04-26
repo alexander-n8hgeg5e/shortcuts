@@ -1,2 +1,7 @@
 #!/bin/sh
-ssh -t tc sudo -u scrcpy scrcpy  --shortcut-mod=ralt -K -S -b 150M -V debug
+ssh -t tc sudo -u scrcpy scrcpy \
+--legacy-paste \
+--shortcut-mod=ralt \
+-K -S \
+-b 150M \
+-V debug

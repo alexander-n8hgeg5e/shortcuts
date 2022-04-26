@@ -1,0 +1,2 @@
+#!/bin/sh
+urlscan --run-safe "b anonymous {}"

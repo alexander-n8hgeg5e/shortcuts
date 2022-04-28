@@ -1,4 +1,13 @@
 #!/bin/sh
+if  [[ $(echo "${1}" | sed -E 's/^\s*([0-9]*[.]?[0-9]*|[0-9]+|max|min)\s*$/ok/') != ok ]];then
+	echo 'This program set the cpu max freq'
+	echo
+	echo '      first_arg         -> interpretation'
+	echo '      =========            =============='
+	echo ' float from 0 to 1      -> range from min to max freq'
+	echo '        number > 1      -> number/100 in GHz'
+	exit
+fi
 for i in $(find /sys/devices/system/cpu/cpufreq -name 'scaling_max_freq');do
     if [[ "${1}" = max ]];then
         if [[ -r $( dirname "${i}" )/cpuinfo_max_freq ]] ; then
@@ -6,8 +15,23 @@ for i in $(find /sys/devices/system/cpu/cpufreq -name 'scaling_max_freq');do
         else
             exit 1
         fi
+    elif [[ "${1}" = min ]];then
+        if [[ -r $( dirname "${i}" )/cpuinfo_min_freq ]] ; then
+            cat $( dirname "${i}" )/cpuinfo_min_freq | sudo dd of="${i}" status=none
+        else
+            exit 1
+        fi
     else
-        echo $(( "${1}" * 10000 )) | sudo dd of="${i}" status=none
+        if [[ -r $( dirname "${i}" )/cpuinfo_min_freq ]] \
+			&& [[ -r $( dirname "${i}" )/cpuinfo_max_freq ]] \
+			&& [[ "${1}" -le 1 ]] \
+			&& [[ "${1}" -ge 0 ]] ; then
+			max="$(cat $( dirname "${i}" )/cpuinfo_max_freq)"
+			min="$(cat $( dirname "${i}" )/cpuinfo_min_freq)"
+			printf "%.0f\n" $( echo "$min + ${1} * ( $max - $min ) " | bc )  | sudo dd of="${i}" status=none
+		else
+        	echo $(( "${1}" * 10000 )) | sudo dd of="${i}" status=none
+		fi
     fi
     echo "${i}" = $(cat $i)
 done

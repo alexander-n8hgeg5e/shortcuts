@@ -53,9 +53,9 @@ for node in nodes:
         else:
             add_to_args={'stdout':DEVNULL,'stderr':DEVNULL}
         check_call(['ssh',node,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
+        nodes_ok.append(node)
     except CalledProcessError:
         pass
-    nodes_ok.append(node)
 
 def gen_cmdline_prefixes(node):
     cmds = []

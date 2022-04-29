@@ -4,18 +4,31 @@ from sys import argv
 from argparse import ArgumentParser
 a=ArgumentParser()
 a.add_argument("-L","--follow-symlinks",action="store_true",default=False)
+a.add_argument(dest="basepathes",nargs='*',default=[],type=str)
 a.add_argument(dest='pathes', nargs="*", action="store",type=str,default=["."])
 args=a.parse_args()
 find_arg=( ['-L'] if args.follow_symlinks else [] )
 
 def get_ebuilds():
     cmd=[ 'find'] + find_arg + args.pathes + [ '-name', '*.ebuild', '-type', 'f' ]
-    return check_output(cmd).decode().split("\n")
+    if not len(args.basepathes) > 0:
+        return check_output(cmd).decode().split("\n")
+    else:
+        outputs=[]
+        for path in args.basepathes:
+            outputs.extend( check_output(cmd,cwd=path).decode().split("\n"))
+        return outputs
 
 
 def get_manifs():
     cmd=[ 'find' ]+ find_arg + args.pathes + [ '-name', '*.ebuild', '-type', 'f' ]
-    return check_output(cmd).decode().split("\n")
+    if not len(args.basepathes) > 0:
+        return check_output(cmd).decode().split("\n")
+    else:
+        outputs=[]
+        for path in args.basepathes:
+            outputs.extend( check_output(cmd,cwd=path).decode().split("\n"))
+        return outputs
 
 
 
@@ -24,14 +37,26 @@ if __name__=="__main__":
         if i.strip() == "":
             continue
         cmd = ['sudo' , 'ebuild' ] + [ i ] + [ 'manifest' ]
-        check_call(cmd)
+        if not len(args.basepathes) > 0:
+            check_call(cmd)
+        else:
+            for path in args.basepathes:
+                check_call(cmd,cwd=path)
         cmd = [ 'group_access', '-g' , 'portage','-p', i ]
-        check_call(cmd)
+        if not len(args.basepathes) > 0:
+            check_call(cmd)
+        else:
+            for path in args.basepathes:
+                check_call(cmd,cwd=path)
     
     
     for i in get_manifs():
         if i.strip() == "":
             continue
         cmd = [ 'group_access', '-g' , 'portage','-p', i ]
-        check_call(cmd)
+        if not len(args.basepathes) > 0:
+            check_call(cmd)
+        else:
+            for path in args.basepathes:
+                check_call(cmd,cwd=path)
         

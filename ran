@@ -30,7 +30,7 @@ if args.nodes is None or len(args.nodes) == 0:
     with open(NODESLISTFILE) as f:
         nodes=f.read().splitlines()
         nodes=[i.strip() for i in nodes]
-        nodes=filter(lambda x: x.strip != '' ,nodes)
+        nodes=[n for n in filter(lambda x: x.strip != '' ,nodes)]
 else:
     nodes=args.nodes
 if not args.no_header:

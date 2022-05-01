@@ -24,8 +24,8 @@ for i in $(find /sys/devices/system/cpu/cpufreq -name 'scaling_max_freq');do
     else
         if [[ -r $( dirname "${i}" )/cpuinfo_min_freq ]] \
 			&& [[ -r $( dirname "${i}" )/cpuinfo_max_freq ]] \
-			&& [[ "${1}" -le 1 ]] \
-			&& [[ "${1}" -ge 0 ]] ; then
+            && [[ $(printf "%.0f" "${1}") -le 1 ]] \
+            && [[ $(printf "%0.f" "${1}") -ge 0 ]] ; then
 			max="$(cat $( dirname "${i}" )/cpuinfo_max_freq)"
 			min="$(cat $( dirname "${i}" )/cpuinfo_min_freq)"
 			printf "%.0f\n" $( echo "$min + ${1} * ( $max - $min ) " | bc )  | sudo dd of="${i}" status=none

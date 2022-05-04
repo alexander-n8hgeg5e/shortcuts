@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 username="${1}" ; [[ -n $username ]] || exit 1
 hostname="${2}" ; [[ -n $hostname ]] || exit 1

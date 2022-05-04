@@ -1,0 +1,16 @@
+#!/bin/bash
+
+username="${1}" ; [[ -n $username ]] || exit 1
+hostname="${2}" ; [[ -n $hostname ]] || exit 1
+additional_groups="${@:3}"
+#echo "additional_groups = ${additional_groups}"
+uid=$(sudo -u $username id -u) || exit 1
+gid=$(sudo -u $username id -g) || exit 1
+ssh "${hostname}" sudo groupadd -g "${gid}" "${username}" \
+|| ssh "${hostname}" sudo groupmod -g "${gid}" "${username}" \
+&& echo ", but by adjusting existing user, satisfaction has been reached." 1>&2 \
+|| exit 1
+ssh "${hostname}" sudo useradd  -G "${additional_groups}" -u "${uid} -g ${gid} "${username}" \
+|| ssh "${hostname}" sudo usermod -aG "${additional_groups}" -u "${uid} -g ${gid} "${username}" \
+&& echo ", but by adjusting existing group, satisfaction has been reached." 1>&2 \
+|| exit 1

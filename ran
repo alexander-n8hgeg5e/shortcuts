@@ -11,8 +11,9 @@ a.add_argument("cmdline",nargs="+")
 a.add_argument("-v","--verbose",action="store_true")
 a.add_argument("-H","--no-header",action="store_true")
 a.add_argument("-n","--nodes",nargs='+')
+a.add_argument("-N","--exclude-nodes",nargs='+')
 a.add_argument("-E","--no-exitcodes",action="store_true")
-a.add_argument("-O","--no-offline-report",action="store_true")
+a.add_argument("-O","--no-offline-exclude-report",action="store_true")
 a.add_argument("-u","--sudo-user",default="root",help="default is root, what means prepending \"sudo\". otherwise: sudo -u {value}")
 a.add_argument("-r","--rils",help="prepend \"rils\",on the remote, which is a syslog logging new independent session spawning python tool",action="store_true")
 
@@ -53,8 +54,9 @@ for node in nodes:
             add_to_args={}
         else:
             add_to_args={'stdout':DEVNULL,'stderr':DEVNULL}
-        check_call(['ssh',node,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
-        nodes_ok.append(node)
+        if not node in args.exclude_nodes:
+            check_call(['ssh',node,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
+            nodes_ok.append(node)
     except CalledProcessError:
         pass
 
@@ -99,8 +101,9 @@ for node in nodes_ok:
         exitcodes.append((node,e.returncode))
 if not args.no_exitcodes:
     print(f"exitcodes: {exitcodes}",file=stdout)
-if not args.no_offline_report:
-    print(f"nodes offline: {[n for n in filter(lambda n: n not in nodes_ok,nodes)]}",file=stdout)
+if not args.no_offline_exclude_report:
+    print(f"nodes offline: {[n for n in filter(lambda n: n not in nodes_ok and n not in args.exclude_nodes ,nodes)]}",file=stdout)
+    print(f"nodes excluded: {args.exclude_nodes}",file=stdout)
 exit(sum(i[-1] for i in exitcodes))
         
 

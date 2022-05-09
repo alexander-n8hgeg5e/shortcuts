@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #elpau!! --fetchonly \
 #(\
-GET_LOG_CMD = [ 'ssh', 'tc', 'cat', '/var/log/syslog*' ]
+GET_LOG_CMD = [ 'ssh', 'syslogger', 'cat', '/var/log/syslog*' ]
 #|grep 'Fetch failed for'\
 #|sed -E 's/^.*Fetch failed for [\']([^\']+)[\'].*$/=\\1/'\
 #)

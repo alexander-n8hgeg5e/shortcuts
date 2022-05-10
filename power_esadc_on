@@ -1,2 +1,2 @@
 #!/bin/sh
-rf 311
+exit 1

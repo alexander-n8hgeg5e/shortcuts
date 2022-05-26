@@ -1,0 +1,52 @@
+#!/bin/sh
+
+mounted=0
+mapped=0
+
+fail(){
+    echo "${1}"
+    exit 1
+}
+MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS="/mnt/backup_boot"
+[[ -d "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}" ]] || mkdir -p "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}"
+[[ -d "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}" ]] || fail "ERROR: can not find nor create mountpoint:\"${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}\""
+
+is_mapped(){
+    mapped=$(rbd device list|tail -n+2|tr \\t ' ' |tr -s ' '|cut -d" " -f3)
+    for i in ${mapped}; do
+        [[ "${i}" = bootfs-backup ]] && return 0
+    done
+    return 1
+}
+do_map(){
+    rbd device map rbd/bootfs-backup && mapped=1
+}
+if ! is_mapped ; then
+    do_map
+fi
+is_mapped || fail 'ERROR: not mapped'
+device=$(rbd device list|grep bootfs-backup|grep -o -E '\S+$')
+#
+is_mounted(){
+    grepstring='^'"${device} $(realpath "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}") btrfs"
+    grep -q -E "${grepstring}" /proc/mounts
+}
+do_mount(){
+    mount "${device}" "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}" && mounted=1
+}
+is_mounted || do_mount 
+is_mounted || fail "ERROR: mount failed"
+
+seconds=$(date +%s)
+ssh root@tc btrfs sub snap -r /boot/ "/boot/snapshots/snap_${seconds}"
+ssh root@tc btrfs send "/boot/snapshots/snap_${seconds}" | sudo btrfs receive "${MOUNTPOINT_BOOT_BACKUP_SNAPSHOTS}"/
+
+if [[ $mounted = 1 ]];then
+    umount "${device}" || exit 1
+fi
+
+if [[ $mounted = 1 ]];then
+    rbd device unmap rbd/bootfs-backup || exit 1
+fi
+#
+# vim: set syntax=sh :

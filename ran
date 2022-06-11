@@ -14,7 +14,7 @@ a.add_argument("-n","--nodes",nargs='+')
 a.add_argument("-N","--exclude-nodes",nargs='+', default=[])
 a.add_argument("-E","--no-exitcodes",action="store_true")
 a.add_argument("-O","--no-offline-exclude-report",action="store_true")
-a.add_argument("-u","--sudo-user",default="root",help="default is root, what means prepending \"sudo\". otherwise: sudo -u {value}")
+a.add_argument("-u","--ssh-user", default="root", help="default is root")
 a.add_argument("-r","--rils",help="prepend \"rils\",on the remote, which is a syslog logging new independent session spawning python tool",action="store_true")
 
 args=a.parse_args()
@@ -47,6 +47,10 @@ if not args.no_header:
     else:
         cols=20
 
+def gen_ssh_string(node):
+    ssh_string = f'{args.ssh_user}@{node}'
+    return ssh_string
+
 nodes_ok=[]
 for node in nodes:
     try:
@@ -55,7 +59,8 @@ for node in nodes:
         else:
             add_to_args={'stdout':DEVNULL,'stderr':DEVNULL}
         if not node in args.exclude_nodes:
-            check_call(['ssh',node,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
+            ssh_string=gen_ssh_string(node)
+            check_call(['ssh',ssh_string,'sh -c \'echo $(date) $(hostname) online\''],**add_to_args)
             nodes_ok.append(node)
     except CalledProcessError:
         pass
@@ -64,20 +69,6 @@ def gen_cmdline_prefixes(node):
     cmds = []
     if args.rils:
         cmds.append("rils")
-    # keep cmdline short for readablity in logs
-    try:
-        cmd = ["ssh", node ,'id -u']
-        remote_id = check_output(cmd).strip().decode()
-        cmd = ['id','-u', args.sudo_user ]
-        requested_id  = check_output(cmd).strip().decode()
-    except:
-        print(f"failed cmd: {cmd}",file=stderr)
-        raise
-    if remote_id != requested_id:
-        if args.sudo_user == "root":
-            cmds.append("sudo")
-        else:
-            cmds.extend(["sudo",'-u',args.sudo_user])
     return cmds
 
 exitcodes=[]
@@ -90,7 +81,8 @@ for node in nodes_ok:
     try:
         # TODO: multiprocessing prior to this loop
         prefixes = gen_cmdline_prefixes(node)
-        cmd = ['ssh',node] + prefixes + args.cmdline
+        ssh_string=gen_ssh_string(node)
+        cmd = ['ssh',ssh_string] + prefixes + args.cmdline
         check_call(cmd)
         exitcodes.append((node,0))
         stderr.flush()

@@ -1,0 +1,8 @@
+#!/bin/sh
+output_sink="alsa_output.pci-0000_00_1b.0.analog-stereo"
+mod_loaded_1=$(pactl load-module module-ladspa-sink sink_name=booster_chain_1 master="${output_sink}" label=satanMaximiser plugin=satan_maximiser_1408 control=30,-15)
+mod_loaded_0=$(pactl load-module module-ladspa-sink sink_name=booster_chain_0 master=booster_chain_1 plugin=mbeq_1197 label=mbeq control=-40,-40,-40,-12,-6,-3,0,0,0,0,0,0,0,0,0)
+pactl set-default-sink booster_chain_0
+echo unload code:
+echo pactl unload-module $mod_loaded_0
+echo pactl unload-module $mod_loaded_1

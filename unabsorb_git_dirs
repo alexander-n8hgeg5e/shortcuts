@@ -8,13 +8,17 @@ function indent -a deep
 end
 
 function clean_module_dir -a module_dir
-    set dirs_to_check_for_clean ( find $module_dir -maxdepth 1 -mindepth 1 -type d )
-	for i in $dirs_to_check_for_clean
-	      begin;rmdir $i ^ /dev/null 1> /dev/null;end
-		  and echo deleted dir: $i
-	end 
-	      begin;rmdir $module_dir ^ /dev/null 1> /dev/null ;end
-		  and echo deleted dir: $module_dir
+    if test -d $module_dir
+        set dirs_to_check_for_clean ( find $module_dir -maxdepth 1 -mindepth 1 -type d )
+	    for i in $dirs_to_check_for_clean
+	        begin;rmdir $i ^ /dev/null 1> /dev/null;end
+                and echo deleted dir: $i
+	    end
+        begin;rmdir $module_dir ^ /dev/null 1> /dev/null ;end
+            and echo deleted dir: $module_dir
+    else
+    # done
+    end
 end
 				
 

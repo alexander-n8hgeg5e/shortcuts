@@ -1,0 +1,4 @@
+#!/bin/sh
+ran -- eselect gcc show
+ran -- eselect binutils show
+#ran -- eixv  -I -e sys-libs/glibc

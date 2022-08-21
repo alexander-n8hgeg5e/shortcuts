@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+
+from math import inf
+TIMEOUT=inf
+PEXPECT_TIMEOUT=3600
+from time import time
+import pexpect
+from sys import stdin
+from time import sleep
+from time import time
+from subprocess import check_output
+
+def read_hosts():
+    with open('/etc/unlock-nodes') as f:
+        return [ i.strip() for i in f.read().strip().split('\n') ]
+
+def get_key():
+    from subprocess import check_output
+    keyid=check_output(['sudo','keyctl','request','user','unlock-key'])
+    keyid=keyid.decode().strip()
+    key = check_output(['sudo','keyctl','pipe', keyid ])
+    return key
+
+def timeout(t0):
+    return time()-t0 > TIMEOUT
+
+class HostChecker():
+    def __init__(self,hosts):
+        self.hosts=hosts
+        self.lh=len(hosts)
+        self.seems_ready2unlock=[]
+        self.online=[]
+        self.childs_check_r2u=[]
+        self.childs_check_online=[]
+        for host in self.hosts:
+            self.childs_check_r2u.append(pexpect.spawn(f"ssh -o remotecommand=date {host}-i",timeout=PEXPECT_TIMEOUT))
+        for host in self.hosts:
+            self.childs_check_online.append(pexpect.spawn(f"ssh -o remotecommand=date root@{host}",timeout=PEXPECT_TIMEOUT))
+
+    def gather_data(self):
+        # gather data about state of the hosts
+        for i in range(self.lh):
+            self.childs_check_r2u[i].read()
+            if self.childs_check_r2u[i].status not in (None,0):
+                # failure exit status , retry
+                self.childs_check_r2u[i]=pexpect.spawn(f"ssh -o remotecommand=date {self.hosts[i]}-i",timeout=PEXPECT_TIMEOUT)
+            elif self.childs_check_r2u[i].status == 0 and not i in self.seems_ready2unlock:
+                self.seems_ready2unlock.append(i)
+        for i in range(self.lh):
+            self.childs_check_online[i].read()
+            if self.childs_check_online[i].status not in (None,0):
+                # failure exit status , retry
+                self.childs_check_online[i]=pexpect.spawn(f"ssh -o remotecommand=date root@{self.hosts[i]}",timeout=PEXPECT_TIMEOUT)
+            elif self.childs_check_online[i].status == 0 and not i in self.online:
+                self.online.append(i)
+
+    def get_hosts_not_ready_nor_online(self):
+        not_ready=[]
+        for i in range(self.lh):
+            if not i in self.online and not i in self.seems_ready2unlock:
+                not_ready.append(self.hosts[i])
+        return not_ready
+
+    def get_num_not_read2unlock_nor_online(self):
+        return len(self.get_hosts_not_ready_nor_online())
+
+    def get_hosts_ready2unlock(self):
+        return [ self.hosts[i] for i in filter(lambda j: j not in self.online , self.seems_ready2unlock)]
+
+    def get_hosts_online(self):
+        return [self.hosts[i] for i in self.online]
+
+    def get_hosts_online_and_ready2unlock(self):
+        l=[]
+        for i in range(self.lh):
+            if i in self.online and i in self.seems_ready2unlock:
+                l.append(self.hosts[i])
+        return l
+
+def main():
+    # gather data about state of the hosts
+    hc = HostChecker(read_hosts())
+    hc.gather_data()
+    t0=time()
+    tp=t0
+    while not (timeout(t0) and hc.get_num_not_read2unlock_nor_online() == 1) and not hc.get_num_not_read2unlock_nor_online() == 0 :
+        # tell the user what is going on
+        if time()-tp > 5:
+            timeoutmsg='' if timeout(t0) else f'timeout={time()-t0}'
+            print(f"waiting for hosts: {hc.get_hosts_not_ready_nor_online()}")
+            tp=time()
+        # wait a bit
+        sleep(1)
+        hc.gather_data()
+    if len(hc.get_hosts_online()) > 0:
+        if len(hc.get_hosts_ready2unlock()) == 0:
+            append=' -> Nothing to unlock'
+        else:
+            append=''
+        print(f"already online: {hc.get_hosts_online()}{append}")
+    if len(hc.get_hosts_online_and_ready2unlock()) > 0:
+        print(f"WARNING: online and ready to unlock: {hc.get_hosts_online_and_ready2unlock()}")
+    if hc.get_num_not_read2unlock_nor_online() > 0:
+        print(f"offline: {hc.get_hosts_not_ready_nor_online()}")
+    if len(hc.get_hosts_ready2unlock()) > 0:
+        print(f"going to unlock: {hc.get_hosts_ready2unlock()}")
+    print([ i for i in filter(lambda j: j not in hc.online , hc.seems_ready2unlock)])
+
+    # unlock
+    unlock_childs={}
+    for h in hc.get_hosts_ready2unlock():
+        unlock_childs.update({h:pexpect.spawn(f"ssh {h}-i",timeout=PEXPECT_TIMEOUT)})
+    pw=get_key()
+    for c in unlock_childs.values():
+        try:
+            c.expect("Password:",timeout=10)
+        except:
+            c.terminate()
+    for h,c in unlock_childs.items():
+        if c.status is None:
+            print(f"sending pw to host {h}")
+            c.send(pw+b"\n")
+    def gen_unlock_state():
+        return dict((h,c.status) for h,c in unlock_childs.items())
+
+    unlock_state=gen_unlock_state()
+    while None in unlock_state.values():
+        print(f'unlock state: {unlock_state}')
+        for c in unlock_childs.values():
+            print(c.read(1024*64).decode(),end='')
+        sleep(5)
+        unlock_state=gen_unlock_state()
+    print(f'unlock state: {unlock_state}')
+
+if __name__ == "__main__":
+    main()

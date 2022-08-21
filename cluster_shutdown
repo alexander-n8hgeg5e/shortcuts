@@ -1,5 +1,5 @@
 #!/bin/sh
 ran -N dusteater -r -- rc-service -D netmount stop
 sleep 4m
-ran -N dusteater wb -r -- sudo openrc-shutdown -p +5
+ran -N dusteater -r -- sudo openrc-shutdown -p +5
 sudo openrc-shutdown -p now

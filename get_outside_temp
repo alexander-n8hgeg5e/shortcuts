@@ -2,14 +2,16 @@
 
 from subprocess import check_output
 from os import environ
-from re import sub,DOTALL
+from re import sub,DOTALL,I
 import re
 
 
 
 cmd=['w3m', '-dump', 'http://www.wetteronline.de/wetter/'+environ['POS']]
+cmd=['w3m', '-dump', 'https://darksky.net/forecast/'+ environ['POS'] +'/ca24/en']
 
 outp=check_output(cmd)
-
-temp=float(sub( b'^.*\x0a([0-9]+)([.][0-9]+)?\x0a\xc2\xb0\x0a.*',b'\\1',outp ,flags=DOTALL))
+outp=outp[outp.find(b'Pressure'):]
+outp=sub( b'[^\x0a]*\x0a([^\x0a]*).*',b'\\1',outp,flags=DOTALL)
+temp=float(sub( b'[^\xb0\xcb\x9a0-9]*([0-9]+([.][0-9]+)?)(\xb0|\xcb\x9a).*',b'\\1',outp ,flags=DOTALL))
 print(temp)

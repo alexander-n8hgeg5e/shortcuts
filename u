@@ -55,18 +55,11 @@ def gen_cmd_emerge( *z,full=False , emptytree=False , ask=False , additional_arg
                             '--backtrack':backtrack
                         }
     pgk_set        = [ pkg_set ]
-    args_default   = {'--deep':include , '--newuse':include, '--with-bdeps':'y'}
+    args_default   = {'--deep':include , '--newuse':include }
     args_full      =    {
                             '--deep':include,
                             '--newuse':include,
                             '--with-bdeps':'y',
-                            '--complete-graph':include,
-                            "--rebuild-if-new-ver":"y",
-                            "--rebuild-if-unbuilt":"y",
-                            "--rebuild-if-new-rev":"y",
-                            "--rebuild-if-new-slot":"y",
-                            '--changed-deps':'y',
-                            '--changed-slot':'y',
                         }
     args_insane = args_full.copy()
     args_insane.update( {'--selective':'n'})

@@ -1,0 +1,2 @@
+#!/bin/bash
+env VGL_FORCEALPHA=1 vglrun -d /dev/dri/card0 -np 4 -c proxy +ocl +v -fps 50 -ge -sp "$@"

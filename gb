@@ -26,7 +26,7 @@ def parse_args():
         argv.remove("--debug")
     else:
         debug=False
-
+    global parser
     parser = PassThroughArgumentParser  (   
                                             prog="gb",
                                             wrapped_cmd=['git','branch'],
@@ -90,6 +90,11 @@ def main():
     +'%(color:green)%(committerdate:format:%y_%m_%d|'\
     +'%H:%M)%(color:white)|%(color:cyan)%(objectname:short)%(color:white)|'\
     +'%(color:yellow)%(contents:subject)%(color:white)'
+
+    got  = parser.get_default("sort")
+    want = args.sort
+    if got != want:
+        formatstring=sub(got,want,formatstring)
 
     git_branch_cmd = [ 'git', 'branch','--format' , formatstring ]
     git_branch_cmd += prepared_args

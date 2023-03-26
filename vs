@@ -10,4 +10,4 @@ ssh -tt \
 	-o ServerAliveInterval=1 \
 	-o ServerAliveCountMax=1 \
     -L 127.0.0.1:7777:/tmp/vncsocket_"%r" "${1}" \
-x11vnc -noipv6 -noipv4 -rfbport 0 -rfbauth \~/.vnc/passwd -display :0 -unixsock /tmp/vncsocket_'${USER}' -clear_all -nomodtweak
+x11vnc -noipv6 -noipv4 -rfbport 0 -rfbauth \~/.vnc/passwd -display :0 -unixsock /tmp/vncsocket_'${USER}' -clear_all -nomodtweak -repeat

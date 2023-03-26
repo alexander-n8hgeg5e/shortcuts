@@ -139,6 +139,7 @@ def parse_args():
     parser.add_argument('-e', '--emptytree', action="store_true",
             help=str(gen_cmd_emerge_world_update(emptytree=True)))
     parser.add_argument('-pr', '--preserved-rebuild', action="store_true",default=True)
+    parser.add_argument('-npr', '--no--preserved-rebuild', dest="preserved_rebuild", action="store_false",default=False)
     parser.add_argument('-nu', '--no-update', action="store_true", default=False,help=str(gen_cmd_emerge_preserved_rebuild()))
     parser.add_argument('-p', '--pump', action="store_true",
             help=str("enable distcc pump mode"))
@@ -176,7 +177,7 @@ if __name__=='__main__':
     if not args.no_update:
         cmd = gen_cmd_emerge_world_update(**zz)
         ecs.append(c(cmd))
-    if args.full or args.insane or args.preserved_rebuild:
+    if args.preserved_rebuild:
           cmd_pr = gen_cmd_emerge_preserved_rebuild(update=False,**zz)
           ecs.append(c(cmd_pr))
     print(ecs)

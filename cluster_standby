@@ -1,0 +1,13 @@
+#!/bin/sh
+ran -r -- rc-service -D netmount stop
+sleep 10
+ran -N $(hostname) tc -- 'rc-service -D netmount stop && openrc-shutdown -H now'
+sleep 60
+power_disknodes_off
+power_dusteater_off
+if [[ $hostname != tc ]];then
+    echo standby|ssh root@tc dd of=/sys/power/state
+fi
+echo standby|sudo dd of=/sys/power/state
+
+

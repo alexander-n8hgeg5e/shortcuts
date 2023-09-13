@@ -37,12 +37,15 @@ atoms=uniq(atoms)
 print(f"Found {len(atoms)} atoms ...",end="")
 
 done=[]
-with open("/tmp/fetch_failed_fetched_list","rt") as f:
-    done_=f.read().strip().split("\n")
-    for d in done_:
-        dd=d.strip()
-        if len(dd) > 0:
-            done.append(dd)
+try:
+    with open("/tmp/fetch_failed_fetched_list","rt") as f:
+        done_=f.read().strip().split("\n")
+        for d in done_:
+            dd=d.strip()
+            if len(dd) > 0:
+                done.append(dd)
+except FileNotFoundError:
+    pass
 
 
 done=uniq(done)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 #elpau!! --fetchonly \
 #(\
+TMP_FETCH_FAILED_LIST_FILE_NAME="/tmp/fetch_failed_fetched_list"
 LOG_LINE_COUNT=20000
 GET_LOGFILES_CMD = [ 'sudo', 'ssh', 'syslogger', 'ls', '-1rt', '/var/log/syslog*']
 def gen_get_log_cmd(filename):
@@ -38,7 +39,7 @@ print(f"Found {len(atoms)} atoms ...",end="")
 
 done=[]
 try:
-    with open("/tmp/fetch_failed_fetched_list","rt") as f:
+    with open(TMP_FETCH_FAILED_LIST_FILE_NAME,"rt") as f:
         done_=f.read().strip().split("\n")
         for d in done_:
             dd=d.strip()
@@ -55,7 +56,7 @@ print(f" and any {len(done)} atoms had been already fetched.")
 
 
 idxes=[]
-with open("/tmp/fetch_failed_fetched_list","at") as f:
+with open(TMP_FETCH_FAILED_LIST_FILE_NAME,"at") as f:
     start= f.tell() == 0 
     from subprocess import check_call,CalledProcessError
     for atom in atoms:

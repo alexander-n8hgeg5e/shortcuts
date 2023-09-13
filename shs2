@@ -1,0 +1,14 @@
+#!/bin/sh
+if [[ $1 = -m ]];then
+    crop='--crop=1440:2560:0:200'
+else
+    crop=''
+fi
+sudo -u scrcpy scrcpy \
+--legacy-paste \
+--shortcut-mod=ralt \
+-K \
+-b 150M \
+--lock-video-orientation=3 \
+"${crop}" \
+-V debug

@@ -1,0 +1,2 @@
+#!/bin/bash
+env DISPLAY=tc:0 vglrun -d /dev/dri/card0 -np 4 -fps 50 -q 95 -cl tc:0 -c jpeg +v "$@"

@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 #elpau!! --fetchonly \
 #(\
-GET_LOG_CMD = [ 'ssh', 'syslogger', 'cat', '/var/log/syslog*' ]
+LOG_LINE_COUNT=20000
+GET_LOGFILES_CMD = [ 'sudo', 'ssh', 'syslogger', 'ls', '-1rt', '/var/log/syslog*']
+def gen_get_log_cmd(filename):
+    return [ 'ssh', 'syslogger', 'tail', '-n'+str(LOG_LINE_COUNT), filename]
+def get_log(logfiles):
+    datalines=[]
+    for i in range(len(logfiles)):
+        data = check_output(gen_get_log_cmd(logfiles[-1-i]))
+        datalines+= data.splitlines()
+        if len( datalines) >= LOG_LINE_COUNT:
+            return datalines
 #|grep 'Fetch failed for'\
 #|sed -E 's/^.*Fetch failed for [\']([^\']+)[\'].*$/=\\1/'\
 #)
@@ -12,8 +22,9 @@ env['ACCEPT_KEYWORDS']='**'
 counter=0
 BREAKCOUNT=3
 atoms=[]
-data = check_output(GET_LOG_CMD)
-datalines = data.splitlines()
+logfiles = check_output(GET_LOGFILES_CMD).decode().strip().split('\n')
+logfiles = logfiles[-2:] if len(logfiles)>1 else logfiles
+datalines = get_log(logfiles)
 for line in datalines:
     line=line.decode(errors="replace")
     if line.find("Fetch failed for ") != -1:

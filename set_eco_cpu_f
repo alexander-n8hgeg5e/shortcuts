@@ -1,0 +1,7 @@
+#!/bin/sh
+ssh wb set_max_cpu_f max
+ssh tc set_max_cpu_f 0.4
+ssh fb set_max_cpu_f 0.5
+ssh dc set_max_cpu_f 0.7
+ssh ac set_max_cpu_f 0.8
+ssh de set_max_cpu_f 0

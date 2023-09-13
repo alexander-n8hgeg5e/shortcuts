@@ -1,6 +1,3 @@
 #!/bin/bash
-pid=$(rind vs "${1}")
-echo pid=$pid
-sleep 2
+vs "${1}" &
 vncviewer -passwd  ~/.vnc/passwd 127.0.0.1:7777
-kill $pid || echo failed to terminate $pid

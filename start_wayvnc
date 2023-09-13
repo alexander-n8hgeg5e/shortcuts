@@ -1,0 +1,81 @@
+#!/bin/fish
+set -x XDG_RUNTIME_DIR /tmp/wayland
+set -x DISPLAY :0
+set -x WAYLAND_USER wayland
+set -x WAYVNC_USER wayvnc
+set -x WLR_RENDERER gles2
+set -x WLR_LIBINPUT_NO_DEVICES 0
+set -x WLR_BACKENDS libinput,headless
+set compositor_cmd qtile start -b wayland -l DEBUG
+set -x WAYLAND_DISPLAY wayland-0
+
+sudo modprobe nouveau
+sudo rc-service seatd start
+sudo -u $WAYLAND_USER qtile start -b wayland -l WARNING &
+set pid (jobs -lp)
+set pid_dir /proc/$pid
+if test -d $pid_dir
+    if test (basename (sudo -u $WAYLAND_USER cat $pid_dir/comm)) = "qtile"
+        echo $pid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+        sudo ionice -c3 -p $pid
+        sudo renice -n -12 -p $pid
+    end
+end
+
+sleep 0.5
+echo setting xhost perms ... 
+while not sudo -u $WAYLAND_USER env DISPLAY=:0 xhost +local:
+    echo setting xhost perms ... 
+    sleep 1
+end
+
+echo setting perms0 ...
+while not sudo -u $WAYLAND_USER chmod g+rwx $XDG_RUNTIME_DIR
+    echo setting perms0 ...
+    sleep 1
+end
+jobs
+echo setting perms1 ...
+while not sudo -u $WAYLAND_USER chmod g+rw \
+                 "$XDG_RUNTIME_DIR"/"$WAYLAND_DISPLAY" \
+                 "$XDG_RUNTIME_DIR"/"$WAYLAND_DISPLAY".lock
+    echo setting perms1 ...
+    sleep 1
+end
+
+echo starting wayvnc
+set cmdline sudo -u $WAYVNC_USER wayvnc -Ldebug --max-fps=60 --gpu 192.168.177.2
+while true
+    eval $cmdline \&
+    set pid (jobs -lp)
+    jobs -lp
+    ps (jobs -lp)
+    set pid_dir /proc/$pid
+    sleep 5
+    if test -d $pid_dir
+        if test (sudo -u $WAYVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
+            echo $pid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+            sudo ionice -c3 -p $pid
+            sudo renice -n -10 -p $pid
+            break
+        end
+    end
+    sleep 1
+    echo no wayvnc found
+end
+
+#echo setting perms2 ...
+#while not sudo -u $WAYLAND_USER chmod g+rw \
+#                 "$XDG_RUNTIME_DIR"/sway*.sock
+#    echo setting perms2 ...
+#    sleep 1
+#end
+
+setup_x
+
+echo starting st
+begin
+    while not st
+        sleep 1
+    end
+end

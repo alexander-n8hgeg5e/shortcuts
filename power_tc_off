@@ -1,5 +1,5 @@
 #!/bin/sh
 busybox microcom -s115200 -X /dev/tty-relais-control -t 4000 &
 sleep 2
-relay_control_0 $(python -c 'print(0b10000100 << 8| 0b00000000)')
+relay_control_0 $(python -c 'print(0b10000010 << 8| 0b00000000)')
 kill -sHUP $(jobs -rp)

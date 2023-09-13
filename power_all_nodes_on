@@ -1,0 +1,20 @@
+#!/bin/sh
+busybox microcom -s115200 -X /dev/tty-relais-control -t 4000 & 
+sleep 2
+relay_control_0 $(python -c 'print(0b10000000 << 8| 0b00100001)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000000 << 8| 0b00100010)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000000 << 8| 0b00100100)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000000 << 8| 0b00101000)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000000 << 8| 0b00110000)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000001 << 8| 0b00100000)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000010 << 8| 0b00100000)')
+sleep 0.5
+relay_control_0 $(python -c 'print(0b10000100 << 8| 0b00100000)')
+sleep 0.5
+kill -sHUP $(jobs -rp)

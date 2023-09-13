@@ -1,0 +1,29 @@
+#!/bin/fish
+python -c '
+from sys import stdout
+a=bytearray([77,211,99,109,253,7,57,91])
+stdout.buffer.raw.write(bytearray([0]*25+[255]))
+addr=0x18
+data='"$argv[1]"'
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+stdout.buffer.raw.write((data).to_bytes(2,"little"))
+stdout.buffer.raw.write((data).to_bytes(2,"little"))
+stdout.buffer.raw.write((data).to_bytes(2,"little"))
+'|python -c '
+import serial,tty
+import termios
+s=serial.Serial(port="/dev/tty-relais-control",baudrate=115200)
+#print(termios.tcgetattr(s.fd))
+from sys import stdin
+b=stdin.buffer.read()
+print([bin(i) for i in bytearray(b[-6:])])
+s.write(b)
+s.flushInput()
+'
+
+# vim: set syntax=python :

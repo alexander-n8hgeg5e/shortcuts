@@ -1,0 +1,26 @@
+#!/bin/fish
+python -c '
+from sys import stdout
+a=bytearray([77,211,99,109,253,7,57,91])
+stdout.buffer.raw.write(bytearray([0]*25+[255]))
+addr=0x18
+data='"$argv[1]"'
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+for c in a:
+    stdout.buffer.raw.write((c ^ addr ).to_bytes(1,"little"))
+stdout.buffer.raw.write((data).to_bytes(1,"little"))
+stdout.buffer.raw.write((data).to_bytes(1,"little"))
+stdout.buffer.raw.write((data).to_bytes(1,"little"))
+'| ssh -tt wb busybox microcom -X -t20000 -s115200 /dev/ttyACM0
+
+
+
+
+
+
+
+
+# vim: set syntax=python :

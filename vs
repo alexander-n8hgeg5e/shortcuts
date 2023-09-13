@@ -10,7 +10,4 @@ ssh -tt \
 	-o ServerAliveInterval=1 \
 	-o ServerAliveCountMax=1 \
     -L 127.0.0.1:7777:/tmp/vncsocket_"%r" "${1}" \
-bash -c \''
-stty isig intr ^C ; trap "/bin/true" SIGINT
-x0vncserver -useipv4=0 -useipv6=0 -rfbunixpath=/tmp/vncsocket_"${USER}" -passwordfile ~/.vnc/passwd -display :0
-'\'
+x11vnc -noipv6 -noipv4 -rfbport 0 -rfbauth \~/.vnc/passwd -display :0 -unixsock /tmp/vncsocket_'${USER}' -clear_all -nomodtweak

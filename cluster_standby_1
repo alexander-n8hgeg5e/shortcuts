@@ -1,0 +1,10 @@
+#!/bin/sh
+ran -r -- rc-service -D netmount stop
+sleep 10
+ran -N $(hostname) tc -- 'rc-service -D netmount stop && openrc-shutdown -H now'
+sleep 60
+power_disknodes_off
+power_dusteater_off
+openrc single_node
+power_disknodes_off
+power_dusteater_off

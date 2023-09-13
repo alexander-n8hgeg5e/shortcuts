@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+from sys import argv,exit,stderr
+on_power_states  = [ 'on' , '1' ]
+off_power_states = [ 'off', '0' ]
+
+with open('/etc/nodelist') as nodelist:
+    nodes = [ i.strip() for i in nodelist.read().strip().split('\n') ]
+nodes.sort()
+
+try:
+    node,requested_power_state = argv[1:3]
+except:
+    print("ERROR: something went wrong with the arguments",file=stderr)
+    print(f"USAGE: {argv[0]} name_of_node requested_power_state_of_node",file=stderr)
+    print(f"Power state is one of {on_power_states}",file=stderr)
+    print(f"            or one of {off_power_states}",file=stderr)
+    print(f"Available nodes are {nodes}" ,file=stderr)
+    exit(1)
+
+
+from time import sleep
+sleep(1) # needed to prevent inrush overcurrent
+from subprocess import check_call
+#check_call(2**nodes.index(node)
+
+
+
+

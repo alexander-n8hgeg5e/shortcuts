@@ -1,0 +1,49 @@
+#!/bin/fish
+set -x XDG_RUNTIME_DIR /tmp/wayland
+set -x WAYLAND_DISPLAY wayland-1
+set -x DISPLAY :0
+set -x WAYLAND_USER wayland
+set -x WLR_RENDERER gles2
+set -x WLR_BACKENDS headless
+
+sudo modprobe nouveau
+
+sudo -iu $WAYLAND_USER weston  \
+        --xwayland \
+        -B rdp-backend.so \
+        --address=192.168.177.2 \
+        --width=1366 --height=768 \
+        --no-clients-resize \
+        --rdp-tls-cert=/home/$WAYLAND_USER/tls.crt \
+        --rdp-tls-key=/home/$WAYLAND_USER/tls.key \
+        &
+
+sleep 0.5
+echo setting xhost perms ... 
+while not sudo -u $WAYLAND_USER xhost +local:
+    echo setting xhost perms ... 
+    sleep 1
+end
+
+echo setting perms0 ...
+while not sudo -u $WAYLAND_USER chmod g+rx $XDG_RUNTIME_DIR
+    echo setting perms0 ...
+    sleep 1
+end
+
+echo setting perms1 ...
+while not sudo -u $WAYLAND_USER chmod g+rw \
+                 "$XDG_RUNTIME_DIR"/wayland-1 \
+                 "$XDG_RUNTIME_DIR"/wayland-1.lock
+    echo setting perms1 ...
+    sleep 1
+end
+
+setup_x
+
+echo starting st
+begin
+    while not st
+        sleep 1
+    end
+end

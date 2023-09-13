@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#xhost SI:localuser:firefox
-
 RUNAS_USER=firefox
 declare -A args
 
@@ -42,7 +40,7 @@ fi
 #echo "all args=$@"
 #echo "last=$last"
 read -a pargs -r <<< "${@}"
-read -a pargs -r <<< "${pargs[@]:$last}"
+read -a pargs -r <<< "${pargs[@]: $last}"
 lpargs="${#pargs[@]}"
 #echo "pargs = ${pargs[@]}"
 #echo len pargs = $lpargs
@@ -59,11 +57,16 @@ else
     more_args=""
 fi
 
-
-
-cmd0="rind sudo -iu firefox"
-cmd1="firefox -P ${profile} ${more_args}"
-
+#cmd0="sudo nice -n-10 sudo -iu firefox vglrun -d /dev/dri/card0 -np 8 -fps 50 -q 95"
+#cmd0="sudo nice -n-10 sudo -iu firefox vglrl"
+#cmd0="sudo nice -n-10 sudo -iu firefox env WAYLAND_DISPLAY= DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/wayland"
+#cmd0="sudo nice -n-10 sudo -iu firefox env XDG_RUNTIME_DIR=/tmp/wayland"
+cmd0="sudo nice -n-10 sudo -iu firefox"
+#cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
+#cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
+cmd1="ril env MOZ_ENABLE_WAYLAND=1 firefox -P ${profile} ${more_args}"
+#cmd1="ril vglrl firefox -P ${profile} ${more_args}"
+#cmd1="vglrl glxinfo -B"
 
 ###############
 ## authorize ##
@@ -96,7 +99,20 @@ if [[ ${args["-vgl"]} -eq 1 ]] ; then
     cmd0="${cmd0} vglrun"
 fi
 
-cmd="${cmd0} env ${env_args} ${cmd1}"
+##################
+## setup cgroup ##
+##################
+echo setting cgroup,...
+proc_path=$(python -c '
+from pylib.cgroup_utils import cgroup2_find_path
+print(cgroup2_find_path()+"/cg_realtime/cgroup.procs")
+')
+cat /proc/self/stat | cut -d' ' -f4 | sudo dd of="${proc_path}" status=none
+#echo -e "${proc_path}:\n$(cat "${proc_path}")"
 
+#########
+## run ##
+#########
+cmd="${cmd0} env ${env_args} ${cmd1}"
 echo "evaluating cmd: \"${cmd}\" ..."
 eval "${cmd}"

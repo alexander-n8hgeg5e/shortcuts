@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+from subprocess import check_output as co
+from subprocess import check_call
+from subprocess import call
+ap=ArgumentParser()
+ap.add_argument("--satan-maximizer",action="store_true")
+ap.add_argument("--reduce-low",action="store_true")
+a=ap.parse_args()
+output_sink=co([ 'pactl', 'get-default-sink' ]).strip().decode()
+print(output_sink)
+master=output_sink
+counter=0
+sink_name=f"chain_{counter}"
+module_nrs=[]
+
+def add_filter(cmdline):
+    global sink_name
+    global counter
+    print(cmdline)
+    n=co( cmdline ).strip().decode()
+    module_nrs.append(n)
+    print(module_nrs)
+    check_call( ['pactl', 'set-default-sink', sink_name] )
+    master=sink_name
+    counter+=1
+    sink_name=f"chain_{counter}"
+try:
+    add_filter( 
+                ['pactl', 'load-module', 'module-ladspa-sink', f'sink_name={sink_name}', f'master={master}',
+                 'label=mbeq', 'plugin=mbeq_1197', 'control=0,0,0,0,-40,-40,-40,0,0,0,0,0,0,0,0'
+                ]
+              )
+    from signal import pause
+    pause()
+finally:
+    print("unloading modules")
+    for nr in module_nrs:
+        check_call(['pactl','unload-module',nr])
+

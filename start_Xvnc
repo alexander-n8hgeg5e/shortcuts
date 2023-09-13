@@ -1,0 +1,49 @@
+#!/bin/fish
+set -x XDG_RUNTIME_DIR /tmp/wayland
+set -x DISPLAY :1
+set -x WAYLAND_DISPLAY wayland-1
+set -x WAYLAND_USER wayland
+set -x XVNC_USER vncserver
+set -x WLR_RENDERER gles2
+set -x WLR_BACKENDS x11
+#set -x WLR_NO_HARDWARE_CURSORS 1
+#set -x WLR_LIBINPUT_NO_DEVICES 1
+#set -x WLR_HEADLESS_OUTPUTS 1
+set compositor_cmd qtile start -l DEBUG
+
+sudo modprobe nouveau
+
+echo starting vncserver
+set cmdline sudo -u $XVNC_USER Xvnc $DISPLAY -interface 192.168.177.2 -SecurityTypes None -geometry 1366x768+0+0
+while true
+    eval $cmdline \&
+    set pid (jobs -lp)
+    set pid_dir /proc/$pid
+    if test -d $pid_dir
+        if test (sudo -u $XVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
+            break
+        else
+         echo nobreak
+        end
+    end
+    sleep 1
+    echo no Xvnc found
+end
+
+
+sleep 0.5
+echo setting xhost perms ... 
+while not sudo -u $XVNC_USER xhost +local:
+    echo setting xhost perms ... 
+    sleep 1
+end
+
+echo starting compositor ...
+eval $compositor_cmd &
+set compositor_pid (jobs -lp)
+
+
+
+setup_x
+
+wait $compositor_pid

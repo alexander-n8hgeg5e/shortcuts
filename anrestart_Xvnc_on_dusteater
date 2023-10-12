@@ -1,0 +1,3 @@
+#!/bin/sh
+ssh de sudo killall qtile start_Xvnc Xvnc
+ssh de ril $s/start_Xvnc

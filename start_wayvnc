@@ -44,34 +44,59 @@ while not sudo -u $WAYLAND_USER chmod g+rw \
 end
 
 echo starting wayvnc
-set cmdline sudo -u $WAYVNC_USER wayvnc -Ldebug --max-fps=60 --gpu 192.168.177.2
-while true
-    eval $cmdline \&
-    set pid (jobs -lp)
-    jobs -lp
-    ps (jobs -lp)
-    set pid_dir /proc/$pid
-    sleep 5
-    if test -d $pid_dir
-        if test (sudo -u $WAYVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
-            echo $pid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
-            sudo ionice -c3 -p $pid
-            sudo renice -n -10 -p $pid
-            break
-        end
-    end
-    sleep 1
-    echo no wayvnc found
-end
-
-#echo setting perms2 ...
-#while not sudo -u $WAYLAND_USER chmod g+rw \
-#                 "$XDG_RUNTIME_DIR"/sway*.sock
-#    echo setting perms2 ...
+#set cmdline sudo -u $WAYVNC_USER wayvnc -Ldebug --max-fps=60 --gpu 192.168.177.2 5900
+#while true
+#    eval $cmdline \&
+#    set pid (jobs -lp)
+#    jobs -lp
+#    ps (jobs -lp)
+#    set pid_dir /proc/$pid
+#    sleep 5
+#    if test -d $pid_dir
+#        if test (sudo -u $WAYVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
+#            echo $pid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+#            sudo ionice -c3 -p $pid
+#            sudo renice -n -10 -p $pid
+#            break
+#        end
+#    end
 #    sleep 1
+#    echo no wayvnc found
 #end
 
+for i in 1 2 3
+    echo starting wayvnc $i
+    set cmdline sudo -u $WAYVNC_USER wayvnc -o HEADLESS-$i -S $XDG_RUNTIME_DIR/wayvncctl-$i -Ldebug --max-fps=60 --gpu 192.168.177.2 590$i
+    while true
+        eval $cmdline \&
+        set pid (jobs -lp)
+        jobs -lp
+        ps (jobs -lp)
+        set pid_dir /proc/$pid
+        sleep 5
+        if test -d $pid_dir
+            if test (sudo -u $WAYVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
+                echo $pid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+                sudo ionice -c3 -p $pid
+                sudo renice -n -10 -p $pid
+                break
+            end
+        end
+        sleep 1
+        echo no wayvnc found
+    end
+end
+
+echo setting perms2 ...
+while not sudo -u $WAYLAND_USER chmod g+rw \
+                 "$XDG_RUNTIME_DIR"/sway*.sock
+    echo setting perms2 ...
+    sleep 1
+end
+
 setup_x
+
+wlr-randr --output HEADLESS-1 --pos 0,594 --on --output HEADLESS-2 --custom-mode 1056x594 --pos 1366,594 --on --output HEADLESS-3 --on --pos 1366,0 --custom-mode 1056x594
 
 echo starting st
 begin

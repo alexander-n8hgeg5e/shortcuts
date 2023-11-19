@@ -9,21 +9,24 @@ set -x WLR_BACKENDS x11
 #set -x WLR_NO_HARDWARE_CURSORS 1
 #set -x WLR_LIBINPUT_NO_DEVICES 1
 #set -x WLR_HEADLESS_OUTPUTS 1
-set compositor_cmd qtile start -l DEBUG
+set compositor_cmd qtile start -l ERROR
 
 sudo modprobe nouveau
 
-echo starting vncserver
-set cmdline sudo -u $XVNC_USER Xvnc $DISPLAY -interface 192.168.177.2 -SecurityTypes None -geometry 1366x768+0+0
+echo starting Xvnc
+set cmdline sudo -u $XVNC_USER Xvnc $DISPLAY -interface 192.168.177.2 -SecurityTypes None -geometry 1824x1366+0+0
 while true
+    set selfpid (cat /proc/self/status|grep PPid|cut -f2)
+    echo $selfpid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+    sudo ionice -c1 -n2 -p $selfpid
+    sudo renice -n -15 -p $selfpid
     eval $cmdline \&
     set pid (jobs -lp)
     set pid_dir /proc/$pid
+    sleep 5
     if test -d $pid_dir
-        if test (sudo -u $XVNC_USER cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
+        if test (sudo -u $XVNC_USER   cat $pid_dir/cmdline | tr \\00 \\40) = "$cmdline "
             break
-        else
-         echo nobreak
         end
     end
     sleep 1
@@ -39,6 +42,10 @@ while not sudo -u $XVNC_USER xhost +local:
 end
 
 echo starting compositor ...
+set selfpid (cat /proc/self/status|grep PPid|cut -f2)
+echo $selfpid | sudo dd of=/sys/fs/cgroup/unified/cg_realtime/cgroup.procs
+sudo ionice -c2 -n4 -p $selfpid
+sudo renice -n 0 -p $selfpid
 eval $compositor_cmd &
 set compositor_pid (jobs -lp)
 

@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+
+
+
+screen_cmd_map = [{"xr":(0,1366)},{"xr":(1366,)}]
+cmds=[ 
+      'sudo renice -n -10 $(cge cg_realtime ril vncviewer dusteater:1)',
+      'sudo renice -n -10 $(cge cg_realtime ril vncviewer dusteater:2)',
+     ]
+
+from libqtile.command.client import InteractiveCommandClient
+c = InteractiveCommandClient()
+from pprint import pprint
+def d(a):          
+    pprint(c.eval('dir('+a+')'))
+def p(a):
+    pprint(c.eval('repr('+a+')'))
+def t(a):
+    pprint(c.eval('type('+a+')'))
+def h(a):
+    pprint(c.eval('help('+a+')'))
+def e(a):
+    pprint(c.eval(a))
+
+def get_cmd_idx(pos):
+    m=screen_cmd_map
+    for i in range(len(m)):
+        if "xr" in m[i].keys():
+            if len(m[i]["xr"]) == 2:
+                if pos[0] > m[i]["xr"][0] and pos[0] < m[i]["xr"][1]:
+                    return i
+            elif len(m[i]["xr"]) == 1:
+                if pos[0] > m[i]["xr"][0] and i==len(m)-1:
+                    return i
+
+def get_pos_of_screen(s):
+    x = s['x']+s['width']/2
+    y = s['y']+s['height']/2
+    return x,y
+
+def get_cmd(screen):
+    pos = get_pos_of_screen(screen)
+    return cmds[get_cmd_idx(pos)]
+
+check_for_window=\
+"""
+get_data(){
+    eval $(xdotool getmouselocation --shell --prefix C_) 
+    xdotool windowfocus --sync $C_WINDOW 
+    windowname=$(xdotool getwindowname $C_WINDOW)
+}
+timeout=10
+while ! [[ $windowname =~ .*TigerVNC  ]];do
+    if [[ $timeout -eq 0 ]];then
+        echo ERROR: This seems to be the wrong window \\""${windowname}"\\". 
+        exit 1
+    fi
+    sleep 1
+    timeout=$(( $timeout - 1 ))
+    get_data
+done
+"""
+
+
+#d("self")
+#e("self.cmd_to_screen(self.current_screen.index)")
+#pprint(c.screens())
+
+from time import sleep
+from subprocess import check_call,CalledProcessError
+c_idx=c.screen.info()['index']
+for screen in c.screens():
+    c.to_screen(screen['index'])
+    e('self.warp_to_screen()')
+    check_call(get_cmd(screen),shell=True)
+    try:
+        check_call(check_for_window,shell=True)
+    except CalledProcessError:
+        exit()
+c.to_screen(c_idx)
+e('self.warp_to_screen()')
+    
+
+##restore mousepositon
+#restore()
+#    {
+#    xdotool mousemove --clearmodifiers --sync $PPOS_X $PPOS_Y
+#    xdotool windowfocus --sync $focus_win
+#    }
+#
+#sleep 2
+#
+#
+## move to right right monitor
+#xdotool mousemove --sync --clearmodifiers 1598 286
+#python -c'
+#from libqtile.command.client import InteractiveCommandClient
+#c = InteractiveCommandClient()
+#c.to_screen(0)
+#'
+#sudo renice -n -10 $(cge cg_realtime ril vncviewer -DesktopSize=1824x1366 RemoteResize=0 dusteater:2)
+#
+#
+#
+#xdotool mousemove --sync --clearmodifiers 1398 126
+### toggle fullscreen
+##xdotool key --clearmodifiers F12
+##xdotool mousemove_relative --sync --clearmodifiers -p 135 36
+##xdotool click --clearmodifiers 1
+##
+### scroll down
+##xdotool mousemove --sync --clearmodifiers 2413 126
+##xdotool click --clearmodifiers --repeat 3 1
+##xdotool mousedown --clearmodifiers 1
+##xdotool mousemove_relative --sync -p 180 245
+##xdotool mouseup --clearmodifiers 1
+##
+#### scroll right
+##xdotool mousemove --sync --clearmodifiers  1398 686 
+##xdotool click --clearmodifiers --repeat 3 1
+##xdotool mousedown 1
+##xdotool mousemove_relative --sync -p 90 1056
+##xdotool mouseup --clearmodifiers 1
+##
+### toggle fullscreen
+##xdotool mousemove --sync --clearmodifiers 1398 126 
+##xdotool key --clearmodifiers F12
+##xdotool mousemove_relative --sync --clearmodifiers -p 135 36
+##xdotool click --clearmodifiers 1
+#
+#
+## move to left monitor
+#xdotool mousemove --sync --clearmodifiers 100 100
+#python -c'
+#from libqtile.command.client import InteractiveCommandClient
+#c = InteractiveCommandClient()
+#c.to_screen(0)
+#'
+#sudo renice -n -10 $(cge cg_realtime ril vncviewer -DesktopSize=1824x1366 RemoteResize=0 dusteater:1)
+#restore

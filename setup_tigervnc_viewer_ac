@@ -1,0 +1,106 @@
+#!/bin/sh
+
+# start windowmanager
+if ! ( env DISPLAY=ac:0 xdotool search .\* getwindowname %@ 2>/dev/null | grep LG3D > /dev/null ) ;then
+    sudo ssh -t ac rc-service xserver restart
+    countdown=10
+    while ! env DISPLAY=ac:0 xrandr --output VGA-1 --scale 0.55 --rotate inverted ; do
+        sleep 1
+        if [[ $countdown -le 0 ]];then
+            echo ERROR: xserver problem
+            exit
+        fi
+        countdown=$(( $countdown -1 ))
+    done
+    #env ril env DISPLAY=ac:0 qtile start -c /dev/null
+    #sleep 5
+    #env DISPLAY=ac:0 qtile cmd-obj -o cmd -f hide_show_bar
+else
+    echo qtile already started
+fi
+
+#restore mousepositon
+#restore()
+#    {
+#    env DISPLAY=ac:0 xdotool mousemove --clearmodifiers --sync $PPOS_X $PPOS_Y
+#    }
+#
+sleep 2
+
+# restart vncviewer
+sudo ssh -t ac rc-service vncviewer restart
+
+## save stuff
+#eval $(env DISPLAY=ac:0 xdotool getmouselocation --shell --prefix PPOS_)
+
+#sleep 1
+#env DISPLAY=ac:0 xdotool mousemove --clearmodifiers --sync 100 100
+#env DISPLAY=ac:0 xdotool mousemove --clearmodifiers --sync 200 200
+#env DISPLAY=ac:0 xdotool mousemove --clearmodifiers --sync 100 100
+#win_id=""
+#get_data()
+#    {
+#    # prepare and check
+#    vncviewer_pid="$(sudo ssh -t ac cat /var/run/vncviewer.pid|sed 's/[^0-9]//g')"
+#    echo "vncviewer_pid=\"${vncviewer_pid}\""
+#    windows=$(2>/dev/null  env DISPLAY=ac:0 xdotool search .\*)
+#    for window in ${windows};do
+#        windowpid="$(2>/dev/null env DISPLAY=ac:0 xdotool getwindowpid $window)"
+#        windowname="$( 2>/dev/null env DISPLAY=ac:0 xdotool getwindowname $window)"
+#        windowclassname="$( 2>/dev/null env DISPLAY=ac:0 xdotool getwindowclassname $window)"
+#        echo $windowclassname $windowname $windowpid
+#        if [[ "${windowpid}" -eq "${vncviewer_pid}" ]];then
+#            win_id="${window}"
+#            break
+#        fi
+#    done
+#    }
+#timeout=10
+#while ! [[ -n $win_id ]];do
+#    if [[ $timeout -lt 0 ]] ;then
+#        echo ERROR: could not find window id.
+#        restore
+#        exit
+#    fi
+#    sleep 1
+#    timeout=$(( $timeout - 1 ))
+#    get_data
+#done
+
+#echo "win_id=\"${win_id}\""
+
+#env DISPLAY=ac:0 xdotool windowfocus --sync $win_id 
+#env DISPLAY=ac:0 xdotool mousemove --sync --clearmodifiers 200 200
+#
+#sleep 2
+
+# toggle fullscreen
+#env DISPLAY=ac:0 xdotool key --clearmodifiers F12
+#env DISPLAY=ac:0 xdotool mousemove_relative --sync --clearmodifiers -p 135 36
+#env DISPLAY=ac:0 xdotool click --clearmodifiers 1
+
+## scroll up
+#sleep 1
+#env DISPLAY=ac:0 xdotool mousemove --sync --clearmodifiers 1048 530
+#env DISPLAY=ac:0 xdotool click --clearmodifiers --repeat 3 1
+#env DISPLAY=ac:0 xdotool mousedown --clearmodifiers 1
+#env DISPLAY=ac:0 xdotool mousemove_relative --sync -p 0 500
+#env DISPLAY=ac:0 xdotool mouseup --clearmodifiers 1
+#
+### scroll right
+#env DISPLAY=ac:0 xdotool mousemove --sync --clearmodifiers  20 562
+#sleep 1
+#env DISPLAY=ac:0 xdotool click --clearmodifiers --repeat 3 1
+#env DISPLAY=ac:0 xdotool mousedown 1
+#env DISPLAY=ac:0 xdotool mousemove_relative --sync -p 90 1056
+#env DISPLAY=ac:0 xdotool mouseup --clearmodifiers 1
+#
+#sleep 2
+#
+#env DISPLAY=ac:0 xdotool mousemove --sync --clearmodifiers 200 200 
+#env DISPLAY=ac:0 xdotool key --clearmodifiers F12
+#env DISPLAY=ac:0 xdotool mousemove_relative --sync --clearmodifiers -p 135 36
+#env DISPLAY=ac:0 xdotool click --clearmodifiers 1
+
+
+#restore

@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+from argparse import ArgumentParser
+from subprocess import check_output as co
+from subprocess import check_call
+from subprocess import call
+ap=ArgumentParser()
+ap.add_argument("--satan-maximizer",action="store_true")
+ap.add_argument("--reduce-low",action="store_true",default=True)
+a=ap.parse_args()
+#output_sink="alsa_output.pci-0000_00_1b.0.analog-stereo"
+output_sink="bluez_sink.50_C2_ED_25_0B_60.a2dp_sink"
+master=output_sink
+counter=0
+sink_name=f"chain_{counter}"
+module_nrs=[]
+
+def add_filter(cmdline):
+    global sink_name
+    global counter
+    print(cmdline)
+    n=co( cmdline ).strip().decode()
+    module_nrs.append(n)
+    print(module_nrs)
+    check_call( ['pactl', 'set-default-sink', sink_name] )
+    master=sink_name
+    counter+=1
+    sink_name=f"chain_{counter}"
+
+try:
+    if a.reduce_low:
+        add_filter( 
+                    ['pactl', 'load-module', 'module-ladspa-sink', f'sink_name={sink_name}', f'master={master}',
+                     'label=mbeq', 'plugin=mbeq_1197', 'control=-24,-20,-16,-14,-12,-10,-8,-6,-4,-2,0,0,0,0,0']
+                  )
+    if a.satan_maximizer:
+        add_filter(
+                    [ 'pactl', 'load-module', 'module-ladspa-sink', f'sink_name={sink_name}', f'master="{master}"',
+                      'label=satanMaximiser', 'plugin=satan_maximiser_1408', 'control=30,-15' ]
+                  )
+    from signal import pause
+    pause()
+finally:
+    print("unloading modules")
+    for nr in module_nrs:
+        check_call(['pactl','unload-module',nr])
+
+
+
+
+# :vim foldlevel=0 :

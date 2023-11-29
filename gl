@@ -78,7 +78,7 @@ def gen_log_cmd():
     ca = '%C(auto)'
     w = '%C(white)'
     hash = b + '%h'+ cr
-    date = g + '%ad' + cr
+    date = g + '%cd' + cr
     refnames = ca + ' %D'+ cr +'|'
     subject = w + '%s'
     body = '%b'

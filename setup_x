@@ -22,5 +22,4 @@ if test -e $xkbmap_file
     xkbcomp $xkbmap_file $DISPLAY ^ /dev/null
 end
 xset r rate 130 125
-#xset dpms 600 1200 3600
 xrdb -override ~/.Xresources

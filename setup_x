@@ -18,12 +18,9 @@ else
     set xkbmap_file "$HOME"/.xkbmap_(hostname)
 end
 
-if not test -e $xkbmap_file
-    echo no xkbmap file at path: \""$xkbmap_file"\" >&2
-    exit 2
+if test -e $xkbmap_file
+    xkbcomp $xkbmap_file $DISPLAY ^ /dev/null
 end
-echo $xkbmap_file
-xkbcomp $xkbmap_file $DISPLAY ^ /dev/null
 xset r rate 130 125
 #xset dpms 600 1200 3600
 xrdb -override ~/.Xresources

@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+from curses import setupterm
+from curses import tigetstr as get
+from time import time,sleep
+from sys import argv
+from sys import stdout
+TIMEOUT=20
+p=argv[1]
+
+setupterm()
+
+ColorGreenBG=0x1b5b306d1b5b34326d.to_bytes(9,'big')
+DeleteLine=get("dl1")
+CarriageReturn=get("cr")
+Civis=get("civis")
+ColorReset=0x1b5b306d.to_bytes(4,'big') 
+
+def w(x):
+    stdout.buffer.write(x)
+
+def fl():
+    stdout.flush()
+
+def blink():
+    w(ColorGreenBG)
+    w(b"    ")
+    w(ColorReset)
+    fl()
+    sleep(0.01)
+    w(DeleteLine)
+    w(CarriageReturn)
+    fl()
+try:
+    w(Civis)
+    
+    timeout=time()+TIMEOUT
+    i0=0
+    i1=0
+    print(p)
+    with open(p) as f:
+        while timeout > time():
+            i0=i1
+            i1=int(f.read(),base=16)
+            f.seek(0)
+            if i0 != i1:
+                blink()
+    
+    
+except:
+    raise
+finally:
+    w(get("cnorm"))

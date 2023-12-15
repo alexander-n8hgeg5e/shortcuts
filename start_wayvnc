@@ -96,7 +96,7 @@ end
 
 setup_x
 
-wlr-randr --output HEADLESS-1 --pos 0,594 --on --output HEADLESS-2 --custom-mode 1056x594 --pos 1366,594 --on --output HEADLESS-3 --on --pos 1366,0 --custom-mode 1056x594
+wlr-randr --output HEADLESS-1 --pos 0,336 --on --output HEADLESS-2 --custom-mode 1033x581 --pos 1366,581 --on --output HEADLESS-3 --on --pos 1366,0 --custom-mode 1033x581
 
 echo starting st
 begin

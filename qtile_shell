@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+from libqtile.command.client import InteractiveCommandClient
+c=InteractiveCommandClient()
+from pprint import pprint
+print(c.eval("""exec(\"\"\"from pprint import pformat\"\"\")"""))
+while True:
+    cmd = "\\\"\\\"\\\""+input()+"\\\"\\\"\\\""
+    code="""exec(\"\"\"
+_code=("""+cmd +""")
+_out=eval(_code)
+raise Exception(str(_out))
+\"\"\")"""
+    out=c.eval(code)
+    pprint(out[1])

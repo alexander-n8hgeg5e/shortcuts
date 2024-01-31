@@ -64,8 +64,8 @@ fi
 cmd0="sudo nice -n-10 sudo -iu firefox"
 #cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
 #cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
-cmd1="ril env MOZ_ENABLE_WAYLAND=1 firefox -P ${profile} ${more_args}"
-#cmd1="ril vglrl firefox -P ${profile} ${more_args}"
+cmd1="ril env MOZ_ENABLE_WAYLAND=1 WAYLAND_DISPLAY=\"${WAYLAND_DISPLAY}\" XDG_RUNTIME_DIR=\"${XDG_RUNTIME_DIR}\" firefox -P \"${profile}\" ${more_args}"
+#cmd1="ril env DISPLAY=tc:0 vglrun -d /dev/dri/card0 -np 4 -fps 50 -q 95 -ms 0 -c jpeg +v firefox -P ${profile} ${more_args}"
 #cmd1="vglrl glxinfo -B"
 
 ###############

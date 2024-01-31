@@ -1,6 +1,6 @@
 #!/bin/bash
 
-RUNAS_USER=firefox
+[[ -z "${RUNAS_USER}" ]] && RUNAS_USER=firefox
 declare -A args
 
 args["-vgl"]=0
@@ -57,13 +57,13 @@ else
     more_args=""
 fi
 
-#cmd0="sudo nice -n-10 sudo -iu firefox vglrun -d /dev/dri/card0 -np 8 -fps 50 -q 95"
-#cmd0="sudo nice -n-10 sudo -iu firefox vglrl"
-#cmd0="sudo nice -n-10 sudo -iu firefox env WAYLAND_DISPLAY= DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/wayland"
-#cmd0="sudo nice -n-10 sudo -iu firefox env XDG_RUNTIME_DIR=/tmp/wayland"
-cmd0="sudo nice -n-10 sudo -iu firefox"
-#cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
-#cmd0="sudo -iu firefox vglrun -d /dev/dri/card0"
+#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0 -np 8 -fps 50 -q 95"
+#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" vglrl"
+#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" env WAYLAND_DISPLAY= DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/wayland"
+#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" env XDG_RUNTIME_DIR=/tmp/wayland"
+cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}""
+#cmd0="sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0"
+#cmd0="sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0"
 cmd1="ril env MOZ_ENABLE_WAYLAND=1 WAYLAND_DISPLAY=\"${WAYLAND_DISPLAY}\" XDG_RUNTIME_DIR=\"${XDG_RUNTIME_DIR}\" firefox -P \"${profile}\" ${more_args}"
 #cmd1="ril env DISPLAY=tc:0 vglrun -d /dev/dri/card0 -np 4 -fps 50 -q 95 -ms 0 -c jpeg +v firefox -P ${profile} ${more_args}"
 #cmd1="vglrl glxinfo -B"

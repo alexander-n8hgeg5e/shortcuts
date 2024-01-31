@@ -69,7 +69,7 @@ done
 from time import sleep
 from subprocess import check_call,CalledProcessError
 c_idx=c.screen.info()['index']
-for screen in c.screens():
+for screen in c.get_screens():
     c.to_screen(screen['index'])
     e('self.warp_to_screen()')
     check_call(get_cmd(screen),shell=True)

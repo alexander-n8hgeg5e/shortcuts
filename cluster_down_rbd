@@ -1,0 +1,2 @@
+#!/bin/sh
+sudo ssh de ril openrc-shutdown -H now

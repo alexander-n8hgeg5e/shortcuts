@@ -1,0 +1,15 @@
+#!/bin/sh
+cluster_down_mds
+cluster_down_rbd
+sudo ran -r -N tc -- 'openrc-shutdown -H now'
+sleep 10m
+sudo power_disknodes_off
+sudo power_dusteater_off
+sudo openrc single_node
+sudo power_disknodes_off
+sudo power_dusteater_off
+sudo openrc single_node
+sudo power_disknodes_off
+sudo power_dusteater_off
+sudo openrc single_node
+

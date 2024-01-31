@@ -1,0 +1,3 @@
+#!/bin/sh
+sudo ran -r -- umount -lR /boot
+sudo ran -r -- umount -lR /node

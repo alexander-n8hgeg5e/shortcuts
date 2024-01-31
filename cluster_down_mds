@@ -1,0 +1,7 @@
+#!/bin/sh
+sudo ran -- umount -Rl /etc/portage/patches 
+sudo ran -- umount -Rl /var/cache/binpkgs   
+sudo ran -- umount -Rl /var/cache/ccache    
+sudo ran -- umount -Rl /var/db/distfiles    
+sudo ran -- umount -Rl /var/db/repos        
+sudo ran -- umount -Rl /var/src             

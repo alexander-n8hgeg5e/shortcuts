@@ -1,0 +1,2 @@
+#!/bin/sh
+_cgroup2_find_path -q status

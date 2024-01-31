@@ -1,0 +1,2 @@
+#!/bin/fish
+for pg in  (ceph pg ls active|head -n-1|column -t -H(echo {(seq 50|sed '/1$/d;/1[45]$/d;/1[567]$/d;'),\,} | tr -d \\40 )|sort -k6 |tail -n+2|head -n"$argv[1]"|cut -d' ' -f1);ceph pg deep-scrub $pg;end

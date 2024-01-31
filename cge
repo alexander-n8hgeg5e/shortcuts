@@ -42,10 +42,7 @@ fi
 ##################
 ## setup cgroup ##
 ##################
-proc_path=$(python -c '
-from pylib.cgroup_utils import cgroup2_find_path
-print(cgroup2_find_path()+"/'"${cgroup}"'/cgroup.procs")
-')
+proc_path=$(cgroup2_find_path)"/${cgroup}/cgroup.procs"
 if [[ -e $proc_path ]];then
     #echo setting cgroup to $cgroup 1>&2
     cat /proc/self/stat | cut -d' ' -f4 | sudo dd of="${proc_path}" status=none

@@ -1,1 +1,1 @@
-find dusteater -name \*gpkg.tar -exec bash -c 'tar -xOf {} --wildcards \*/metadata.tar.bz2 | tar -xOj --wildcards metadata/\*FLAGS |grep -q -- -mtune=generic' \; -and -print
+find -name \*gpkg.tar -exec bash -c 'tar -xOf {} --wildcards \*/metadata.tar.bz2 | tar -xOj --wildcards metadata/\*FLAGS |grep -q -- -mtune=generic' \; -and -print

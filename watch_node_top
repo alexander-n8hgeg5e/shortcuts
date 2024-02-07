@@ -1,5 +1,5 @@
 #!/bin/sh
 while true;do
-    ssh -t "${1}" sudo top
+    sudo ssh -t "${1}" top
     sleep 20
 done

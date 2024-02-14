@@ -23,7 +23,7 @@ def get_key():
     return key
 
 def time_left(t0,timeout):
-    return time()-t0 - timeout
+    return timeout + t0 - time()
 
 def time_left_missing_0(t0):
     return time_left(t0,TIMEOUT_MISSING_0)

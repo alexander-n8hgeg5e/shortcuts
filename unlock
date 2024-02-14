@@ -26,10 +26,10 @@ def time_left(t0,timeout):
     return time()-t0 - timeout
 
 def time_left_missing_0(t0):
-    return time_left(TIMEOUT_MISSING_0)
+    return time_left(t0,TIMEOUT_MISSING_0)
 
 def time_left_missing_1(t0):
-    return time_left(TIMEOUT_MISSING_1)
+    return time_left(t0,TIMEOUT_MISSING_1)
 
 def timeout(t0,timeout):
     return time_left(t0,timeout) <= 0

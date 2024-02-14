@@ -123,8 +123,8 @@ def main():
               and not (timeout_missing_1(t0) and hc.get_num_not_read2unlock_nor_online() == 1):
             # tell the user what is going on
             if time()-tp > 5:
-                timeoutmsg  = '' if timeout_missing_0(t0) else f'(0_missing={time_left_missing_0(t0)}[s])'
-                timeoutmsg += '' if timeout_missing_1(t0) else f'(1_missing={time_left_missing_1(t0)}[s])'
+                timeoutmsg  = '' if timeout_missing_0(t0) else f'(waiting {time_left_missing_0(t0)}[s] for all nodes)'
+                timeoutmsg += '' if timeout_missing_1(t0) else f'(waiting {time_left_missing_1(t0)}[s] for all-1 nodes)'
                 print(f"waiting for hosts{timeoutmsg}: {hc.get_hosts_not_ready_nor_online()}")
                 tp=time()
             # wait a bit

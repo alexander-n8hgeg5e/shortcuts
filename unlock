@@ -105,6 +105,10 @@ class HostChecker():
         return l
 
 def main():
+    from argparse import ArgumentParser
+    ap=ArgumentParser()
+    ap.add_argument("-nw","--no-waiting",action="store_true" )
+    args = ap.parse_args()
     # gather data about state of the hosts
     hc = HostChecker(read_hosts())
     hc.gather_data()
@@ -114,17 +118,18 @@ def main():
         hc.gather_data()
     t0=time()
     tp=t0
-    while     not (timeout_missing_0(t0) and hc.get_num_not_read2unlock_nor_online() == 0) \
-          and not (timeout_missing_1(t0) and hc.get_num_not_read2unlock_nor_online() == 1):
-        # tell the user what is going on
-        if time()-tp > 5:
-            timeoutmsg  = '' if timeout_missing_0(t0) else f'(0_missing={time_left_missing_0(t0)}[s])'
-            timeoutmsg += '' if timeout_missing_1(t0) else f'(1_missing={time_left_missing_1(t0)}[s])'
-            print(f"waiting for hosts{timeoutmsg}: {hc.get_hosts_not_ready_nor_online()}")
-            tp=time()
-        # wait a bit
-        sleep(1)
-        hc.gather_data()
+    if not args.no_waiting:
+        while     not (timeout_missing_0(t0) and hc.get_num_not_read2unlock_nor_online() == 0) \
+              and not (timeout_missing_1(t0) and hc.get_num_not_read2unlock_nor_online() == 1):
+            # tell the user what is going on
+            if time()-tp > 5:
+                timeoutmsg  = '' if timeout_missing_0(t0) else f'(0_missing={time_left_missing_0(t0)}[s])'
+                timeoutmsg += '' if timeout_missing_1(t0) else f'(1_missing={time_left_missing_1(t0)}[s])'
+                print(f"waiting for hosts{timeoutmsg}: {hc.get_hosts_not_ready_nor_online()}")
+                tp=time()
+            # wait a bit
+            sleep(1)
+            hc.gather_data()
     if len(hc.get_hosts_online()) > 0:
         if len(hc.get_hosts_ready2unlock()) == 0:
             append=' -> Nothing to unlock'

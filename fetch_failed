@@ -62,7 +62,7 @@ with open(TMP_FETCH_FAILED_LIST_FILE_NAME,"at") as f:
     for atom in atoms:
         if not atom in done:
             try: 
-                check_call(['emerge','--nodeps','--verbose','--fetchonly',atom],env=env)
+                check_call(['emerge','--nodeps','--verbose','--fetchonly','--getbinpkg=n',atom],env=env)
                 if not atom in done:
                     if start:
                         f.write(atom)

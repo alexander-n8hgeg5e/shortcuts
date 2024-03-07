@@ -1,0 +1,12 @@
+#!/bin/fish
+while true
+    if nice -n19 memtester 100M 1
+        echo sleeping...
+        sleep 10m
+    else
+        echo error: $status
+        break
+    end
+end
+
+# vim: set syntax=sh :

@@ -11,5 +11,5 @@ sudo power_dusteater_off
 sudo openrc single_node
 sudo power_disknodes_off
 sudo power_dusteater_off
-sudo openrc single_node
+sudo openrc default
 

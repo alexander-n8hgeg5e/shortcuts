@@ -1,0 +1,19 @@
+#!/bin/sh
+mount --rbind /sys                  sys                    
+mount --rbind /dev                  dev                    
+mount -t proc proc                  proc                   
+mount --rbind /var/db/repos         var/db/repos/ 
+mount --rbind /etc/portage/patches  etc/portage/patches/ 
+mount --rbind /var/db/distfiles     var/db/distfiles/ 
+mount --rbind /var/src              var/src
+mount --bind /etc/portage/gnupg     etc/portage/gnupg
+mv           root/.ssh              root/.ssh.backup
+rsync -avi   /root/.ssh            root/ 
+
+mv     var/lib/portage/home/.ssh var/lib/portage/home/.ssh.backup
+rsync -avi /var/lib/portage/home/.ssh var/lib/portage/home/
+
+chmod 0755 run
+mkdir run/logdaemon
+mount --bind /var/run/logdaemon var/run/logdaemon
+cp -a /etc/portage/mirrors  etc/portage/mirrors

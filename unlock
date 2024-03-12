@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from math import inf
-TIMEOUT_MISSING_0=60
+TIMEOUT_MISSING_0=180
 TIMEOUT_MISSING_1=inf
 PEXPECT_TIMEOUT=3600
 from time import time

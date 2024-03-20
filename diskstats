@@ -66,7 +66,7 @@ ap.add_argument("-s","--sector-size",type=float,help="sector size in bytes requi
 ap.add_argument('-l',"--list",action="store_true",help="print available device names")
 ap.add_argument('-i',action="store_true",help="print available field indices")
 ap.add_argument('-w','--watch',action="store_true",help="watch",default=True)
-ap.add_argument('-r','--rate',action="store_true",help="show rate only",default=True)
+ap.add_argument('-r','--rate',action="store_true",help="show rate only",default=False)
 ap.add_argument('-n','--repeat-time',type=float,help="watch",default=2)
 args=ap.parse_args()
 if args.watch:

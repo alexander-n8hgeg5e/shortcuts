@@ -1,2 +1,17 @@
-#!/bin/fish
-for pg in  (ceph pg ls active|head -n-1|column -t -H(echo {(seq 50|sed '/1$/d;/1[45]$/d;/1[567]$/d;'),\,} | tr -d \\40 )|sort -k6 |tail -n+2|head -n"$argv[1]"|cut -d' ' -f1);ceph pg deep-scrub $pg;end
+#!/usr/bin/env python3
+from subprocess import check_output as co
+from sys import argv
+import json
+#help(json)
+data = json.loads(co('ceph -f json pg ls active',shell=True).decode())['pg_stats']
+from pprint import pprint
+l=[]
+for i in data:
+    l.append((i['pgid'],i['last_deep_scrub_stamp']))
+l.sort(key=lambda x: x[-1])
+l=[i for i in l][:int(argv[1])]
+from subprocess import check_call as cc
+for i in l:
+    cc(['ceph','pg','deep-scrub',i[0]])
+
+

@@ -1,0 +1,4 @@
+#!/bin/sh
+ssh -t handy git --git-dir=/storage/emulated/0/.password-store/.git --work-tree=/storage/emulated/0/.password-store reset
+ssh -t handy git --git-dir=/storage/emulated/0/.password-store/.git --work-tree=/storage/emulated/0/.password-store checkout -- .
+ssh -t handy git --git-dir=/storage/emulated/0/.password-store/.git --work-tree=/storage/emulated/0/.password-store clean -i

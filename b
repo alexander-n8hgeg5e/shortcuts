@@ -103,10 +103,11 @@ fi
 ## setup cgroup ##
 ##################
 echo setting cgroup,...
-proc_path=$(python -c '
-from pylib.cgroup_utils import cgroup2_find_path
-print(cgroup2_find_path()+"/cg_realtime/cgroup.procs")
-')
+#proc_path=$(python -c '
+#from pylib.cgroup_utils import cgroup2_find_path
+#print(cgroup2_find_path()+"/cg_realtime/cgroup.procs")
+#')
+proc_path="/sys/fs/cgroup/unified/openrc.cg_realtime/cgroup.procs"
 cat /proc/self/stat | cut -d' ' -f4 | sudo dd of="${proc_path}" status=none
 #echo -e "${proc_path}:\n$(cat "${proc_path}")"
 

@@ -1,0 +1,2 @@
+#!/bin/sh -i
+cut -c-$COLUMNS

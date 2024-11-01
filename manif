@@ -4,6 +4,7 @@ from sys import argv
 from argparse import ArgumentParser
 a=ArgumentParser()
 a.add_argument("-L","--follow-symlinks",action="store_true",default=False)
+a.add_argument("-s","--skip",action="store",default=0,type=int)
 a.add_argument(dest="basepathes",nargs='*',default=[],type=str)
 a.add_argument(dest='pathes', nargs="*", action="store",type=str,default=["."])
 args=a.parse_args()
@@ -33,7 +34,7 @@ def get_manifs():
 
 
 if __name__=="__main__":
-    for i in get_ebuilds():
+    for i in get_ebuilds()[args.skip:]:
         if i.strip() == "":
             continue
         cmd = ['sudo' , 'ebuild' ] + [ i ] + [ 'manifest' ]

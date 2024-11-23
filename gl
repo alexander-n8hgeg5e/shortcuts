@@ -22,9 +22,9 @@ f = round( n  * columns )
 
 default_min_number_logentries = 10
 
-py_escape_seq_pattern  =  b'(\x1B\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK])' # 3 x "("
+py_escape_seq_pattern  =  b'(\x1B\\[([0-9]{1,2}([;][0-9]{1,2})?)?[mK])' # 3 x "("
 
-py_subst_args  = [ b'[ ]' + py_escape_seq_pattern +           b'{1,4}(\w+[/])?([_]*old_|(\w|[-/_]|[0-9])*[_]+old_)(\w|[-/_]|[0-9])*' + py_escape_seq_pattern +b'{1,4}([,]|[|])'  , b"" ]
+py_subst_args  = [ b'[ ]' + py_escape_seq_pattern +           b'{1,4}(\\w+[/])?([_]*old_|(\\w|[-/_]|[0-9])*[_]+old_)(\\w|[-/_]|[0-9])*' + py_escape_seq_pattern +b'{1,4}([,]|[|])'  , b"" ]
 
 def parse_args():
     output_conversions = {

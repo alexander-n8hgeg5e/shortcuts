@@ -1,0 +1,3 @@
+#!/bin/sh
+# git amend head
+git commit -C HEAD --amend

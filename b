@@ -57,11 +57,11 @@ else
     more_args=""
 fi
 
-#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0 -np 8 -fps 50 -q 95"
-#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" vglrl"
-#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" env WAYLAND_DISPLAY= DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/wayland"
-#cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}" env XDG_RUNTIME_DIR=/tmp/wayland"
-cmd0="sudo nice -n-10 sudo -iu "${RUNAS_USER}""
+#cmd0="sudo nice -n-15 sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0 -np 8 -fps 50 -q 95"
+#cmd0="sudo nice -n-15 sudo -iu "${RUNAS_USER}" vglrl"
+#cmd0="sudo nice -n-15 sudo -iu "${RUNAS_USER}" env WAYLAND_DISPLAY= DISPLAY=:0 XDG_RUNTIME_DIR=/tmp/wayland"
+#cmd0="sudo nice -n-15 sudo -iu "${RUNAS_USER}" env XDG_RUNTIME_DIR=/tmp/wayland"
+cmd0="sudo nice -n-15 sudo -iu "${RUNAS_USER}""
 #cmd0="sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0"
 #cmd0="sudo -iu "${RUNAS_USER}" vglrun -d /dev/dri/card0"
 cmd1="ril env MOZ_ENABLE_WAYLAND=1 WAYLAND_DISPLAY=\"${WAYLAND_DISPLAY}\" XDG_RUNTIME_DIR=\"${XDG_RUNTIME_DIR}\" firefox -P \"${profile}\" ${more_args}"
